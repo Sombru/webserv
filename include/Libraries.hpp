@@ -11,6 +11,9 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <stdexcept>
+#include <map>
+#include <stdlib.h>
 
+void openFile(std::ifstream& file, const std::string& filename);
 
 #endif

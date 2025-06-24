@@ -1,18 +1,17 @@
 NAME		=	webserv
 
-# Compiler
-CPP			=	c++
+CPP         =  c++
 
 # Compiler Flags
-CPPFLAGS	=	-g -std=c++98 -Wall -Wextra -Werror -Wshadow -Wno-shadow -I. -Iinclude
-RM 			=	rm -rf
+CPPFLAGS    =   -g -std=c++98 -Wall -Wextra -Werror -Wshadow -Wno-shadow -I. -Iinclude
+RM          =   rm -rf
 
 # Directories
 OBJS_DIR 	=	objs
 SRC_DIRS 	=	srcs
 
 # Source Files
-SRCS		=	main.cpp $(SRC_DIRS)/Socket.cpp srcs/Client.cpp
+SRCS		=	main.cpp $(SRC_DIRS)/Socket.cpp srcs/Client.cpp $(SRC_DIRS)/Utils.cpp
 
 # Object Files
 OBJS		=	$(SRCS:%.cpp=$(OBJS_DIR)/%.o)
