@@ -1,4 +1,5 @@
 #include "include/Socket.hpp"
+#include "include/Client.hpp"
 
 int main()
 {
@@ -9,30 +10,19 @@ int main()
 		return 1;
 	}
 
+	std::ifstream index("webpages/index.html");
+	std::stringstream page;
+	page << index.rdbuf();
+	std::cout << page.str();
 	while (true)
 	{
-		int client_fd = server.acceptClient();
-		if (client_fd < 0)
-		{
-			std::cerr << "Failed to accept client\n";
-			continue;
-		}
+		// possibly use try here
+		Client client(server);
 
-		char buffer[4096];
-		std::memset(buffer, 0, sizeof(buffer));
-		read(client_fd, buffer, sizeof(buffer) - 1);
+		std::string request = client.recievedRequest();
 		std::cout << "Received request:\n"
-				  << buffer << std::endl;
-
-		const char *response =
-			"HTTP/1.1 200 OK\r\n"
-			"Content-Type: text/plain\r\n"
-			"Content-Length: 13\r\n"
-			"\r\n"
-			"Hello, world!";
-
-		send(client_fd, response, std::strlen(response), 0);
-		close(client_fd);
+				  << request << std::endl;
+		client.sendMessage(page.str());
 	}
 
 	return 0;

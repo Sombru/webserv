@@ -33,12 +33,12 @@ bool Socket::setup()
 		std::cerr << "setsockopt failed\n";
 		return false;
 	}
-
+	
 	_address.sin_family = AF_INET;
 	_address.sin_addr.s_addr = INADDR_ANY;
 	_address.sin_port = htons(_port);
 
-	if (bind(_server_fd, (struct sockaddr *)&_address, sizeof(_address)) == -1)
+	if (bind(_server_fd, (sockaddr *)&_address, sizeof(_address)) == -1)
 	{
 		std::cerr << "Bind failed\n";
 		return false;
@@ -56,7 +56,7 @@ bool Socket::setup()
 
 int Socket::acceptClient()
 {
-	return accept(_server_fd, (struct sockaddr *)&_address, &_addrlen);
+	return accept(_server_fd, (sockaddr *)&_address, &_addrlen);
 }
 
 int Socket::getServerFd() const
