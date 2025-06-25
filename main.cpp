@@ -4,10 +4,9 @@
 #include "include/Get.hpp"
 #include "Logger.hpp"
 
-int runServer(std::map<std::string, std::string> &config)
+int runServer(Config config)
 {
-	int port = std::atoi(config["port"].c_str());
-	Socket server(port);
+	Socket server(config.server.port);
 	if (server.setup() == false)
 		throw std::runtime_error("Failed to set up server");
 
@@ -24,31 +23,12 @@ int runServer(std::map<std::string, std::string> &config)
 	return 0;
 }
 
-std::map<std::string, std::string> storeConfig()
-{
-	std::string line;
-	std::ifstream index;
-	openFile(index, "config/default.conf");
-	std::map<std::string, std::string> config;
-	while (std::getline(index, line))
-	{
-		std::stringstream ss(line);
-		std::string date, value;
-
-		if (std::getline(ss, date, ' ') && std::getline(ss, value))
-		{
-			if (!date.empty() && !value.empty())
-				config.insert(std::make_pair(date, value));
-		}
-	}
-	return config;
-}
-
 int main()
 {
 	try
 	{
-		std::map<std::string, std::string> config = storeConfig();
+		Config config;
+		config.loadFromFile("config/default.conf");
 		runServer(config);
 	}
 	catch (const std::exception &e)
