@@ -1,12 +1,13 @@
 #pragma once
 
-#include "Libraries.hpp"
+#include "Webserv.hpp"
 #include "Socket.hpp"
 
 class Client
 {
 private:
 	int _fd;
+	std::string raw_request;
 
 public:
 	Client(Socket& server);
@@ -16,6 +17,7 @@ public:
 	
 
 	ssize_t sendMessage(std::string response);
-	std::string recievedRequest();
+	void recievedRequest();
+	HttpRequest parseRequest();
 
 };

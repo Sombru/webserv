@@ -1,4 +1,5 @@
 #include "include/Socket.hpp"
+#include "Logger.hpp"
 
 Socket::Socket(int port) 
 : _server_fd(-1), _port(port), _addrlen(sizeof(_address))
@@ -20,17 +21,19 @@ bool Socket::setup()
 	// domain: AF_INET == IPV4
 	// type: AF_INET == two way connection
 	// protocol: we can leave as default
+	Logger::debug("Creating socket");
 	_server_fd = socket(AF_INET, SOCK_STREAM, 0); // returns a file descriptor that refers to that endpoint(just like open())
 	if (_server_fd < 0)
 	{
-		std::cerr << "Socket creation failed\n";
+		Logger::error("Socket creation failed");
 		return false;
 	}
 
 	int opt = 1;
+	Logger::debug("Setting sersockopt");
 	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
 	{
-		std::cerr << "setsockopt failed\n";
+		Logger::error("setsockopt failed");
 		return false;
 	}
 	
@@ -38,15 +41,17 @@ bool Socket::setup()
 	_address.sin_addr.s_addr = INADDR_ANY;
 	_address.sin_port = htons(_port);
 
+	Logger::debug("Binding socket");
 	if (bind(_server_fd, (sockaddr *)&_address, sizeof(_address)) == -1)
 	{
-		std::cerr << "Bind failed\n";
+		Logger::error("Bind failed");
 		return false;
 	}
 
+	Logger::debug("Listening on socket");
 	if (listen(_server_fd, 10) == -1)
 	{
-		std::cerr << "Listen failed\n";
+		Logger::error("Listen failed");
 		return false;
 	}
 
@@ -56,7 +61,8 @@ bool Socket::setup()
 
 int Socket::acceptClient()
 {
-	return accept(_server_fd, (sockaddr *)&_address, &_addrlen);
+	int fd = accept(_server_fd, (sockaddr *)&_address, &_addrlen); 
+	return fd;
 }
 
 int Socket::getServerFd() const
