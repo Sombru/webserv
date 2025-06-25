@@ -2,10 +2,12 @@
 #include "include/Client.hpp"
 #include "include/Webserv.hpp"
 #include "include/Get.hpp"
+#include "include/ParserManager.hpp"
 #include "Logger.hpp"
 
 int runServer(Config config)
 {
+	std::cout << config.server.port;
 	Socket server(config.server.port);
 	if (server.setup() == false)
 		throw std::runtime_error("Failed to set up server");
@@ -27,9 +29,8 @@ int main()
 {
 	try
 	{
-		Config config;
-		config.loadFromFile("config/default.conf");
-		runServer(config);
+		ParserManager pm(CONFIG, "config/default.conf");
+		runServer(pm.config);
 	}
 	catch (const std::exception &e)
 	{

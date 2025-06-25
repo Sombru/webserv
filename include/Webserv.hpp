@@ -72,9 +72,12 @@ struct ServerConfig
             std::stringstream ss(line);
             std::string key, value;
             ss >> key >> value;
-
             if (key == "listen")
+            {
+                std::cout << "saving port on" << std::atoi(value.c_str()) << std::endl;
                 port = std::atoi(value.c_str());
+            }
+                
             else if (key == "host")
                 host = value;
             else if (key == "server_name")
@@ -126,7 +129,7 @@ struct Config
     ServerConfig server;
     LocationConfig location;
 
-    void loadFromFile(const std::string& filename)
+    void parse(const std::string& filename)
     {
         validateFormat(filename);
         server.saveData(filename);
