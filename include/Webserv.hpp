@@ -20,24 +20,23 @@
 
 struct HttpRequest
 {
-	std::string method;
-	std::string path;
-	std::string query_string;
-	std::string version;
-	strHmap query_params;
-	strHmap headers;
+	std::string method; // e.g. GET
+	std::string path; // e.g. /about.html
+	std::string query_string; // e.g ?alice=18 // how this differs from path you need find out
+	std::string version; //  e.g. "HTTP/1.1"
+	std::map<std::string, std::string> query_params; // e.g. query_params["alice"] == 18
+	std::map<std::string, std::string> headers; // e.g. headers["Authorization"] == <browser>
 };
 
 struct HttpResponse 
 {
-	std::string version;        // e.g. "HTTP/1.1"
-	int status_code;            // e.g. 200
-	std::string status_text;    // e.g. "OK"
-	strHmap headers;
-	std::string body;
+	std::string version; // e.g. "HTTP/1.1"
+	int status_code; // e.g. 200
+	std::string status_text; // e.g. "OK"
+	std::map<std::string, std::string> headers; // e.g. headers["Content-Length"] == body.size()
+	std::string body; // e.g. Hello, world!  
 };
 
-// TODO add a httpresponse structure
 
 void openFile(std::ifstream& file, const std::string& filename);
 

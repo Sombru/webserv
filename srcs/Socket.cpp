@@ -1,8 +1,9 @@
 #include "include/Socket.hpp"
 #include "Logger.hpp"
+#include "Client.hpp"
 
 Socket::Socket(int port) 
-: _server_fd(-1), _port(port), _addrlen(sizeof(_address))
+: _server_fd(-1), _port(port), _addrlen(sizeof(_address)), isrunning(true)
 {
 	std::memset(&_address, 0, sizeof(_address));
 }
@@ -26,7 +27,7 @@ bool Socket::setup()
 	if (_server_fd < 0)
 	{
 		Logger::error("Socket creation failed");
-		return false;
+		throw std::runtime_error("failed to setup the server");
 	}
 
 	int opt = 1;
@@ -34,7 +35,7 @@ bool Socket::setup()
 	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
 	{
 		Logger::error("setsockopt failed");
-		return false;
+		throw std::runtime_error("failed to setup the server");
 	}
 	
 	_address.sin_family = AF_INET;
@@ -45,17 +46,18 @@ bool Socket::setup()
 	if (bind(_server_fd, (sockaddr *)&_address, sizeof(_address)) == -1)
 	{
 		Logger::error("Bind failed");
-		return false;
+		throw std::runtime_error("failed to setup the server");
 	}
 
 	Logger::debug("Listening on socket");
 	if (listen(_server_fd, 10) == -1)
 	{
 		Logger::error("Listen failed");
-		return false;
+		throw std::runtime_error("failed to setup the server");
 	}
 
 	std::cout << "Server listening on port " << _port << "...\n";
+	isrunning = true;
 	return true;
 }
 
@@ -65,7 +67,17 @@ int Socket::acceptClient()
 	return fd;
 }
 
+int Socket::response(const Client& client)
+{
+	return(send(client.getClientFd(), this->res.c_str(), this->res.length(), 0));
+}
+
 int Socket::getServerFd() const
 {
 	return _server_fd;
+}
+
+void Socket::setResponse(std::string res)
+{
+	this->res = res;
 }
