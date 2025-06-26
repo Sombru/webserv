@@ -82,3 +82,6 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &os, const HttpRequest &req);
+std::ostream& operator<<(std::ostream& os, const LocationConfig& loc);
+std::ostream& operator<<(std::ostream& os, const ServerConfig& server);
+std::ostream& operator<<(std::ostream& os, const Config& config);

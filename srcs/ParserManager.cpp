@@ -35,12 +35,10 @@ void ServerConfig::saveData(const std::string& filename)
 		std::stringstream ss(line);
 		std::string key, value;
 		ss >> key >> value;
+		if (!value.empty() && value[value.length() - 1] == ';')
+			value = value.substr(0, value.length() - 1);
 		if (key == "listen")
-		{
-			std::cout << "saving port on" << std::atoi(value.c_str()) << std::endl;
 			port = std::atoi(value.c_str());
-		}
-			
 		else if (key == "host")
 			host = value;
 		else if (key == "server_name")
@@ -161,4 +159,55 @@ std::ostream &operator<<(std::ostream &os, const HttpRequest &req)
 
 	os << "====================\n";
 	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const ServerConfig& server) 
+{
+    os << "ServerConfig {\n";
+    os << "  port: " << server.port << "\n";
+    os << "  host: " << server.host << "\n";
+    os << "  server_name: " << server.server_name << "\n";
+    os << "  client_max_body_size: " << server.client_max_body_size << "\n";
+    os << "  root: " << server.root << "\n";
+    os << "  index: " << server.index << "\n";
+    os << "  error_pages:\n";
+    for (std::map<int, std::string>::const_iterator it = server.error_pages.begin(); it != server.error_pages.end(); ++it) {
+        os << "    " << it->first << " => " << it->second << "\n";
+    }
+    os << "}\n";
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const LocationConfig& loc) 
+{
+    os << "LocationConfig {\n";
+    os << "  root: " << loc.root << "\n";
+    os << "  autoindex: " << loc.autoindex << "\n";
+    os << "  index: " << loc.index << "\n";
+    os << "  return_path: " << loc.return_path << "\n";
+    os << "  alias: " << loc.alias << "\n";
+
+    os << "  allow_methods: ";
+    for (size_t i = 0; i < loc.allow_methods.size(); ++i)
+        os << loc.allow_methods[i] << (i + 1 < loc.allow_methods.size() ? ", " : "\n");
+
+    os << "  cgi_path: ";
+    for (size_t i = 0; i < loc.cgi_path.size(); ++i)
+        os << loc.cgi_path[i] << (i + 1 < loc.cgi_path.size() ? ", " : "\n");
+
+    os << "  cgi_ext: ";
+    for (size_t i = 0; i < loc.cgi_ext.size(); ++i)
+        os << loc.cgi_ext[i] << (i + 1 < loc.cgi_ext.size() ? ", " : "\n");
+
+    os << "}\n";
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const Config& config) 
+{
+    os << "Config {\n";
+    os << config.server;
+    os << config.location;
+    os << "}\n";
+    return os;
 }

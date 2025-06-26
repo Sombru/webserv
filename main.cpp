@@ -28,7 +28,8 @@ int main()
 	try
 	{
 		ParserManager pm(CONFIG, "config/default.conf");
-		runServer(pm.config);
+		std::cout << pm.config;
+		//runServer(pm.config);
 	}
 	catch (const std::exception &e)
 	{
