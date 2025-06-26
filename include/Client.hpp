@@ -14,10 +14,10 @@ public:
 	~Client();
 
 	int getClientFd() const;
-	
+	std::string getRawRequest() const;
 
 	ssize_t sendMessage(std::string response);
 	void recievedRequest();
-	HttpRequest parseRequest();
 
 };
+ ;

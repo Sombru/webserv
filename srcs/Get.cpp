@@ -48,7 +48,7 @@ std::string to_string(HttpResponse& res)
 {
 	std::ostringstream oss;
 	oss << res.version << " " << res.status_code << " " << res.status_text << "\r\n";
-	for (strHmap::const_iterator it = res.headers.begin(); it != res.headers.end(); ++it) {
+	for (std::map<std::string, std::string>::const_iterator it = res.headers.begin(); it != res.headers.end(); ++it) {
 		oss << it->first << ": " << it->second << "\r\n";
 	}
 	oss << "\r\n" << res.body;

@@ -2,7 +2,6 @@
 #include "include/Client.hpp"
 #include "include/Webserv.hpp"
 #include "include/Get.hpp"
-#include "include/ParserManager.hpp"
 #include "Logger.hpp"
 
 int runServer(Config config)
@@ -16,11 +15,10 @@ int runServer(Config config)
 	{
 		Client client(server);
 		client.recievedRequest();
-		HttpRequest req(client.parseRequest());
-
-		std::cout << req;
-		if (req.method == "GET")
-			client.sendMessage(Get(req).response());
+		ParserManager pm(REQUEST, client.getRawRequest());
+		std::cout << pm.request;
+		if (pm.request.method == "GET")
+			client.sendMessage(Get(pm.request).response());
 	}
 	return 0;
 }
