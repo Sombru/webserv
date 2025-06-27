@@ -1,0 +1,38 @@
+ServerConfig {
+  host: 127.0.0.1
+  port: 8080
+  server_name: test
+  error_page_404: /error/404.html
+  client_max_body_size: 1024
+  root: docs/fusion_web/
+  index: index.html
+  locations: [
+LocationConfig {
+  path: /tours
+  root: docs/fusion_web
+  alias: docs/fusion_web
+  index: index.html
+  return_path: abc/index1.html
+  autoindex: true
+  allow_methods: [POST, GET]
+  cgi_path: []
+  cgi_ext: []
+}
+LocationConfig {
+  path: cgi-bin
+  root: ./
+  alias: 
+  index: 
+  return_path: 
+  autoindex: true
+  allow_methods: []
+  cgi_path: [/usr/bin/python3, /bin/bash]
+  cgi_ext: [.py, .sh]
+}
+  ]
+}
+
+[2025-06-27 15:19:46] [DEBUG] Creating socket
+[2025-06-27 15:19:46] [DEBUG] Setting sersockopt
+[2025-06-27 15:19:46] [DEBUG] Binding socket
+[2025-06-27 15:19:46] [DEBUG] Listening on socket

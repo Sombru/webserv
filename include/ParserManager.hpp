@@ -13,12 +13,11 @@ enum ParseType
 class ParserManager 
 {
 public:
-    Config config;
+    // Config config;
 	HttpRequest request;
 	HttpResponse response;
 
 	ParserManager() {};
-    ParserManager(ParseType type, const std::string& filename);
 	int parseRequest(const Client& client);
 	int buildResponse(Socket& socket);
 
