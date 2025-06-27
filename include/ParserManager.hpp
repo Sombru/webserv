@@ -3,12 +3,12 @@
 #include "Client.hpp"
 #include "Socket.hpp"
 
-enum ParseType
-{
-    CONFIG,
-    RESPONSE,
-    REQUEST,
-};
+// enum ParseType
+// {
+//     CONFIG,
+//     RESPONSE,
+//     REQUEST,
+// };
 
 class ParserManager 
 {
@@ -18,8 +18,8 @@ public:
 	HttpResponse response;
 
 	ParserManager() {};
-    ParserManager(ParseType type, const std::string& filename);
+    // ParserManager(ParseType type, const std::string& filename);
 	int parseRequest(const Client& client);
-	int buildResponse(Socket& socket);
+	int buildResponse(Socket& webserv, const Client& client);
 
 };

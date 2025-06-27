@@ -1,22 +1,24 @@
 #include "ParserManager.hpp"
+#include "HttpResponseBuilder.hpp"
 #include "Client.hpp"
 #include "Logger.hpp"
+#include <iostream>
 
-ParserManager::ParserManager(ParseType type, const std::string& filename)
-{
-	switch(type)
-	{
-		case(CONFIG):
-			config.parse(filename);
-			break;
-		case(RESPONSE):
-			std::cout << "here is the rule for parsing a response" << std::endl;
-			break;
-		case(REQUEST):
-			std::cout << "here is the rule for parsing a request" << std::endl;
-			break;
-	}
-}
+// ParserManager::ParserManager(ParseType type, const std::string& filename)
+// {
+// 	switch(type)
+// 	{
+// 		case(CONFIG):
+// 			config.parse(filename);
+// 			break;
+// 		case(RESPONSE):
+// 			std::cout << "here is the rule for parsing a response" << std::endl;
+// 			break;
+// 		case(REQUEST):
+// 			std::cout << "here is the rule for parsing a request" << std::endl;
+// 			break;
+// 	}
+// }
 
 int ParserManager::parseRequest(const Client& client)	
 {
@@ -66,42 +68,81 @@ int ParserManager::parseRequest(const Client& client)
 	return 0;
 }
 
-int ParserManager::buildResponse(Socket& webserv)
+std::string HttpResponse::serialize() const {
+	std::ostringstream oss;
+
+	oss << "HTTP/1.1 " << status_code << " " << status_text << "\r\n";
+	for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it) {
+		oss << it->first << ": " << it->second << "\r\n";
+	}
+	oss << "\r\n";
+	oss << body;
+
+	return oss.str();
+}
+
+HttpResponse HttpResponseBuilder::build(const HttpRequest& req) {
+	HttpResponse res;
+	std::string full_path = "webpages";	// the current directory
+
+	if (req.path == "/")
+		full_path +="/index.html";
+	else
+		full_path += req.path;			// appent the requested path
+
+	std::ifstream file(full_path.c_str());
+
+	if (!file.is_open())
+	{
+		res.status_code = 404;
+		res.status_text = "Not Found";
+		res.body = "<h1>404 Not Found</h1>";
+		res.headers["Content-Type"] = "text/html";
+
+	} else {
+		std::stringstream body_stream;
+		body_stream << file.rdbuf();
+		res.body = body_stream.str();
+		res.status_code = 200;
+		res.status_text = "OK";
+		res.headers["Content-Type"] = "text/html";
+	}
+	std::ostringstream len_stream;
+	len_stream << res.body.length();
+	res.headers["Content-Length"] = len_stream.str();
+	return res;
+}
+
+int ParserManager::buildResponse(Socket& webserv, const Client& client)
 {
-	std::ifstream index(this->request.path.c_str());
-	if (index.bad())
-		index.open(INDEX);
-	if (index.good())
-		Logger::debug(INDEX);
-	// this will be proper HTTP response
-	this->response.status_text = "OK";
-	this->response.status_code = 200;
-	this->response.headers = this->request.headers;
-	std::stringstream page;
+	// Bulid response from parsed request using your new modular builder
+	this->response = HttpResponseBuilder::build(this->request);
+
+	// Debug: print readable response
+	std::cout << this->response;
 	
-	// page << index.rdbuf();
-	// std::string body = page.str();
-	// std::stringstream response_body;
-	// response_body << "Content-Type: text/html\r\n"
-	// 			  << "Content-Length: " << body.size() << "\r\n"
-	// 		 	  << "\r\n"
-	// 		 	  << body;
+	// Serialize to raw HTTP string and send it
+	std::string raw_response = this->response.serialize();
+	webserv.setResponse(raw_response);
+	webserv.response(client); // <- actual, connected client
 
-	// this->response.body = body;
-	this->response.body = "HTTP/1.1 200 OK\r\n"
-			"Content-Type: text/plain\r\n"
-			"Content-Length: 13\r\n"
-			"\r\n"
-			"Hello, world!";
-	std::cout << this->response.body;
-
-	// std::ostringstream oss;
-	// oss << this->response.version << " " << this->response.status_code << " " << this->response.status_text << "\r\n";
-	// for (strHmap::const_iterator it = this->response.headers.begin(); it != this->response.headers.end(); ++it) {
-	// 	oss << it->first << ": " << it->second << "\r\n";
-	// }
-	// oss << "\r\n" << this->response.body;
-	// std::cout << this->response.body << '\n';
-	webserv.setResponse(this->response.body);
 	return (0);
+}
+
+std::ostream &operator<<(std::ostream &os, const HttpResponse &res)
+{
+	os << "=== HTTP RESPONSE ===\n";
+	os << "Version:  " << res.version << "\n";
+	os << "Status_code:    " << res.status_code << "\n";
+	os << "Status_text: " << res.status_text << "\n";
+	os << "Body: " << res.body << "\n";
+
+	os << "Headers:\n";
+	for (strHmap::const_iterator it = res.headers.begin(); it != res.headers.end(); ++it)
+	{
+		os << "  " << it->first << ": " << it->second << "\n";	
+	}
+
+	os << "====================\n";
+	return os;
 }

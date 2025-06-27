@@ -36,7 +36,25 @@ struct HttpResponse
 	int status_code; // e.g. 200
 	std::string status_text; // e.g. "OK"
 	std::map<std::string, std::string> headers; // e.g. headers["Content-Length"] == body.size()
-	std::string body; // e.g. Hello, world!  
+	std::string body; // e.g. Hello, world!
+
+    std::string serialize() const;
+    // std::string serialize() const {
+    //     std::ostringstream response;
+
+    //     // Status line
+    //     response << version << " " << status_code << " " << status_text << "\r\n";
+
+    //     // Headers
+    //     for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it) {
+    //         response << it->first << ": " << it->second << "\r\n";
+    //     }
+
+    //     response << "\r\n"; // End of headers
+    //     response << body;
+
+    //     return response.str();
+    //}
 };
 
 
@@ -49,6 +67,7 @@ void validateStartTitle(const std::string& line);
 void validateTitles(std::ifstream &file);
 void validateBraces(std::string filename);
 void validateFormat(std::string filename);
+std::ostream &operator<<(std::ostream &os, const HttpResponse &res);
 
 struct ServerConfig
 {

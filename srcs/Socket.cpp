@@ -66,18 +66,36 @@ int Socket::acceptClient()
 	int fd = accept(_server_fd, (sockaddr *)&_address, &_addrlen); 
 	return fd;
 }
+// Waits for client to connect. 
+// Returns a new file descriptor - used to communicate with that spcific client.
+// This is typically called in a loop to keep accepting new connections.
 
 int Socket::response(const Client& client)
 {
 	return(send(client.getClientFd(), this->res.c_str(), this->res.length(), 0));
 }
+// Sends the current res string to a specific client.
+// Uses the client's socket file descriptor.
+// send(...) is a wrapper over low-level write call, used for sockets.
 
 int Socket::getServerFd() const
 {
 	return _server_fd;
 }
+// Getter for main listening socket FD.
+// Useful for using this fd in a select()/poll()/epoll() loop or to monitor it externally.
 
 void Socket::setResponse(std::string res)
 {
 	this->res = res;
+}
+// Assigns a response string to the res field.
+// Prepares the Socket object to send this response later using response().
+
+void Socket::closeServerSocket() {
+	if (this->_server_fd != -1) {
+		close(this->_server_fd);
+		this->_server_fd = -1;
+		std::cout << "Server socket closed safely.\n";
+	}
 }
