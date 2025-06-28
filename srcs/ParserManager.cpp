@@ -1,6 +1,6 @@
-#include "ParserManager.hpp"
 #include "Client.hpp"
 #include "Logger.hpp"
+#include "ParserManager.hpp"
 
 int ParserManager::parseRequest(const Client& client)	
 {

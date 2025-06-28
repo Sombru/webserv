@@ -2,6 +2,7 @@
 #include "include/Client.hpp"
 #include "include/Webserv.hpp"
 #include "include/ParserManager.hpp"
+#include "include/ServerManager.hpp"
 #include "Logger.hpp"
 #include "Config.hpp"
 
@@ -11,7 +12,6 @@ int main()
 	{
 		// TODO config
 		// Parser::parseConfig()
-
 		std::ifstream file("config/default.conf");
 		std::stringstream buffer;
 		buffer << file.rdbuf();
@@ -24,19 +24,9 @@ int main()
 		parse_server(serv, tokens, i);
 		std::cout << serv << '\n';
 
-		Socket webserv(PORT);
-		webserv.setup();
-
-		while (true)
-		{
-			// accept client
-			Client client(webserv);
-			client.getRequest();
-			ParserManager pm;
-			pm.parseRequest(client);
-			pm.buildResponse(webserv);
-			webserv.response(client);
-		}
+        ServerManager serverManager(serv);
+        serverManager.setup();
+        serverManager.run();
 	}
 	catch (const std::exception &e)
 	{

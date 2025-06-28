@@ -3,13 +3,6 @@
 #include "Client.hpp"
 #include "Socket.hpp"
 
-enum ParseType
-{
-    CONFIG,
-    RESPONSE,
-    REQUEST,
-};
-
 class ParserManager 
 {
 public:
