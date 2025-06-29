@@ -30,12 +30,6 @@ struct ServerConfig
 	std::vector<LocationConfig> locations;
 };
 
-// maybe later
-struct GlobalConfig
-{
-	std::vector<ServerConfig> servers; // vector for multiple serv
-};
-
 enum TokenType
 {
 	WORD,
@@ -56,4 +50,4 @@ std::ostream &operator<<(std::ostream &os, const std::vector<Token> &tokens);
 std::ostream &operator<<(std::ostream &os, const ServerConfig &config);
 std::ostream &operator<<(std::ostream &os, const LocationConfig &config);
 
-void parse_server(ServerConfig &srv, const std::vector<Token> &tokens, size_t &i);
+void parse_server(ServerConfig &srv, const std::vector<Token> &tokens);

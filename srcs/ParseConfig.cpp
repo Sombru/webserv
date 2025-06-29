@@ -1,14 +1,26 @@
 #include "Webserv.hpp"
 #include "Config.hpp"
+#include "ParserManager.hpp"
 
-static size_t expect_word(const std::vector<Token> &tokens, size_t &i, const std::string &error_msg)
+int ParserManager::parseConfig(const std::string &path)
+{
+	std::ifstream file(path.c_str());
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+
+	this->tokens = tokenize_config(buffer.str());
+	parse_server(config, this->tokens);
+	return 1;
+}
+
+size_t expect_word(const std::vector<Token> &tokens, size_t &i, const std::string &error_msg)
 {
 	if (i >= tokens.size() || tokens[i].type != WORD)
 		throw std::runtime_error(error_msg);
 	return i++;
 }
 
-static void parse_location(LocationConfig &loc, const std::vector<Token> &tokens, size_t &i)
+void parse_location(LocationConfig &loc, const std::vector<Token> &tokens, size_t &i)
 {
 	loc.path = tokens[i - 1].value;
 	if (tokens[i++].type != LBRACE)
@@ -46,8 +58,9 @@ static void parse_location(LocationConfig &loc, const std::vector<Token> &tokens
 	++i;
 }
 
-void parse_server(ServerConfig &srv, const std::vector<Token> &tokens, size_t &i)
+void parse_server(ServerConfig &srv, const std::vector<Token> &tokens)
 {
+	size_t i = 1;
 	if (tokens[i++].type != LBRACE)
 		throw std::runtime_error("Expected '{' after server");
 
@@ -85,5 +98,4 @@ void parse_server(ServerConfig &srv, const std::vector<Token> &tokens, size_t &i
 			++i;
 	}
 
-	++i;
 }

@@ -9,24 +9,12 @@ int main()
 {
 	try //setup
 	{
-		// TODO config
-		// Parser::parseConfig()
-
-		std::ifstream file("config/default.conf");
-		std::stringstream buffer;
-		buffer << file.rdbuf();
-
-		std::vector<Token> tokens = tokenize_config(buffer.str());
-		// std::cout << tokens;
-		
-		ServerConfig serv;
-		size_t i = 1;
-		parse_server(serv, tokens, i);
-		std::cout << serv << '\n';
-
+		ParserManager pm;
+		pm.parseConfig("config/default.conf");;
+		// std::cout << pm.getTokens();
+		// std::cout << pm.getServerConfig() << '\n';
 		Socket webserv(PORT);
 		webserv.setup();
-
 		while (true)
 		{
 			// accept client
