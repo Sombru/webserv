@@ -4,10 +4,7 @@
 #include "include/ParserManager.hpp"
 #include "Logger.hpp"
 #include "Socket.hpp"
-#include <csignal> // For signal()
-#include <vector>
-#include <poll.h>
-#include <fcntl.h>
+#include "ServerManager.hpp"
 
 Socket* global_socket_ptr = NULL;
 
@@ -17,36 +14,16 @@ void handle_sigint(int sig) {
 		global_socket_ptr->Socket::closeServerSocket(); // method added to Socket
 	}
 }
+
 int main()
 {
-	try //setup
+	try
 	{
-		// TODO config
-		// Parser::parseConfig()
-
 		Socket webserv(PORT);
-
-		global_socket_ptr = &webserv; // assign global pointer
-
-		signal(SIGINT, handle_sigint); // hook CTRL+C
-		webserv.setup();
-
-		std::vector<pollfd> pollfds;
-		while (true)
-		{
-
-			poll(pollfds.data(),pollfds.size(), 0);
-			for (int i = 0; i < pollfds.size(); i++) {
-				// accept client
-				Client client(webserv);
-				client.getRequest();
-				ParserManager pm;
-				pm.parseRequest(client);
-				pm.buildResponse(webserv, client);
-				webserv.response(client);
-			} 
-			
-		}
+		global_socket_ptr = &webserv;
+		signal(SIGINT, handle_sigint);
+		ServerManager serverManager(webserv);
+		serverManager.run();
 	}
 	catch (const std::exception &e)
 	{

@@ -15,6 +15,10 @@
 #include <stdlib.h>
 #include <vector>
 #include <cctype>
+#include <csignal> // For signal()
+#include <vector>
+#include <poll.h>
+#include <fcntl.h>
 
 // preprocessor for hash map
 #define strHmap std::map<std::string, std::string>
