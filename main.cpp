@@ -7,6 +7,7 @@
 #include <csignal> // For signal()
 #include <vector>
 #include <poll.h>
+#include <fcntl.h>
 
 Socket* global_socket_ptr = NULL;
 
@@ -33,7 +34,7 @@ int main()
 		std::vector<pollfd> pollfds;
 		while (true)
 		{
-			
+
 			poll(pollfds.data(),pollfds.size(), 0);
 			for (int i = 0; i < pollfds.size(); i++) {
 				// accept client

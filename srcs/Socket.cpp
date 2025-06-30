@@ -99,3 +99,11 @@ void Socket::closeServerSocket() {
 		std::cout << "Server socket closed safely.\n";
 	}
 }
+
+// Setting sockets to non- blocking
+void set_non_blocking(int fd) {
+	int flags = fcntl(fd, F_GETFL, 0); // Using F_GETFL to check the current state of a file descriptor
+	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+}
+// F_GETFL - is a command used with the fcntl() function 
+// in Linux to retrieve the file status flags associated with a file descriptor.
