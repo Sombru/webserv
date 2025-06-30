@@ -115,7 +115,7 @@ HttpResponse HttpResponseBuilder::build(const HttpRequest& req) {
 
 int ParserManager::buildResponse(Socket& webserv, const Client& client)
 {
-	// Bulid response from parsed request using your new modular builder
+	// Build response from parsed request using your new modular builder
 	this->response = HttpResponseBuilder::build(this->request);
 
 	// Debug: print readable response
@@ -131,6 +131,7 @@ int ParserManager::buildResponse(Socket& webserv, const Client& client)
 
 std::ostream &operator<<(std::ostream &os, const HttpResponse &res)
 {
+	os << std::endl;
 	os << "=== HTTP RESPONSE ===\n";
 	os << "Version:  " << res.version << "\n";
 	os << "Status_code:    " << res.status_code << "\n";

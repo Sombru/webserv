@@ -5,6 +5,8 @@
 #include "Logger.hpp"
 #include "Socket.hpp"
 #include <csignal> // For signal()
+#include <vector>
+#include <poll.h>
 
 Socket* global_socket_ptr = NULL;
 
@@ -28,15 +30,21 @@ int main()
 		signal(SIGINT, handle_sigint); // hook CTRL+C
 		webserv.setup();
 
+		std::vector<pollfd> pollfds;
 		while (true)
 		{
-			// accept client
-			Client client(webserv);
-			client.getRequest();
-			ParserManager pm;
-			pm.parseRequest(client);
-			pm.buildResponse(webserv, client);
-			webserv.response(client);
+			
+			poll(pollfds.data(),pollfds.size(), 0);
+			for (int i = 0; i < pollfds.size(); i++) {
+				// accept client
+				Client client(webserv);
+				client.getRequest();
+				ParserManager pm;
+				pm.parseRequest(client);
+				pm.buildResponse(webserv, client);
+				webserv.response(client);
+			} 
+			
 		}
 	}
 	catch (const std::exception &e)
