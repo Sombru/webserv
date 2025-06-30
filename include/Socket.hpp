@@ -3,7 +3,7 @@
 #include "Webserv.hpp"
 #include "Client.hpp"
 
-#define PORT 8090
+#define PORT 8082
 
 class Client;
 class Socket;

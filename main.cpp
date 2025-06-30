@@ -27,7 +27,7 @@ int main()
 	}
 	catch (const std::exception &e)
 	{
-		std::cerr << "Error: " << e.what() << std::endl;
+		//std::cerr << "Error: " << e.what() << std::endl;
 		Logger::error(e.what());
 		return 1;
 	}

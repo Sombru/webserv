@@ -72,6 +72,7 @@ void validateTitles(std::ifstream &file);
 void validateBraces(std::string filename);
 void validateFormat(std::string filename);
 std::ostream &operator<<(std::ostream &os, const HttpResponse &res);
+std::string intToString(int number);
 
 struct ServerConfig
 {

@@ -63,7 +63,8 @@ int ParserManager::parseRequest(const Client& client)
 			this->request.headers[key] = value;
 		}
 	}
-	std::cout << this->request;
+	Logger::info("Request is parsed");
+	//std::cout << this->request;
 	// req.path = INDEX; // this will be something else idk what for now
 	return 0;
 }
@@ -119,7 +120,8 @@ int ParserManager::buildResponse(Socket& webserv, const Client& client)
 	this->response = HttpResponseBuilder::build(this->request);
 
 	// Debug: print readable response
-	std::cout << this->response;
+	//std::cout << this->response;
+	Logger::info("Response is parsed");
 	
 	// Serialize to raw HTTP string and send it
 	std::string raw_response = this->response.serialize();

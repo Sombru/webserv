@@ -15,6 +15,6 @@ public:
 	ServerManager(const Socket& webserv);
     void run();
 	void createClient();
-	void handleClient(size_t clientIndex);
+	void handleClients(size_t clientIndex);
 };
 

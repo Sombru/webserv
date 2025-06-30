@@ -22,41 +22,36 @@ bool Socket::setup()
 	// domain: AF_INET == IPV4
 	// type: AF_INET == two way connection
 	// protocol: we can leave as default
-	Logger::debug("Creating socket");
+	Logger::info("Creating socket");
 	_server_fd = socket(AF_INET, SOCK_STREAM, 0); // returns a file descriptor that refers to that endpoint(just like open())
 	if (_server_fd < 0)
 	{
-		Logger::error("Socket creation failed");
-		throw std::runtime_error("failed to setup the server");
+		throw std::runtime_error("Socket creation failed");
 	}
 
 	int opt = 1;
-	Logger::debug("Setting sersockopt");
+	Logger::info("Setting sersockopt");
 	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
 	{
-		Logger::error("setsockopt failed");
-		throw std::runtime_error("failed to setup the server");
+		throw std::runtime_error("Setsockopt failed");
 	}
 	
 	_address.sin_family = AF_INET;
 	_address.sin_addr.s_addr = INADDR_ANY;
 	_address.sin_port = htons(_port);
 
-	Logger::debug("Binding socket");
+	Logger::info("Binding socket");
 	if (bind(_server_fd, (sockaddr *)&_address, sizeof(_address)) == -1)
 	{
-		Logger::error("Bind failed");
-		throw std::runtime_error("failed to setup the server");
+		throw std::runtime_error("Bind failed");
 	}
 
-	Logger::debug("Listening on socket");
+	Logger::info("Listening on socket");
 	if (listen(_server_fd, 10) == -1)
 	{
-		Logger::error("Listen failed");
-		throw std::runtime_error("failed to setup the server");
+		throw std::runtime_error("Listen failed");
 	}
-
-	std::cout << "Server listening on port " << _port << "...\n";
+	Logger::debug("Server listening on port " + std::to_string(_port));
 	isrunning = true;
 	return true;
 }
@@ -72,7 +67,15 @@ int Socket::acceptClient()
 
 int Socket::response(const Client& client)
 {
-	return(send(client.getClientFd(), this->res.c_str(), this->res.length(), 0));
+    int bytesSent = send(client.getClientFd(), this->res.c_str(), this->res.length(), 0);
+
+    if (bytesSent < 0)
+        Logger::error("Failed to send response to client FD " + std::to_string(client.getClientFd()) + ": " + std::string(strerror(errno)));
+    else 
+	{
+        Logger::info("Sent " + std::to_string(bytesSent) + " bytes to client FD " + std::to_string(client.getClientFd()));
+    }
+    return bytesSent;
 }
 // Sends the current res string to a specific client.
 // Uses the client's socket file descriptor.

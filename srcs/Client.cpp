@@ -43,9 +43,8 @@ void Client::getRequest()
 	read(this->_fd, buffer, sizeof(buffer) - 1);
 	// recv(this->_fd, buffer, sizeof(buffer) - 1, 0);
 
-	std::cout << "Received request:\n"
-			  << buffer << std::endl;
-	// Logger::debug("recieved a request");
+	//std::cout << "Received request:\n" << buffer << std::endl;
+	Logger::debug("Recieved a request and saved to buffer");
 	this->raw_request = buffer;
 }
 // Reads data sent by the client over the socket.
