@@ -50,3 +50,8 @@ std::ostream &operator<<(std::ostream &os, const HttpRequest &req)
 	return os;
 }
 
+std::string intToString(int n) {
+    std::stringstream ss;
+    ss << n;
+    return ss.str();
+}

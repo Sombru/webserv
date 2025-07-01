@@ -17,7 +17,7 @@
 #include <cctype>
 #include <csignal> // For signal()
 #include <vector>
-#include <poll.h>
+#include <sys/epoll.h>
 #include <fcntl.h>
 
 // preprocessor for hash map
@@ -73,6 +73,7 @@ void validateBraces(std::string filename);
 void validateFormat(std::string filename);
 std::ostream &operator<<(std::ostream &os, const HttpResponse &res);
 std::string intToString(int number);
+void set_non_blocking(int fd);
 
 struct ServerConfig
 {

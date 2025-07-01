@@ -6,8 +6,8 @@
 class ServerManager {
 private:
     //ServerConfig serverConfig;
-	std::vector<pollfd> pollfds;
-	std::vector<Client> clients;
+	int epoll_fd;
+	std::map<int, Client> clients;
     Socket serverSocket;
 public:
     //ServerManager(const ServerConfig& config)
@@ -15,6 +15,8 @@ public:
 	ServerManager(const Socket& webserv);
     void run();
 	void createClient();
-	void handleClients(size_t clientIndex);
+	void handleClient(Client& client);
+	void setupEpoll(int fd);
+	void addClientToEpoll(int epoll_fd, int fd);
 };
 

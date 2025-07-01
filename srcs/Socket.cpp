@@ -51,7 +51,7 @@ bool Socket::setup()
 	{
 		throw std::runtime_error("Listen failed");
 	}
-	Logger::debug("Server listening on port " + std::to_string(_port));
+	Logger::debug("Server listening on port " + intToString(_port));
 	isrunning = true;
 	return true;
 }
@@ -70,10 +70,10 @@ int Socket::response(const Client& client)
     int bytesSent = send(client.getClientFd(), this->res.c_str(), this->res.length(), 0);
 
     if (bytesSent < 0)
-        Logger::error("Failed to send response to client FD " + std::to_string(client.getClientFd()) + ": " + std::string(strerror(errno)));
+        Logger::error("Failed to send response to client FD " + intToString(client.getClientFd()) + ": " + std::string(strerror(errno)));
     else 
 	{
-        Logger::info("Sent " + std::to_string(bytesSent) + " bytes to client FD " + std::to_string(client.getClientFd()));
+        Logger::info("Sent " + intToString(bytesSent) + " bytes to client FD " + intToString(client.getClientFd()));
     }
     return bytesSent;
 }
@@ -103,10 +103,21 @@ void Socket::closeServerSocket() {
 	}
 }
 
-// Setting sockets to non- blocking
-void set_non_blocking(int fd) {
-	int flags = fcntl(fd, F_GETFL, 0); // Using F_GETFL to check the current state of a file descriptor
-	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+
+void set_non_blocking(int fd) 
+{
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1) 
+    {
+        Logger::error("Failed to get flags for fd " + intToString(fd));
+        throw std::runtime_error("fcntl F_GETFL failed");
+    }
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) 
+    {
+        Logger::error("Failed to set O_NONBLOCK for fd " + intToString(fd));
+        throw std::runtime_error("fcntl F_SETFL failed");
+    }
+    Logger::info("Set fd " + intToString(fd) + " to non-blocking mode");
 }
 // F_GETFL - is a command used with the fcntl() function 
 // in Linux to retrieve the file status flags associated with a file descriptor.
