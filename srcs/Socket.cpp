@@ -6,11 +6,11 @@
 
 void Socket::shutdown() {
 	close(this->_server_fd);
-	Logger::info("Shutdown server.\n");
+	Logger::info("Shutdown server.");
 }
 void ServerManager::shutdown_epoll() {
 	close(this->epoll_fd);
-	Logger::info("epoll function closed. Shutdown complete.\n");
+	Logger::info("epoll function closed. Shutdown complete.");
 }
 Socket::Socket(int port) 
 : _server_fd(-1), _port(port), _addrlen(sizeof(_address)), isrunning(true)

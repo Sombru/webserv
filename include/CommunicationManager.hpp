@@ -10,15 +10,15 @@
 //     REQUEST,
 // };
 
-class ParserManager 
+class CommunicationManager 
 {
 public:
     Config config;
 	HttpRequest request;
 	HttpResponse response;
 
-	ParserManager() {};
-    // ParserManager(ParseType type, const std::string& filename);
+	CommunicationManager() {};
+    // CommunicationManager(ParseType type, const std::string& filename);
 	int parseRequest(const Client& client);
 	int buildResponse(Socket& webserv, const Client& client);
 

@@ -87,7 +87,7 @@ void ServerManager::handleClient(Client& client)
     try
     {
         client.getRequest();
-        ParserManager pm;
+        CommunicationManager pm;
         pm.parseRequest(client);
         pm.buildResponse(serverSocket, client);
         Logger::info("[" + intToString(fd) + "] request and response completed");

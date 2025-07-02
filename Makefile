@@ -12,7 +12,7 @@ SRC_DIRS 	=	srcs
 
 # Source Files
 SRCS		=	main.cpp $(SRC_DIRS)/Socket.cpp srcs/Client.cpp $(SRC_DIRS)/Utils.cpp\
-				srcs/Logger.cpp srcs/Config.cpp srcs/ParserManager.cpp srcs/ServerManager.cpp
+				srcs/Logger.cpp srcs/Config.cpp srcs/CommunicationManager.cpp srcs/ServerManager.cpp
 
 # Object Files
 OBJS		=	$(SRCS:%.cpp=$(OBJS_DIR)/%.o)

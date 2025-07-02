@@ -1,7 +1,7 @@
 #include "include/Socket.hpp"
 #include "include/Client.hpp"
 #include "include/Webserv.hpp"
-#include "include/ParserManager.hpp"
+#include "include/CommunicationManager.hpp"
 #include "Logger.hpp"
 #include "Socket.hpp"
 #include "ServerManager.hpp"

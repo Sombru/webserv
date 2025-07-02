@@ -1,10 +1,10 @@
-#include "ParserManager.hpp"
+#include "CommunicationManager.hpp"
 #include "HttpResponseBuilder.hpp"
 #include "Client.hpp"
 #include "Logger.hpp"
 #include <iostream>
 
-// ParserManager::ParserManager(ParseType type, const std::string& filename)
+// CommunicationManager::CommunicationManager(ParseType type, const std::string& filename)
 // {
 // 	switch(type)
 // 	{
@@ -20,7 +20,7 @@
 // 	}
 // }
 
-int ParserManager::parseRequest(const Client& client)	
+int CommunicationManager::parseRequest(const Client& client)	
 {
 	std::istringstream stream(client.getRaw_request());
 	std::string line;
@@ -114,7 +114,7 @@ HttpResponse HttpResponseBuilder::build(const HttpRequest& req) {
 	return res;
 }
 
-int ParserManager::buildResponse(Socket& webserv, const Client& client)
+int CommunicationManager::buildResponse(Socket& webserv, const Client& client)
 {
 	// Build response from parsed request using your new modular builder
 	this->response = HttpResponseBuilder::build(this->request);

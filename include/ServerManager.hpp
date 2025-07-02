@@ -1,7 +1,7 @@
 #pragma once
 #include "Webserv.hpp"
 #include "Socket.hpp"
-#include "ParserManager.hpp"
+#include "CommunicationManager.hpp"
 
 class ServerManager {
 private:
