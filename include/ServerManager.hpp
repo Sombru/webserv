@@ -10,6 +10,7 @@ private:
 	std::map<int, Client> clients;
     Socket serverSocket;
 public:
+	bool running;
     //ServerManager(const ServerConfig& config)
     //    : serverConfig(config), serverSocket(config.port) {}
 	ServerManager(const Socket& webserv);
@@ -18,5 +19,7 @@ public:
 	void handleClient(Client& client);
 	void setupEpoll(int fd);
 	void addClientToEpoll(int epoll_fd, int fd);
+	void shutdown_epoll();
+	void stop(); // stops the loop
 };
 

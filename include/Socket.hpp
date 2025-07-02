@@ -34,4 +34,5 @@ public:
 	int getServerFd() const; // Getter for the main listening socket FD.
 	void setResponse(std::string res); // Assigns a response string to the res field
 	void closeServerSocket();
+	void shutdown();
 };

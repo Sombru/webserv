@@ -12,6 +12,7 @@ ServerManager::ServerManager(const Socket& webserv) : serverSocket(webserv)
     int fd = serverSocket.getServerFd();
     set_non_blocking(fd);
     setupEpoll(fd);
+    running = true; // initializing the running of the while loop
     Logger::debug("[Server socket][" + intToString(fd) + "] initialized with epoll");
 }
 
@@ -114,11 +115,16 @@ void ServerManager::run()
     
     Logger::info("Server started, entering main loop...");
     
-    while (true)
+    while (running)
     {
+        std::cout << "checking ...\n";
         int n = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
         if (n == -1) 
         {
+            if (errno == EINTR) {
+		        Logger::info("epoll_wait interrupted by signal, shutting down.");
+		        break; // graceful break
+	        }
             Logger::error("epoll_wait() failed");
             continue;
         }
@@ -148,3 +154,6 @@ void ServerManager::run()
     }
 }
 
+void ServerManager::stop() {
+    running = false;
+}
