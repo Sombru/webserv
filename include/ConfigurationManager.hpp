@@ -6,5 +6,4 @@ class ConfigurationManager {
         ConfigurationManager();
         ConfigurationManager(std::string fd);
         ~ConfigurationManager();
-        
-}
+};

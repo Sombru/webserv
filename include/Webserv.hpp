@@ -75,6 +75,9 @@ std::ostream &operator<<(std::ostream &os, const HttpResponse &res);
 std::string intToString(int number);
 void set_non_blocking(int fd);
 
+std::string run_cgi_script(const HttpRequest& req, const std::string&  script_path);
+
+
 struct ServerConfig
 {
     unsigned int                port;

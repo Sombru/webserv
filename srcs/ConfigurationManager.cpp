@@ -4,4 +4,10 @@
 ConfigurationManager::ConfigurationManager() {
 }
 // Constructor acceprint fd-s
-ConfigurationManager::ConfigurationManager()
+ConfigurationManager::ConfigurationManager(std::string fds) {
+    // needs to be adjust to work
+}
+
+// Destructor
+ConfigurationManager::~ConfigurationManager() {
+}

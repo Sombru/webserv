@@ -4,22 +4,6 @@
 #include "Logger.hpp"
 #include <iostream>
 
-// CommunicationManager::CommunicationManager(ParseType type, const std::string& filename)
-// {
-// 	switch(type)
-// 	{
-// 		case(CONFIG):
-// 			config.parse(filename);
-// 			break;
-// 		case(RESPONSE):
-// 			std::cout << "here is the rule for parsing a response" << std::endl;
-// 			break;
-// 		case(REQUEST):
-// 			std::cout << "here is the rule for parsing a request" << std::endl;
-// 			break;
-// 	}
-// }
-
 int CommunicationManager::parseRequest(const Client& client)	
 {
 	std::istringstream stream(client.getRaw_request());
@@ -81,9 +65,27 @@ std::string HttpResponse::serialize() const {
 
 	return oss.str();
 }
+bool is_cgi_request(const std::string& path) {
+	return (path.find("/cgi-bin/") == 0);
+}
 
 HttpResponse HttpResponseBuilder::build(const HttpRequest& req) {
 	HttpResponse res;
+
+	// First cheking CGI
+	if (is_cgi_request(req.path)) {
+		std::string script_path = "./" + req.path;
+		res.body = run_cgi_script(req, script_path);
+		res.status_code = 200;
+		res.status_text = "OK";
+		res.headers["Content-Type"] = "text/html";
+		std::ostringstream len_stream;
+		len_stream << res.body.length();
+		res.headers["Content-Length"] = len_stream.str();
+		return (res);
+	}
+	
+	// fallback: normal static file
 	std::string full_path = "webpages";	// the current directory
 
 	if (req.path == "/")
