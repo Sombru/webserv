@@ -45,3 +45,5 @@ int main()
 }
 
 // http://localhost:8082/
+
+// curl http://localhost:8080/cgi-bin/hello.py

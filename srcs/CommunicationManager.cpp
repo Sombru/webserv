@@ -75,7 +75,17 @@ HttpResponse HttpResponseBuilder::build(const HttpRequest& req) {
 	// First cheking CGI
 	if (is_cgi_request(req.path)) {
 		std::string script_path = "./" + req.path;
+
+		// Debugging only
+		Logger::debug("CGI requested: ");
+		std::cout << script_path << std::endl;
+
 		res.body = run_cgi_script(req, script_path);
+
+		// Debugging only
+		Logger::debug("CGI OUTPUT:\n");
+		std::cout << res.body << std::endl;
+
 		res.status_code = 200;
 		res.status_text = "OK";
 		res.headers["Content-Type"] = "text/html";
