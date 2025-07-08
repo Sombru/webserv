@@ -21,12 +21,15 @@ void ServerManager::setup()
 
 void ServerManager::run()
 {
-	Client client(this->sockets[0]);
-	Client client2(this->sockets[1]);
-	client.getRequest();
-	client2.getRequest();
-	Logger::debug(client.getRaw_request());
-	Logger::debug(client2.getRaw_request());
+	while (running)
+	{
+		for (size_t i = 0; i < sockets.size(); ++i)
+		{
+			Client client(sockets[i]);
+			client.getRequest();
+			Logger::debug(client.getRaw_request());
+		}
+	}
 }
 
 ServerManager::~ServerManager()
