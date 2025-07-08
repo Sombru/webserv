@@ -3,6 +3,7 @@
 #include "Webserv.hpp"
 #include "Config.hpp"
 #include "Socket.hpp"
+#include <set>
 
 class Socket;
 class Client;
@@ -20,10 +21,11 @@ private:
 	//Socket socket;
 
 	void set_non_blocking(int fd);
-	void setupEpoll(int fd);
+	//void setupEpoll(int fd);
     void addFdToEpoll(int fd);
 	void handleClient(int fd);
     void acceptNewClient(int server_fd);
+	void initServerSockets();
     //void handleClient(Client& client);
 	//void addClientToEpoll(int epoll_fd, int fd);
 	

@@ -19,7 +19,7 @@ public:
     bool setup();
     int acceptClient();
 
-    int getServerFD() const;
+    int getServerFd() const;
     void closeServerSocket();
 };
 

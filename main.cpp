@@ -4,7 +4,7 @@
 #include "Logger.hpp"
 #include "Client.hpp"
 
-void setup(const std::string& configPath, std::vector<ServerConfig>& servers)
+void setup(const std::string& configPath, std::vector<ServerConfig>& servers) //🍓
 {
 	std::vector<Token> tokens = tokenize_config(openFile(configPath));
 
@@ -32,7 +32,7 @@ void setup(const std::string& configPath, std::vector<ServerConfig>& servers)
 
 }
 
-int main()
+int main() //🍓
 {
 	std::vector<ServerConfig> servers;
 

@@ -7,17 +7,24 @@ class Client {
 private:
     int fd;
     std::string raw_request;
-    const ServerConfig& config;
+    //const ServerConfig& config;
 
+    ServerConfig serverConfig; // Added to be able to associate this client with its server config
+    int request_size;
 public:
-    Client(int fd, const ServerConfig& config);
+    //Client(int fd, const ServerConfig& config);
+    Client(const ServerConfig& config);
     ~Client();
 
     int getClientFd() const;
     std::string getRaw_request() const;
+    void setClientFd(int fd);
+    const ServerConfig& getServerConfig() const;
+    void setClientFd(int fd);
 
-    void getRequest(); // blocking for now
+    void receiveRequest(); // getRequest renamed to receiveRequest
     ssize_t sendResponse(const std::string& response);
+
 };
 
 // class Client

@@ -20,22 +20,6 @@
 
 // }
 
-// void ServerManager::set_non_blocking(int fd)
-// {
-// 	int flags = fcntl(fd, F_GETFL, 0);
-// 	if (flags == -1)
-// 	{
-// 		Logger::error("Failed to get flags for fd " + intToString(fd));
-// 		throw std::runtime_error("fcntl F_GETFL failed");
-// 	}
-// 	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-// 	{
-// 		Logger::error("Failed to set O_NONBLOCK for fd " + intToString(fd));
-// 		throw std::runtime_error("fcntl F_SETFL failed");
-// 	}
-// 	Logger::info("Set fd " + intToString(fd) + " to non-blocking mode");
-// }
-
 // void ServerManager::setupEpoll(int fd)
 // {
 // 	epoll_fd = epoll_create1(0);
@@ -120,45 +104,53 @@
 
 
 
-// This will setup one socket per config block, bound to its port.
-// So only one socket = one port
-ServerManager::ServerManager(const std::vector<ServerConfig>& serverConfigs) 
-: servers(serverConfigs) {
-    epoll_fd = epoll_create1(0);
+ServerManager::ServerManager(const std::vector<ServerConfig>& serverConfigs) //🍓
+: servers(serverConfigs), running(true) {
+    epoll_fd = epoll_create(0);
     if (epoll_fd == -1)
         throw std::runtime_error("Failed to create epoll instance");
     
+    initServerSockets();
+}
+
+void ServerManager::initServerSockets() { //🍓
+     std::set<std::string> seen;
+
     for (size_t i = 0; i < servers.size(); ++i) {
-        Socket s(servers[i]);
+        const ServerConfig& config = servers[i];
+
+        std::string key = config.host + ":" + intToString(config.port);
+        if (!seen.insert(key).second)
+            throw std::runtime_error("Duplicate bind attempt: " + key);
+        
+        Socket s(config);
         s.setup();
 
-        int fd = s.getServerFD();
+        int fd = s.getServerFd();
         set_non_blocking(fd);
         addFdToEpoll(fd);
 
-        serverSockets[fd] = servers[i];
+        serverSockets[fd] = config;
         Logger::debug("[Server Socket][" + intToString(fd) + "] initialized with epoll");
     }
-    running = true;
 }
 
-void ServerManager::serverLoop() {
-    const int MAX_EVENTS = 100;
-    struct epoll_event events[MAX_EVENTS];
+void ServerManager::serverLoop() { //🍓
+    const int maxEvents = 100;
+    struct epoll_event events[maxEvents];
 
     while (running) {
-        int n = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
-        if (n < 0)
+        int nbrReadyEventsreturned = epoll_wait(epoll_fd, events, maxEvents, -1);
+        if (nbrReadyEventsreturned < 0)
             throw std::runtime_error("epoll_wait failed");
 
-        for (int i = 0; i < n; ++i) {
-            int fd = events[i].data.fd;
+        for (int i = 0; i < nbrReadyEventsreturned; ++i) {
+            int fd = events[i].data.fd; // each epoll_event == events, contains the fd that triggered the event
 
-            if (serverSockets.count(fd)) {
-                // It's a server socket
+            std::cout << fd << std::endl;
+            if (serverSockets.count(fd)) { // if fd is a server socket, waits for a new connection 
                 acceptNewClient(fd);
-            } else if (clients.count(fd)) {
-                // It's a client socket
+            } else if (clients.count(fd)) { // if fd is a client socket, is ready to read data from a client
                 handleClient(fd);
             }
         }
@@ -166,7 +158,7 @@ void ServerManager::serverLoop() {
 }
 
 void ServerManager::acceptNewClient(int server_fd) {
-    int client_fd = accept(server_fd, NULL, NULL);
+    int client_fd = accept(server_fd, NULL, NULL); // accepts a new connection on the listening socket server_fd
     if (client_fd == -1)
     {
         Logger::error("accept() failed");
@@ -176,20 +168,23 @@ void ServerManager::acceptNewClient(int server_fd) {
     set_non_blocking(client_fd);
     addFdToEpoll(client_fd);
 
-    Client client(serverSockets[server_fd]); // associare with the correct ServerConfig
+    // Associat the client with its server config
+    Client client(serverSockets[server_fd]);
     client.setClientFd(client_fd);
+
+    // Store in clients map
     clients[client_fd] = client;
 
     Logger::info("[" + intToString(client_fd) + "] New client connected");
 }
 
 void ServerManager::handleClient(int fd) {
-    Client client = clients[fd];
+    Client& client = clients[fd];
     try {
         client.receiveRequest();
         // parse + response here
 
-        // for now just debug
+        // for now, print the request
         std::cout << client.getRaw_request() << std::endl;
     }
     catch (...) {
@@ -199,17 +194,30 @@ void ServerManager::handleClient(int fd) {
     }
 }
 
-void ServerManager::set_non_blocking(int fd) {
-    int flags = fcntl(fd, F_GETFL, 0);
-    if (flags == -1 || fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-        throw std::runtime_error("Failed to set non-blocking");
+void ServerManager::set_non_blocking(int fd) //🍓
+{
+	int flags = fcntl(fd, F_GETFL, 0);
+	if (flags == -1)
+	{
+		Logger::error("Failed to get flags for fd " + intToString(fd));
+		throw std::runtime_error("fcntl F_GETFL failed");
+	}
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+	{
+		Logger::error("Failed to set O_NONBLOCK for fd " + intToString(fd));
+		throw std::runtime_error("fcntl F_SETFL failed");
+        Logger::info("Failed to set " + intToString(fd) + " to non-blocking mode");
+	}
+	Logger::info("Set fd " + intToString(fd) + " to non-blocking mode");
 }
 
-void ServerManager::addFdToEpoll(int fd) {
+void ServerManager::addFdToEpoll(int fd) { //🍓
     struct epoll_event ev;
     ev.events = EPOLLIN;
     ev.data.fd = fd;
 
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1)
         throw std::runtime_error("Failed to add fd to epoll");
+
+    Logger::info("added to epoll()");
 }

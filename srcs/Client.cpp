@@ -53,14 +53,31 @@
 // // Read() fill a buffer
 // // Stores the result in a raw_request.
 
-Client::Client(int fd, const ServerConfig& config)
-    :fd(fd), config(config) {}
+
+
+// Client::Client(int fd, const ServerConfig& config)
+//     :fd(fd), config(config) {}
 
 Client::~Client() {
     if (fd != -1) {
         close(fd);
         Logger::info("Closed client fd: " + intToString(fd));
     }
+}
+
+Client::Client(const ServerConfig& config) 
+    : fd(-1), request_size (config.client_max_body_size), raw_request(""), serverConfig(config) {}
+
+void Client::setClientFd(int fd) {
+    this->fd = fd;
+}
+
+const ServerConfig& Client::getServerConfig() const {
+    return this->serverConfig;
+}
+
+void Client::setClientFd(int fd) {
+    this->fd = fd;
 }
 
 int Client::getClientFd() const {
@@ -71,15 +88,15 @@ std::string Client::getRaw_request() const {
     return raw_request;
 }
 
-void Client::getRequest() {
-    char buffer[8192]; // max body size can be refined via config
-    std::memset(buffer, 0, sizeof(buffer));
+void Client::receiveRequest() {
+    std::vector<char> buffer(request_size); // using config-based max size instead of hardcoding 8192
+    std::memset(&buffer, 0, sizeof(buffer));
 
-    ssize_t bytes = read(fd, buffer, sizeof(buffer) - 1);
+    ssize_t bytes = read(fd, &buffer[0], buffer.size() - 1);
     if (bytes <= 0) {
         throw std::runtime_error("Client disconnected or read failed");
     }
-    raw_request = buffer;
+    raw_request.assign(buffer.begin(), buffer.begin() + bytes);
     Logger::debug("Received request:\n" + raw_request);
 }
 

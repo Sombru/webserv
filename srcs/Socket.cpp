@@ -139,3 +139,7 @@ bool Socket::setup()
     Logger::info("Listening on port " + portStr);
     return (true);
 }
+
+int Socket::getServerFd() const {
+    return (this->server_fd);
+}
