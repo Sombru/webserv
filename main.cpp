@@ -38,12 +38,14 @@ int main()
 
 	setup("servers/default.conf", servers);
 
-	for (size_t i = 0; i < servers.size(); i++)
-	{
-		// Logger::debug(servers[i]);
-		ServerManager websrv(servers[i]);
-		websrv.serverLoop();
-	}
+    ServerManager websrv(servers);
+    websrv.serverLoop();
+	// for (size_t i = 0; i < servers.size(); i++)
+	// {
+	// 	// Logger::debug(servers[i]);
+	// 	ServerManager websrv(servers[i]);
+	// 	websrv.serverLoop();
+	// }
 }
 
 // TODO serv_manager shold have setup int separate function not in constructor
