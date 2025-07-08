@@ -67,13 +67,13 @@ std::ostream &operator<<(std::ostream &os, const ServerConfig &config)
 	os << "  client_max_body_size: " << config.client_max_body_size << "\n";
 	os << "  root: " << config.root << "\n";
 	os << "  index: " << config.index << "\n";
-	os << "  locations: [\n";
+	os << "  locations: {\n";
 	for (size_t i = 0; i < config.locations.size(); ++i)
 	{
 		const LocationConfig &loc = config.locations[i];
 		os <<  loc << "\n";
 	}
-	os << "  ]\n";
+	os << "  }\n";
 	os << "}";
 	return os;
 }
@@ -81,9 +81,8 @@ std::ostream &operator<<(std::ostream &os, const ServerConfig &config)
 std::ostream &operator<<(std::ostream &os, const LocationConfig &config)
 {
 	os << "LocationConfig {\n";
-	os << "  path: " << config.path << "\n";
+	os << "  name: " << config.name << "\n";
 	os << "  root: " << config.root << "\n";
-	os << "  alias: " << config.alias << "\n";
 	os << "  index: " << config.index << "\n";
 	os << "  return_path: " << config.return_path << "\n";
 	os << "  autoindex: " << (config.autoindex ? "true" : "false") << "\n";

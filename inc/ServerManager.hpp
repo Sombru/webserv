@@ -10,28 +10,18 @@ class Client;
 class ServerManager
 {
 private:
-	struct ServerConfig& server;
-	int epoll_fd;
-	std::map<int, Client> clients;
-	Socket socket;
-
-	void set_non_blocking(int fd);
-	void setupEpoll(int fd);
-	void handleClient(Client& client);
-	void addClientToEpoll(int epoll_fd, int fd);
-	
+	const std::vector<ServerConfig>& servers;
+	// int epoll_fd;
+	// std::map<int, Client> clients;
+	std::vector<Socket> sockets;
 public:
-
 	bool running;
 
-	ServerManager(ServerConfig& serv);
+	ServerManager(const std::vector<ServerConfig>& servers);
 	~ServerManager();
 
-	void serverLoop();
+	void setup();
+	void run();
 
-
-	void createClient();
-
-	ServerConfig& getServer() const;
 };
 

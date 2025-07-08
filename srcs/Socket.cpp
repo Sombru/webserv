@@ -98,6 +98,6 @@ void Socket::closeServerSocket()
 	{
 		close(this->server_fd);
 		this->server_fd = -1;
-		std::cout << "Server socket closed safely.\n";
+		Logger::info("Server socket closed safely.\n");
 	}
 }

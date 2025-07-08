@@ -2,32 +2,34 @@
 
 #include "Webserv.hpp"
 
+#define DEFAULT_HOST "127.0.0.1"
+
 struct LocationConfig
 {
-	std::string path;
-	std::string root;
-	std::string alias;
-	std::string index;
-	std::string return_path;
-	bool autoindex;
-	std::vector<std::string> allow_methods;
+	std::string name;						// name of loc mandatory
+	std::string root;						// path to root of its folder, defaults to root of the server
+	std::string index;						// index a location, defaults to index of the server
+	std::string return_path;				// redirection path
+	std::string upload_dir;					// dir for POST request might be usefull
+	bool autoindex;							// directory listing
+	std::vector<std::string> allow_methods; // GET is always enabled
 
 	// For CGI
-	std::vector<std::string> cgi_path;
-	std::vector<std::string> cgi_ext;
+	std::vector<std::string> cgi_path; // path to cgi scripts interpreters
+	std::vector<std::string> cgi_ext;  // allowed extenstions
 };
 
 struct ServerConfig
 {
-	std::string host;
-	int port;
-	std::string server_name;
-	std::string error_pages_dir;
-	size_t client_max_body_size;
-	std::string root;
-	std::string index;
+	std::string host;			 // defaults to 127.0.0.1
+	int port;					 // socket port to listen to, mandatory
+	std::string server_name;	 // mandatory
+	std::string root;			 // mandatory
+	std::string index;			 // default index of a server mandatory
+	size_t client_max_body_size; // max recv size, mandatory
+	std::string error_pages_dir; // mandatory
 
-	std::vector<LocationConfig> locations;
+	std::vector<LocationConfig> locations; // locations for URI starting with location.name
 };
 
 enum TokenType
@@ -51,4 +53,4 @@ std::ostream &operator<<(std::ostream &os, const std::vector<Token> &tokens);
 std::ostream &operator<<(std::ostream &os, const ServerConfig &config);
 std::ostream &operator<<(std::ostream &os, const LocationConfig &config);
 
-void parse_server(ServerConfig &srv, const std::vector<Token> &tokens, size_t& i);
+void parse_server(ServerConfig &srv, const std::vector<Token> &tokens, size_t &i);

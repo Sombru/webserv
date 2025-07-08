@@ -4,7 +4,7 @@
 #include "Logger.hpp"
 #include "Client.hpp"
 
-void setup(const std::string& configPath, std::vector<ServerConfig>& servers)
+int parseConfig(const std::string& configPath, std::vector<ServerConfig>& servers)
 {
 	std::vector<Token> tokens = tokenize_config(openFile(configPath));
 
@@ -28,7 +28,9 @@ void setup(const std::string& configPath, std::vector<ServerConfig>& servers)
 	catch (const std::exception &e)
 	{
 		std::cerr << e.what() << '\n';
+		return (-1);
 	}
+	return (0);
 
 }
 
@@ -36,14 +38,25 @@ int main()
 {
 	std::vector<ServerConfig> servers;
 
-	setup("servers/default.conf", servers);
-
-	for (size_t i = 0; i < servers.size(); i++)
+	if (parseConfig("servers/default.conf", servers) == -1)
 	{
-		// Logger::debug(servers[i]);
-		ServerManager websrv(servers[i]);
-		websrv.serverLoop();
+		return (1);
 	}
+	try
+	{
+		ServerManager webserv(servers);
+		webserv.setup();
+		webserv.run();
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		return (1);
+	}
+	
+
+	// Socket socket(servers[0]);
+	// socket.setup();
 }
 
 // TODO serv_manager shold have setup int separate function not in constructor
