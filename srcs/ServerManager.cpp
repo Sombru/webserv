@@ -1,6 +1,7 @@
 #include "ServerManager.hpp"
 #include "Logger.hpp"
 #include "Client.hpp"
+#include "HTTP.hpp"
 
 ServerManager::ServerManager(const std::vector<ServerConfig>& servers)
 : servers(servers), running(true)
@@ -46,9 +47,11 @@ void ServerManager::run()
 		{
 			if (poll_fds[i].revents & POLLIN)
 			{
-				Client client(poll_fds[i].fd);
-				client.getRequest();
-				Logger::debug(client.getRaw_request());
+				Client client(poll_fds[i].fd, this->sockets[i].getRequestSize());
+				client.makeRequest();
+				HttpRequest request = parseRequset(client.getRaw_request(), this->servers[i]);
+				// generateResponse(request);
+				Logger::debug(request);
 			}
 		}
 	}

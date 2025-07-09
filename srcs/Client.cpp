@@ -7,12 +7,12 @@
 // This waits for and accepts a new client connection.
 // If it fails, throws exception
 
-Client::Client(int poll_fd)
+Client::Client(int poll_fd, int requset_size)
 {
 	sockaddr_in client_addr;
 	socklen_t addrlen = sizeof(client_addr);
 	this->fd = accept(poll_fd, (sockaddr*)&client_addr, &addrlen);
-	this->request_size = 1024;
+	this->request_size = requset_size;
 }
 
 Client::~Client()
@@ -37,7 +37,7 @@ std::string Client::getRaw_request() const
 // Returns the full raw request string received from the client.
 // Useful later when you parse the request.
 
-void Client::getRequest()
+void Client::makeRequest()
 {
 	char buffer[this->request_size];
 	std::memset(buffer, 0, sizeof(buffer));

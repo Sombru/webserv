@@ -14,14 +14,14 @@ private:
 public:
 	Client() {} ; // Default constructor. Not used in this context, but defined for completeness.
 	Client(Socket& socket); // Calls acceptClient() from the passed-in Socket object.
-	Client(int poll_fd);
+	Client(int poll_fd, int requset_size);
 	~Client(); // Automatically close the socket when the client is destroyed.
 
 	int getClientFd() const; // Simple getter for the socket file descriptor.
 	std::string getRaw_request() const; // Returns the full raw request string received from the client.
 	
 	ssize_t response(std::string response);
-	void getRequest(); // Reads data sent by the client over the socket.
+	void makeRequest(); // Reads data sent by the client over the socket.
 	// HttpRequest parseRequest();
 
 };

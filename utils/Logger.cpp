@@ -1,25 +1,28 @@
 // Logger.cpp
 #include "Logger.hpp"
 #include "Config.hpp"
+#include "HTTP.hpp"
 
-std::string Logger::getTimestamp() {
-    time_t now = time(0);
-    tm* localtm = localtime(&now);
+std::string Logger::getTimestamp()
+{
+	time_t now = time(0);
+	tm *localtm = localtime(&now);
 
-    char buf[20];
-    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtm);
+	char buf[20];
+	strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtm);
 
-    return (std::string(buf));
+	return (std::string(buf));
 }
 
-void Logger::info(const std::string& message, const std::string& serverName, const std::string& host, int port) {
-    std::cout << "[" << getTimestamp() << "] " 
-              << "[INFO] "
-              << message
-              << "ServerName[" << serverName << "] "
-              << "Host[" << host << "] "
-              << "Port[" << port << "]"
-              << std::endl;
+void Logger::info(const std::string &message, const std::string &serverName, const std::string &host, int port)
+{
+	std::cout << "[" << getTimestamp() << "] "
+			  << "[INFO] "
+			  << message
+			  << "ServerName[" << serverName << "] "
+			  << "Host[" << host << "] "
+			  << "Port[" << port << "]"
+			  << std::endl;
 }
 
 std::ostream &operator<<(std::ostream &os, const Token &token)
@@ -71,7 +74,7 @@ std::ostream &operator<<(std::ostream &os, const ServerConfig &config)
 	for (size_t i = 0; i < config.locations.size(); ++i)
 	{
 		const LocationConfig &loc = config.locations[i];
-		os <<  loc << "\n";
+		os << loc << "\n";
 	}
 	os << "  }\n";
 	os << "}";
@@ -118,29 +121,29 @@ std::ostream &operator<<(std::ostream &os, const LocationConfig &config)
 	return os;
 }
 
-// std::ostream &operator<<(std::ostream &os, const HttpRequest &req)
-// {
-// 	os << "=== HTTP REQUEST ===\n";
-// 	os << "Method:  " << req.method << "\n";
-// 	os << "Path:    " << req.path << "\n";
-// 	os << "Version: " << req.version << "\n";
+std::ostream &operator<<(std::ostream &os, const HttpRequest &req)
+{
+	os << "=== HTTP REQUEST ===\n";
+	os << "Method:  " << req.method << "\n";
+	os << "Path:    " << req.path << "\n";
+	os << "Version: " << req.version << "\n";
 
-// 	if (!req.query_string.empty())
-// 	{
-// 		os << "Query:   " << req.query_string << "\n";
-// 		os << "Query Parameters:\n";
-// 		for (strHmap::const_iterator it = req.query_params.begin(); it != req.query_params.end(); ++it)
-// 		{
-// 			os << "  " << it->first << " = " << it->second << "\n";
-// 		}
-// 	}
+	if (!req.query_string.empty())
+	{
+		os << "Query:   " << req.query_string << "\n";
+		os << "Query Parameters:\n";
+		for (std::map<std::string, std::string>::const_iterator it = req.query_params.begin(); it != req.query_params.end(); ++it)
+		{
+			os << "  " << it->first << " = " << it->second << "\n";
+		}
+	}
 
-// 	os << "Headers:\n";
-// 	for (strHmap::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it)
-// 	{
-// 		os << "  " << it->first << ": " << it->second << "\n";
-// 	}
+	os << "Headers:\n";
+	for (std::map<std::string, std::string>::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it)
+	{
+		os << "  " << it->first << ": " << it->second << "\n";
+	}
 
-// 	os << "====================\n";
-// 	return os;
-// }
+	os << "====================\n";
+	return os;
+}

@@ -3,6 +3,7 @@
 #ifndef LOGGER_HPP
 #define LOGGER_HPP
 
+#include "HTTP.hpp"
 #include "Webserv.hpp"
 #include <ctime>
 
@@ -36,6 +37,8 @@ class Logger {
 };
 
 // Implementation moved to Logger.cpp
+
+std::ostream &operator<<(std::ostream &os, const HttpRequest &req);
 
 template<typename T>
 void Logger::info(const T& message) {
