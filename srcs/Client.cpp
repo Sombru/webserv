@@ -2,18 +2,18 @@
 #include "Socket.hpp"
 #include "Logger.hpp"
 
-Client::Client(Socket& socket)
-: request_size(socket.getRequestSize())
-{
-	fd = socket.acceptClient();
-	if (fd < 0)
-	{
-		throw std::runtime_error("Failed to accept client connection");
-	}
-}
+
 // Calls acceptClient() from the passed-in Socket object.
 // This waits for and accepts a new client connection.
 // If it fails, throws exception
+
+Client::Client(int poll_fd)
+{
+	sockaddr_in client_addr;
+	socklen_t addrlen = sizeof(client_addr);
+	this->fd = accept(poll_fd, (sockaddr*)&client_addr, &addrlen);
+	this->request_size = 1024;
+}
 
 Client::~Client()
 {

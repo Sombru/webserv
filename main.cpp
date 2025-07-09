@@ -59,11 +59,6 @@ int main()
 	// socket.setup();
 }
 
-// TODO serv_manager shold have setup int separate function not in constructor
-// implement minimal server loop
-// more logging
-// before porting com_manager have it working in a minimal way pls (just static page)
-// port com manager together to not make everyone lose their mind
-// cgi/serving pages later together
-
-// tip: logger if now better it can accepr any of our structure
+// setup poll/epoll
+// memory?
+// do some requests and responses

@@ -76,10 +76,10 @@ int Socket::respond(const Client &client)
 	return bytesSent;
 }
 
-int Socket::acceptClient()
+int Socket::acceptClient(int poll_fd, sockaddr* addr, socklen_t* addrlen)
 {
-	int fd = accept(server_fd, (sockaddr *)&address, &addrlen); 
-	return fd;
+	int clientFD = accept(poll_fd, addr, addrlen); 
+	return clientFD;
 }
 
 int Socket::getServerFD() const

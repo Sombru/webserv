@@ -25,7 +25,7 @@ public:
 	~Socket();
 
 	bool setup();
-	int acceptClient();
+	int acceptClient(int poll_fd, sockaddr* addr, socklen_t* addrlen);
 	int respond(const Client& client);
 
 

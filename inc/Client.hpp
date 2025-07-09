@@ -14,6 +14,7 @@ private:
 public:
 	Client() {} ; // Default constructor. Not used in this context, but defined for completeness.
 	Client(Socket& socket); // Calls acceptClient() from the passed-in Socket object.
+	Client(int poll_fd);
 	~Client(); // Automatically close the socket when the client is destroyed.
 
 	int getClientFd() const; // Simple getter for the socket file descriptor.

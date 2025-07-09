@@ -17,17 +17,39 @@ void ServerManager::setup()
 {
 	for (unsigned int i = 0; i < this->sockets.size(); i++)
 		this->sockets[i].setup();
+
 }
 
 void ServerManager::run()
 {
+	std::vector<pollfd> poll_fds;
+
+	// Setup pollfd list from all server sockets
+	for (size_t i = 0; i < sockets.size(); ++i)
+	{
+		pollfd pfd;
+		pfd.fd = sockets[i].getServerFD();
+		pfd.events = POLLIN; // wait for incoming connections
+		poll_fds.push_back(pfd);
+	}
+
 	while (running)
 	{
-		for (size_t i = 0; i < sockets.size(); ++i)
+		int ret = poll(&poll_fds[0], poll_fds.size(), -1);
+		if (ret < 0)
 		{
-			Client client(sockets[i]);
-			client.getRequest();
-			Logger::debug(client.getRaw_request());
+			perror("poll");
+			break;
+		}
+
+		for (size_t i = 0; i < poll_fds.size(); ++i)
+		{
+			if (poll_fds[i].revents & POLLIN)
+			{
+				Client client(poll_fds[i].fd);
+				client.getRequest();
+				Logger::debug(client.getRaw_request());
+			}
 		}
 	}
 }

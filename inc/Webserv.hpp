@@ -17,6 +17,8 @@
 #include <sys/wait.h>
 #include <netdb.h>
 #include <sys/epoll.h>
+#include <poll.h>
+#include <sys/epoll.h>
 
 // #include "Client.hpp"
 // #include "Config.hpp"
