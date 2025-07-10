@@ -20,7 +20,7 @@ public:
 	int getClientFd() const; // Simple getter for the socket file descriptor.
 	std::string getRaw_request() const; // Returns the full raw request string received from the client.
 	
-	ssize_t response(std::string response);
+	ssize_t response(); // uses the raw request to send response
 	void makeRequest(); // Reads data sent by the client over the socket.
 	// HttpRequest parseRequest();
 

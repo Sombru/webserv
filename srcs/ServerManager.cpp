@@ -49,9 +49,10 @@ void ServerManager::run()
 			{
 				Client client(poll_fds[i].fd, this->sockets[i].getRequestSize());
 				client.makeRequest();
-				HttpRequest request = parseRequset(client.getRaw_request(), this->servers[i]);
+				HttpRequest request = parseRequest(client.getRaw_request(), this->servers[i]);
 				// generateResponse(request);
 				Logger::debug(request);
+				HttpResponse response = recieveResponse(request, this->servers[i]);
 			}
 		}
 	}

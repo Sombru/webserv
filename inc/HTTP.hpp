@@ -22,4 +22,17 @@ struct HttpResponse
 	std::string body; // e.g. Hello, world!
 };
 
-HttpRequest parseRequset(const std::string& raw_request, const ServerConfig& config);
+enum TokenTypeRes {
+	WORD,
+	COLON
+};
+
+struct Token_response {
+	TokenTypeRes type;
+	std::string value;
+};
+
+std::vector<Token_response> tokenize_request(std::string rawResponse);
+HttpRequest parseRequest(const std::string& raw_request, const ServerConfig& config);
+HttpResponse recieveResponse(HttpRequest rawRequest, const ServerConfig& config);
+std::vector<Token_response> responseTokenized(std::string rawRequest);

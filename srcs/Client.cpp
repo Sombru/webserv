@@ -52,3 +52,97 @@ void Client::makeRequest()
 // Reads data sent by the client over the socket.
 // Read() fill a buffer
 // Stores the result in a raw_request.
+
+Token_response addTokenResp(TokenTypeRes type, std::string value) {
+	Token_response token;
+
+	token.type = type;
+	token.value = value;
+	return token;
+}
+
+// tokenizing the request
+std::vector<Token_response> tokenize_request(std::string rawResponse) {
+	std::vector<Token_response> tokens;
+	std::string current;
+	char c;
+	for (size_t i = 0; i < rawResponse.length(); i++) {
+		c = rawResponse[i];
+		if (isspace(c)) {
+			if (!current.empty()) {
+				tokens.push_back(addTokenResp(WORD, current));
+				current.clear();
+			}
+		} else if (c == ':') {
+			if (!current.empty()) {
+				tokens.push_back(addTokenResp(WORD, current));
+				current.clear();
+			}
+			tokens.push_back(addTokenResp(COLON, ":"));
+		} else {
+			current += c;
+		}
+	}
+	if (!current.empty()) {
+		tokens.push_back(addTokenResp(WORD, current));
+	}
+	return tokens;
+}
+// takes the data from raw_request - fills the response struct and returns response
+ssize_t Client::response() {
+	std::vector<Token_response> tokens;
+	tokens = tokenize_request(this->raw_request);
+	Logger::debug("Raw request tokrnized");
+	HttpResponse responseRecieved = recieveResponse()
+
+
+} // uses the raw request to send response
+
+
+HttpResponse recieveResponse(HttpRequest rawRequest, const ServerConfig &config)
+{
+	
+	HttpResponse responceRecieved;
+	std::string fullPath;
+
+	// if (config.root.c_str() == "www/portfolio/" &&
+	// 	config.index.c_str() == "index.html")
+	// {
+	fullPath = config.root;	  // path directory
+	fullPath += config.index; // adding index directory
+	std::ifstream file(fullPath.c_str());
+
+	Logger::debug("working");
+	if (file.is_open())
+	{
+		if (config.root == "www/portfolio/" &&
+			config.index == "index.html")
+		{
+			std::stringstream body_stream;
+			body_stream << file.rdbuf();
+			responceRecieved.body = body_stream.str();
+			responceRecieved.status_code = 200;
+			responceRecieved.status_text = "OK";
+			responceRecieved.headers["Content-Type"] = "text/html";
+			{
+				Logger::info("Proper page found\n");
+				std::ostringstream len_stream;
+				len_stream << responceRecieved.body.length();
+				responceRecieved.headers["Content-Length"] = len_stream.str();
+				return (responceRecieved);
+			}
+		}
+		// if () faila otgovarq na neshto poznato neka se otvori, inache error
+
+		else
+		{
+			std::cout << "Not ready yet\n";
+			// run error page
+		}
+	}
+	//else
+	//{ // error opening file -> open page error
+	//}
+	Logger::debug("Not working yet");
+	return (responceRecieved);
+}
