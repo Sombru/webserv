@@ -52,7 +52,11 @@ void ServerManager::run()
 				HttpRequest request = parseRequest(client.getRaw_request(), this->servers[i]);
 				// generateResponse(request);
 				Logger::debug(request);
-				HttpResponse response = recieveResponse(request, this->servers[i]);
+				// Serialize to raw HTTP string and send it
+				HttpResponse response = recieveResponse(request);
+				std::string serializeStr = serialize(response);
+				write(client.getClientFd(), serializeStr.c_str(), serializeStr.size());
+				Logger::debug("Writing the page to the Client Fd");
 			}
 		}
 	}

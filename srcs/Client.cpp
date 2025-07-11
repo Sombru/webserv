@@ -2,7 +2,6 @@
 #include "Socket.hpp"
 #include "Logger.hpp"
 
-
 // Calls acceptClient() from the passed-in Socket object.
 // This waits for and accepts a new client connection.
 // If it fails, throws exception
@@ -11,17 +10,13 @@ Client::Client(int poll_fd, int requset_size)
 {
 	sockaddr_in client_addr;
 	socklen_t addrlen = sizeof(client_addr);
-	this->fd = accept(poll_fd, (sockaddr*)&client_addr, &addrlen);
+	this->fd = accept(poll_fd, (sockaddr *)&client_addr, &addrlen);
 	this->request_size = requset_size;
 }
 
 Client::~Client()
 {
-	if (fd < -1) // (_fd >= 0)
-	{
-		std::cout << "closing " << fd << '\n';
-		close(fd);
-	}
+	close(fd);
 }
 
 int Client::getClientFd() const
@@ -45,7 +40,7 @@ void Client::makeRequest()
 	read(this->fd, buffer, sizeof(buffer) - 1);
 	// recv(this->fd, buffer, sizeof(buffer) - 1, 0);
 
-	//std::cout << "Received request:\n" << buffer << std::endl;
+	// std::cout << "Received request:\n" << buffer << std::endl;
 	Logger::debug("Recieved a request and saved to buffer");
 	this->raw_request = buffer;
 }
@@ -53,96 +48,65 @@ void Client::makeRequest()
 // Read() fill a buffer
 // Stores the result in a raw_request.
 
-Token_response addTokenResp(TokenTypeRes type, std::string value) {
-	Token_response token;
-
-	token.type = type;
-	token.value = value;
-	return token;
-}
-
-// tokenizing the request
-std::vector<Token_response> tokenize_request(std::string rawResponse) {
-	std::vector<Token_response> tokens;
-	std::string current;
-	char c;
-	for (size_t i = 0; i < rawResponse.length(); i++) {
-		c = rawResponse[i];
-		if (isspace(c)) {
-			if (!current.empty()) {
-				tokens.push_back(addTokenResp(WORD, current));
-				current.clear();
-			}
-		} else if (c == ':') {
-			if (!current.empty()) {
-				tokens.push_back(addTokenResp(WORD, current));
-				current.clear();
-			}
-			tokens.push_back(addTokenResp(COLON, ":"));
-		} else {
-			current += c;
-		}
-	}
-	if (!current.empty()) {
-		tokens.push_back(addTokenResp(WORD, current));
-	}
-	return tokens;
-}
-// takes the data from raw_request - fills the response struct and returns response
-ssize_t Client::response() {
-	std::vector<Token_response> tokens;
-	tokens = tokenize_request(this->raw_request);
-	Logger::debug("Raw request tokrnized");
-	HttpResponse responseRecieved = recieveResponse()
-
-
-} // uses the raw request to send response
-
-
-HttpResponse recieveResponse(HttpRequest rawRequest, const ServerConfig &config)
+// uses the struct request to check the request and execute it
+HttpResponse recieveResponse(HttpRequest &request)
 {
-	
 	HttpResponse responceRecieved;
 	std::string fullPath;
 
 	// if (config.root.c_str() == "www/portfolio/" &&
 	// 	config.index.c_str() == "index.html")
 	// {
-	fullPath = config.root;	  // path directory
-	fullPath += config.index; // adding index directory
-	std::ifstream file(fullPath.c_str());
 
-	Logger::debug("working");
-	if (file.is_open())
+	if (request.headers["Host"] == "127.0.0.3:8080")
 	{
-		if (config.root == "www/portfolio/" &&
-			config.index == "index.html")
+		//fullPath = request.path;		  // path directory
+		//fullPath += request.query_string; // adding index directory
+		fullPath = "www/portfolio/index.html";
+		std::ifstream file(fullPath.c_str());
+		Logger::debug("working");
+		if (file.is_open())
 		{
-			std::stringstream body_stream;
-			body_stream << file.rdbuf();
-			responceRecieved.body = body_stream.str();
-			responceRecieved.status_code = 200;
-			responceRecieved.status_text = "OK";
-			responceRecieved.headers["Content-Type"] = "text/html";
-			{
-				Logger::info("Proper page found\n");
-				std::ostringstream len_stream;
-				len_stream << responceRecieved.body.length();
-				responceRecieved.headers["Content-Length"] = len_stream.str();
-				return (responceRecieved);
-			}
+				std::stringstream body_stream;
+				body_stream << file.rdbuf();
+				responceRecieved.version = request.version;
+				responceRecieved.body = body_stream.str();
+				responceRecieved.status_code = 200;
+				responceRecieved.status_text = "OK";
+				responceRecieved.headers["Content-Type"] = "text/html";
+				{
+					Logger::info("Proper page found\n");
+					std::ostringstream len_stream;
+					len_stream << responceRecieved.body.length();
+					responceRecieved.headers["Content-Length"] = len_stream.str();
+					return (responceRecieved);
+				}
 		}
-		// if () faila otgovarq na neshto poznato neka se otvori, inache error
 
-		else
-		{
-			std::cout << "Not ready yet\n";
-			// run error page
-		}
+		// else
+		// {
+		// 	std::cout << "Not ready yet\n";
+		// 	// run error page
+		// }
 	}
-	//else
+	// else
 	//{ // error opening file -> open page error
-	//}
-	Logger::debug("Not working yet");
+	// }
+	// Logger::debug("Not working yet");
 	return (responceRecieved);
+}
+
+// sending the response back to the client - serializes the HTTP response
+std::string serialize(HttpResponse &response){
+	std::ostringstream oss;
+
+	oss << response.version << " " << response.status_code << " "
+		<< response.status_text << "\r\n";
+	for (std::map<std::string, std::string>::const_iterator it = response.headers.begin(); it != response.headers.end(); ++it) {
+		oss << it->first <<": "<< it->second << "\r\n";
+	}
+	oss << "\r\n";
+	oss << response.body;
+
+	return (oss.str());
 }

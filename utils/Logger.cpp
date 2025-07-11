@@ -16,13 +16,13 @@ std::string Logger::getTimestamp()
 
 void Logger::info(const std::string &message, const std::string &serverName, const std::string &host, int port)
 {
-	std::cout << "[" << getTimestamp() << "] "
+	std::cout << GREEN << "[" << getTimestamp() << "] "
 			  << "[INFO] "
 			  << message
 			  << "ServerName[" << serverName << "] "
 			  << "Host[" << host << "] "
 			  << "Port[" << port << "]"
-			  << std::endl;
+			  << RESET << std::endl;
 }
 
 std::ostream &operator<<(std::ostream &os, const Token &token)

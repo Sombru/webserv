@@ -26,5 +26,8 @@
 // #include "ServerManager.hpp"
 // #include "Socket.hpp"
 
+#define GREEN "\033[32m"
+#define RESET "\033[0m"
+
 std::string openFile(const std::string& path);
 std::string intToString(int n);
