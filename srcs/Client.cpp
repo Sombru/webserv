@@ -17,11 +17,7 @@ Client::Client(int poll_fd, int requset_size)
 
 Client::~Client()
 {
-	if (fd < -1) // (_fd >= 0)
-	{
-		std::cout << "closing " << fd << '\n';
-		close(fd);
-	}
+	close(fd);
 }
 
 int Client::getClientFd() const
@@ -39,12 +35,22 @@ std::string Client::getRaw_request() const
 
 void Client::makeRequest()
 {
+	this->request_size_fail = true;
 	char buffer[this->request_size];
 	std::memset(buffer, 0, sizeof(buffer));
 
-	read(this->fd, buffer, sizeof(buffer) - 1);
+	ssize_t bytes = read(this->fd, buffer, sizeof(buffer) - 1);
+	if (bytes <= 0) {
+		throw std::runtime_error("Client disconnected or read failed");
+	}
 	// recv(this->fd, buffer, sizeof(buffer) - 1, 0);
 
+	// ⚠️ check if request body exceeds limit (e.g. from config file)
+	if (bytes > this->request_size) {
+		Logger::error("Error. Request body too large");
+		request_size_fail = false;
+		return ;
+	}
 	//std::cout << "Received request:\n" << buffer << std::endl;
 	Logger::debug("Recieved a request and saved to buffer");
 	this->raw_request = buffer;
@@ -52,3 +58,7 @@ void Client::makeRequest()
 // Reads data sent by the client over the socket.
 // Read() fill a buffer
 // Stores the result in a raw_request.
+
+bool Client::get_request_size_fail(void) {
+	return (this->request_size_fail);
+}

@@ -49,9 +49,21 @@ void ServerManager::run()
 			{
 				Client client(poll_fds[i].fd, this->sockets[i].getRequestSize());
 				client.makeRequest();
-				HttpRequest request = parseRequset(client.getRaw_request(), this->servers[i]);
+				HttpRequest request;
+				HttpResponse response;
+
+				if (client.get_request_size_fail() == false) {
+					// if payload is too large
+					response = tooLargeRequest();
+				}
+				request = parseRequset(client.getRaw_request(), this->servers[i]);
 				// generateResponse(request);
 				Logger::debug(request);
+				// recieve response;
+				response = recieveResponse(request, this->servers[i]);
+				std::string serializeStr = serialize(response);
+				write(client.getClientFd(), serializeStr.c_str(), serializeStr.size());
+				Logger::debug("Write the page to the Client Fd");
 			}
 		}
 	}

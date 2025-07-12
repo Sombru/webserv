@@ -6,6 +6,7 @@
 class Client
 {
 private:
+	bool request_size_fail; // in case of 413 error, body size too
 	int fd; // The client-specific socket file descriptor, returned by accept(), in the Socket class.
 	// Used for reading(receiving requests) and writing(sending responses).
 	int request_size;
@@ -23,5 +24,7 @@ public:
 	ssize_t response(std::string response);
 	void makeRequest(); // Reads data sent by the client over the socket.
 	// HttpRequest parseRequest();
+	
+	bool get_request_size_fail(void);
 
 };

@@ -15,6 +15,7 @@ struct HttpRequest
 
 struct HttpResponse 
 {
+	std::string fullPath; // e.g. "/" or "/about.html"
 	std::string version; // e.g. "HTTP/1.1"
 	int status_code; // e.g. 200
 	std::string status_text; // e.g. "OK"
@@ -23,3 +24,6 @@ struct HttpResponse
 };
 
 HttpRequest parseRequset(const std::string& raw_request, const ServerConfig& config);
+HttpResponse recieveResponse(HttpRequest request, const ServerConfig& config);
+std::string serialize(HttpResponse &response);
+HttpResponse tooLargeRequest();

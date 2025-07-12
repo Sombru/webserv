@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>404 Not Found</title>
+  <style>
+    body {
+      background-color: #0d1117;
+      color: #c9d1d9;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 6rem;
+      margin: 0;
+      color: #f85149;
+    }
+
+    p {
+      font-size: 1.5rem;
+      margin: 10px 0;
+    }
+
+    .glitch {
+      font-size: 2rem;
+      color: #58a6ff;
+      animation: flicker 1.5s infinite alternate;
+    }
+
+    @keyframes flicker {
+      0%   { opacity: 1; }
+      50%  { opacity: 0.4; }
+      100% { opacity: 0.8; }
+    }
+
+    a {
+      color: #8b949e;
+      text-decoration: none;
+      margin-top: 20px;
+      display: inline-block;
+      transition: color 0.3s;
+    }
+
+    a:hover {
+      color: #58a6ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>404</h1>
+    <p class="glitch">Oops! Page not found.</p>
+    <p>The page you are looking for doesn't exist or has been moved.</p>
+    <a href="/">← Back to homepage</a>
+  </div>
+</body>
+</html>
