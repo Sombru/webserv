@@ -1,5 +1,6 @@
 #include "HTTP.hpp"
 #include "Config.hpp"
+#include "Logger.hpp"
 
 std::map<std::string, std::string> parse_query(const std::string &query_string)
 {
@@ -17,7 +18,7 @@ std::map<std::string, std::string> parse_query(const std::string &query_string)
 	return params;
 }
 
-HttpRequest parseRequset(const std::string& raw_request, const ServerConfig& config)
+HttpRequest parseRequset(const std::string &raw_request, const ServerConfig &config)
 {
 	HttpRequest request;
 	std::istringstream stream(raw_request);
@@ -64,4 +65,28 @@ HttpRequest parseRequset(const std::string& raw_request, const ServerConfig& con
 	}
 	// req.path = INDEX; // this will be something else idk what for now
 	return (request);
+}
+
+std::string resolvePath(const HttpRequest &request, const ServerConfig &serverConfig)
+{
+	// Logger::debug(serverConfig.root + request.path); 
+	std::string fullPath;
+
+	for (size_t i = 0; i < serverConfig.locations.size(); i++)
+	{
+		if (!serverConfig.locations[i].name.compare(request.path))
+			fullPath = serverConfig.root + serverConfig.locations[i].name;
+	}
+	
+	return fullPath;
+}
+
+HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &serverConfig)
+{
+	HttpResponse response;
+
+	response.path = resolvePath(request, serverConfig);
+	Logger::debug(response.path);
+
+	return response;
 }

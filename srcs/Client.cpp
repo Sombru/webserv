@@ -52,3 +52,8 @@ void Client::makeRequest()
 // Reads data sent by the client over the socket.
 // Read() fill a buffer
 // Stores the result in a raw_request.
+
+ssize_t Client::response(std::string response)
+{
+	return (send(this->fd, response.c_str(), this->request_size, 0));
+}

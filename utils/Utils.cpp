@@ -5,7 +5,7 @@ std::string openFile(const std::string& path)
 {
     std::ifstream file(path.c_str());
     if (file.bad())
-        return (NULL);
+        return ("BAD");
     std::stringstream buffer;
 
     buffer << file.rdbuf();

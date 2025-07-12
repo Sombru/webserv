@@ -118,7 +118,7 @@ void parse_server(ServerConfig &server, const std::vector<Token> &tokens, size_t
 		else if (key == "location")
 		{
 			LocationConfig location;
-			location.name  = tokens[expect_word(tokens, i, "Expected location name")].value;
+			location.name = tokens[expect_word(tokens, i, "Expected location name")].value;
 			parse_location(location, tokens, i);
 			server.locations.push_back(location);
 		}

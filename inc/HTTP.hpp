@@ -15,11 +15,13 @@ struct HttpRequest
 
 struct HttpResponse 
 {
-	std::string version; // e.g. "HTTP/1.1"
 	int status_code; // e.g. 200
 	std::string status_text; // e.g. "OK"
+	std::string path; // e.g files/
+	std::string version; // e.g. "HTTP/1.1"
 	std::map<std::string, std::string> headers; // e.g. headers["Content-Length"] == body.size()
 	std::string body; // e.g. Hello, world!
 };
 
 HttpRequest parseRequset(const std::string& raw_request, const ServerConfig& config);
+HttpResponse generateResponse(const HttpRequest&, const ServerConfig&);

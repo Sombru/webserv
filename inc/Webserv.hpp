@@ -19,7 +19,7 @@
 #include <sys/epoll.h>
 #include <poll.h>
 #include <sys/epoll.h>
-
+#include <dirent.h>
 // #include "Client.hpp"
 // #include "Config.hpp"
 // #include "Logger.hpp"
