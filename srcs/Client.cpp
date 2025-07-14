@@ -53,7 +53,13 @@ void Client::makeRequest()
 // Read() fill a buffer
 // Stores the result in a raw_request.
 
-ssize_t Client::response(std::string response)
+ssize_t Client::sendResponse(const std::string& response)
 {
 	return (send(this->fd, response.c_str(), this->request_size, 0));
+}
+
+ssize_t Client::sendResponse(const HttpResponse& response)
+{
+	std::string res = serialize(response);
+	return (send(this->fd, res.c_str(), this->request_size, 0));
 }

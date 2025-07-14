@@ -1,7 +1,8 @@
 #include "Webserv.hpp"
+#include "HTTP.hpp"
 
-// takes a path to a file and returns it contents or 0 if empty
-std::string openFile(const std::string& path)
+// takes a path to a file and returns it contents or "BAD" if empty
+std::string readFile(const std::string& path)
 {
     std::ifstream file(path.c_str());
     if (file.bad())
@@ -19,19 +20,16 @@ std::string intToString(int n) {
     return ss.str();
 }
 
-// strHmap parse_query(const std::string &query_string)
-// {
-// 	strHmap params;
-// 	std::istringstream ss(query_string);
-// 	std::string pair;
-// 	while (std::getline(ss, pair, '&'))
-// 	{
-// 		size_t eq = pair.find('=');
-// 		if (eq != std::string::npos)
-// 			params[pair.substr(0, eq)] = pair.substr(eq + 1);
-// 		else
-// 			params[pair] = ""; // no value
-// 	}
-// 	return params;
-// }
+std::string serialize(const HttpResponse& response)
+{
+	std::ostringstream oss;
 
+	oss << response.version <<  " " << response.status_code << " " << response.status_text << "\r\n";
+	for (std::map<std::string, std::string>::const_iterator it = response.headers.begin(); it != response.headers.end(); ++it) {
+		oss << it->first << ": " << it->second << "\r\n";
+	}
+	oss << "\r\n";
+	oss << response.body;
+
+	return oss.str();
+}

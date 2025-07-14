@@ -23,5 +23,10 @@ struct HttpResponse
 	std::string body; // e.g. Hello, world!
 };
 
+#define NOTFOUD 404
+#define FORBIDDEN 403
+
 HttpRequest parseRequset(const std::string& raw_request, const ServerConfig& config);
 HttpResponse generateResponse(const HttpRequest&, const ServerConfig&);
+
+HttpResponse generateErrorResponse(int code, const std::string &error_pages_dir, const std::string& version);

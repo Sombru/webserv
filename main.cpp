@@ -6,7 +6,7 @@
 
 int parseConfig(const std::string& configPath, std::vector<ServerConfig>& servers)
 {
-	std::vector<Token> tokens = tokenize_config(openFile(configPath));
+	std::vector<Token> tokens = tokenize_config(readFile(configPath));
 
 	// Logger::debug(tokens);
 	size_t i = 0;

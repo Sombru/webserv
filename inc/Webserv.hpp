@@ -26,5 +26,9 @@
 // #include "ServerManager.hpp"
 // #include "Socket.hpp"
 
-std::string openFile(const std::string& path);
+struct HttpResponse;
+
+
+std::string readFile(const std::string& path);
 std::string intToString(int n);
+std::string serialize(const HttpResponse& response);

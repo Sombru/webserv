@@ -59,7 +59,7 @@ bool Socket::setup()
 	{
 		throw std::runtime_error("Listen failed");
 	}
-	Logger::debug("Server listening on port " + intToString(port));
+	Logger::debug("Server listening on host " + this->addres_str + ":" + intToString(port));
 	return true;
 }
 

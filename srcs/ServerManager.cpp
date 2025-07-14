@@ -51,6 +51,7 @@ void ServerManager::run()
 				client.makeRequest();
 				HttpRequest request = parseRequset(client.getRaw_request(), this->servers[i]);
 				HttpResponse response = generateResponse(request, servers[i]);
+				client.sendResponse(response);
 				// Logger::debug(request);
 			}
 		}
