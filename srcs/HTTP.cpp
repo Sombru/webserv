@@ -90,6 +90,8 @@ const LocationConfig *locate(const HttpRequest &request, const ServerConfig &ser
 		return &serverConfig.locations[serverConfig.default_location_index];
 	for (size_t k = 0; k < serverConfig.locations.size(); k++)
 	{
+		if (serverConfig.locations[k].name == "/")
+			continue;
 		const std::string &locName = serverConfig.locations[k].name;
 		if (request.path.compare(0, locName.size(), locName) == 0)
 			return &serverConfig.locations[k];
@@ -110,8 +112,8 @@ HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &se
 	if (location)
 		Logger::debug(*location);
 	else
-		return generateErrorResponse(NOTFOUD, serverConfig.error_pages_dir, request.version);
-	// Logger::debug(requestFile);
+		return generateErrorResponse(NOTFOUND, serverConfig.error_pages_dir, request.version);
+		// Logger::debug(requestFile);
 
 	// std::string path = resolvePath(request, serverConfig);
 	// Logger::debug(path);
