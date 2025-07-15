@@ -2,6 +2,14 @@
 #include "HTTP.hpp"
 #include "Config.hpp"
 
+void generateHeaders(HttpResponse& response)
+{
+	response.headers["Content-Type"] = "text/html";
+	response.headers["Content-Length"] = intToString(response.body.size());
+	response.headers["Connection"] = "close";
+	response.headers["Server"] = "skbidi rizzlers";
+}
+
 HttpResponse generateErrorResponse(int code, const std::string &error_pages_dir, const std::string& version)
 {
 	HttpResponse resp;
@@ -22,7 +30,6 @@ HttpResponse generateErrorResponse(int code, const std::string &error_pages_dir,
 																							"<body><h1>" +
 					intToString(code) + " " + resp.status_text + "</h1></body></html>";
 	}
-	resp.headers["Content-Type"] = "text/html";
-	resp.headers["Content-Length"] = intToString(resp.body.size());
+	generateHeaders(resp);
 	return resp;
 }
