@@ -21,13 +21,13 @@ struct LocationConfig
 
 struct ServerConfig
 {
-	std::string host;			 // defaults to 127.0.0.1
-	int port;					 // socket port to listen to, mandatory
-	std::string server_name;	 // mandatory
-	std::string root;			 // mandatory
-	std::string index;			 // default index of a server mandatory
-	size_t client_max_body_size; // max recv size, mandatory
-	std::string error_pages_dir; // mandatory
+	std::string host;			 	 // defaults to 127.0.0.1
+	int port;					 	 // socket port to listen to, mandatory
+	std::string server_name;	 	 // mandatory
+	std::string root;  				 // root of this server mandatory
+	size_t client_max_body_size; 	 // max recv size, mandatory
+	std::string error_pages_dir;     // mandatory
+	ssize_t default_location_index; // mandatory
 
 	std::vector<LocationConfig> locations; // locations for URI starting with location.name
 };

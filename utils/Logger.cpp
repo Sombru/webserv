@@ -69,7 +69,7 @@ std::ostream &operator<<(std::ostream &os, const ServerConfig &config)
 	os << "  error_pages_dir: " << config.error_pages_dir << "\n";
 	os << "  client_max_body_size: " << config.client_max_body_size << "\n";
 	os << "  root: " << config.root << "\n";
-	os << "  index: " << config.index << "\n";
+	os << "  default location: " << config.locations[config.default_location_index].name << "\n";
 	os << "  locations: {\n";
 	for (size_t i = 0; i < config.locations.size(); ++i)
 	{

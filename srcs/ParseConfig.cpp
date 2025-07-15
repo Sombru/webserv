@@ -16,9 +16,6 @@ void validate_server(ServerConfig& server)
 	if (server.root.empty())
 		throw std::runtime_error("root is mandatory");
 	
-	if (server.index.empty())
-		throw std::runtime_error("index is mandatory");
-	
 	if (server.client_max_body_size == 0)
 		throw std::runtime_error("client_max_body_size is mandatory and must be > 0");
 	
@@ -29,6 +26,9 @@ void validate_server(ServerConfig& server)
 		Logger::info("host should be set (defaults to 127.0.0.1)");
 		server.host = DEFAULT_HOST;
 	}
+
+	if (server.default_location_index == -1)
+		throw std::runtime_error("default location is mandatory");
 	
 	// Validate locations
 	for (unsigned int i = 0; i < server.locations.size(); i++)
@@ -94,6 +94,7 @@ void parse_location(LocationConfig &location, const std::vector<Token> &tokens, 
 
 void parse_server(ServerConfig &server, const std::vector<Token> &tokens, size_t &i)
 {
+	server.default_location_index = -1;
 	if (tokens[i++].type != LBRACE)
 		throw std::runtime_error("Expected '{' after server");
 
@@ -113,19 +114,24 @@ void parse_server(ServerConfig &server, const std::vector<Token> &tokens, size_t
 			server.client_max_body_size = std::atoi(tokens[expect_word(tokens, i, "Expected size")].value.c_str());
 		else if (key == "root")
 			server.root = tokens[expect_word(tokens, i, "Expected root value")].value;
-		else if (key == "index")
-			server.index = tokens[expect_word(tokens, i, "Expected index value")].value;
 		else if (key == "location")
 		{
 			LocationConfig location;
 			location.name = tokens[expect_word(tokens, i, "Expected location name")].value;
 			parse_location(location, tokens, i);
+			if (location.name == "/")
+			{
+				if (server.default_location_index != -1)
+					throw std::runtime_error("only 1 default location block per server");
+				server.default_location_index = server.locations.size();
+			}
 			server.locations.push_back(location);
 		}
 		else
 		{
 			throw std::runtime_error("Unknown server directive: " + key);
 		}
+
 		if (tokens[i].type == SEMICOLON)
 			++i;
 	}

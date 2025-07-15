@@ -69,7 +69,7 @@ HttpRequest parseRequset(const std::string &raw_request, const ServerConfig &con
 
 std::string resolvePath(const HttpRequest &request, const ServerConfig &serverConfig)
 {
-	// Logger::debug(serverConfig.root + request.path); 
+	// Logger::debug(serverConfig.root + request.path);
 	std::string fullPath;
 
 	for (size_t i = 0; i < serverConfig.locations.size(); i++)
@@ -77,53 +77,42 @@ std::string resolvePath(const HttpRequest &request, const ServerConfig &serverCo
 		if (!serverConfig.locations[i].name.compare(request.path))
 			fullPath = serverConfig.root + serverConfig.locations[i].name;
 	}
-	
+
 	return fullPath;
 }
 
 const LocationConfig* locate(const HttpRequest &request, const ServerConfig &serverConfig)
 {
-	// Find the longest matching location prefix
-	const LocationConfig* bestMatch = 0;
-	size_t bestLen = 0;
+	// size_t bestLen = 0;
 
-	for (size_t k = 0; k < serverConfig.locations.size(); ++k)
+	size_t len = request.path.find_last_of('/');
+	if (len == 0)
+		return &serverConfig.locations[serverConfig.default_location_index];
+	for (size_t k = 0; k < serverConfig.locations.size(); k++)
 	{
-		const std::string& locName = serverConfig.locations[k].name;
-		if (request.path.compare(0, locName.size(), locName) == 0)
-		{
-			// Ensure match is on a path boundary
-			if ((locName.size() == request.path.size()) ||
-				(request.path[locName.size()] == '/') )
-			{
-				if (locName.size() > bestLen)
-				{
-					bestLen = locName.size();
-					bestMatch = &serverConfig.locations[k];
-				}
-			}
-		}
+		if (serverConfig.locations[k].name.compare(0, len, request.path) == 0)
+			return &serverConfig.locations[k];
 	}
-	return bestMatch;
+
+	return NULL;
 }
 
 HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &serverConfig)
 {
 	HttpResponse response;
 
-	// Logger::debug("req: " + request.path);
+	Logger::debug("req: " + request.path);
 
 	const LocationConfig* location = locate(request, serverConfig);
-	if (!location)
-		return (generateErrorResponse(NOTFOUD, serverConfig.error_pages_dir, request.version));
-	Logger::debug(*location);
-	for (size_t i = 0; i < serverConfig.locations.size(); i++)
-	{
-		// Logger::debug("locs: " + serverConfig.locations[i].name);
-		// Logger::debug("path: " + serverConfig.root + serverConfig.locations[i].root);
-	}
 
-	std::string path = resolvePath(request, serverConfig);
+	// std::string requestFile = request.path.substr(request.path.find_last_of('/')+);
+	if (location)
+		Logger::debug(*location);
+	else
+		return generateErrorResponse(NOTFOUD, serverConfig.error_pages_dir, request.version);
+	// Logger::debug(requestFile);
+
+	// std::string path = resolvePath(request, serverConfig);
 	// Logger::debug(path);
 
 	return response;
