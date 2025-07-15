@@ -1,27 +1,28 @@
-#include "include/Webserv.hpp"
+// Logger.cpp
+#include "Logger.hpp"
 #include "Config.hpp"
+#include "HTTP.hpp"
 
-void openFile(std::ifstream &file, const std::string &filename)
+std::string Logger::getTimestamp()
 {
-	file.open(filename.c_str());
-	if (!file.is_open())
-		throw std::runtime_error("Failed to open file: " + filename);
+	time_t now = time(0);
+	tm *localtm = localtime(&now);
+
+	char buf[20];
+	strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtm);
+
+	return (std::string(buf));
 }
 
-strHmap parse_query(const std::string &query_string)
+void Logger::info(const std::string &message, const std::string &serverName, const std::string &host, int port)
 {
-	strHmap params;
-	std::istringstream ss(query_string);
-	std::string pair;
-	while (std::getline(ss, pair, '&'))
-	{
-		size_t eq = pair.find('=');
-		if (eq != std::string::npos)
-			params[pair.substr(0, eq)] = pair.substr(eq + 1);
-		else
-			params[pair] = ""; // no value
-	}
-	return params;
+	std::cout << "[" << getTimestamp() << "] "
+			  << "[INFO] "
+			  << message
+			  << "ServerName[" << serverName << "] "
+			  << "Host[" << host << "] "
+			  << "Port[" << port << "]"
+			  << std::endl;
 }
 
 std::ostream &operator<<(std::ostream &os, const Token &token)
@@ -50,7 +51,7 @@ std::ostream &operator<<(std::ostream &os, const Token &token)
 
 std::ostream &operator<<(std::ostream &os, const std::vector<Token> &tokens)
 {
-	os << "[";
+	os << "\n[";
 	for (size_t i = 0; i < tokens.size(); ++i)
 	{
 		os << tokens[i];
@@ -65,54 +66,26 @@ std::ostream &operator<<(std::ostream &os, const ServerConfig &config)
 	os << "  host: " << config.host << "\n";
 	os << "  port: " << config.port << "\n";
 	os << "  server_name: " << config.server_name << "\n";
-	os << "  error_page_404: " << config.error_page_404 << "\n";
+	os << "  error_pages_dir: " << config.error_pages_dir << "\n";
 	os << "  client_max_body_size: " << config.client_max_body_size << "\n";
 	os << "  root: " << config.root << "\n";
-	os << "  index: " << config.index << "\n";
-	os << "  locations: [\n";
+	os << "  default location: " << config.locations[config.default_location_index].name << "\n";
+	os << "  locations: {\n";
 	for (size_t i = 0; i < config.locations.size(); ++i)
 	{
 		const LocationConfig &loc = config.locations[i];
-		os <<  loc << "\n";
+		os << loc << "\n";
 	}
-	os << "  ]\n";
+	os << "  }\n";
 	os << "}";
-	return os;
-}
-
-std::ostream &operator<<(std::ostream &os, const HttpRequest &req)
-{
-	os << "=== HTTP REQUEST ===\n";
-	os << "Method:  " << req.method << "\n";
-	os << "Path:    " << req.path << "\n";
-	os << "Version: " << req.version << "\n";
-
-	if (!req.query_string.empty())
-	{
-		os << "Query:   " << req.query_string << "\n";
-		os << "Query Parameters:\n";
-		for (strHmap::const_iterator it = req.query_params.begin(); it != req.query_params.end(); ++it)
-		{
-			os << "  " << it->first << " = " << it->second << "\n";
-		}
-	}
-
-	os << "Headers:\n";
-	for (strHmap::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it)
-	{
-		os << "  " << it->first << ": " << it->second << "\n";
-	}
-
-	os << "====================\n";
 	return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const LocationConfig &config)
 {
 	os << "LocationConfig {\n";
-	os << "  path: " << config.path << "\n";
+	os << "  name: " << config.name << "\n";
 	os << "  root: " << config.root << "\n";
-	os << "  alias: " << config.alias << "\n";
 	os << "  index: " << config.index << "\n";
 	os << "  return_path: " << config.return_path << "\n";
 	os << "  autoindex: " << (config.autoindex ? "true" : "false") << "\n";
@@ -145,5 +118,35 @@ std::ostream &operator<<(std::ostream &os, const LocationConfig &config)
 	os << "]\n";
 
 	os << "}";
+	return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const HttpRequest &req)
+{
+	os << "=== HTTP REQUEST ===\n";
+	os << "Method:  " << req.method << "\n";
+	os << "Path:    " << req.path << "\n";
+	os << "Version: " << req.version << "\n";
+
+	if (!req.query_string.empty())
+	{
+		os << "Query:   " << req.query_string << "\n";
+		os << "Query Parameters:\n";
+		for (std::map<std::string, std::string>::const_iterator it = req.query_params.begin(); it != req.query_params.end(); ++it)
+		{
+			os << "  " << it->first << " = " << it->second << "\n";
+		}
+	}
+
+	os << "Headers:\n";
+	for (std::map<std::string, std::string>::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it)
+	{
+		os << "  " << it->first << ": " << it->second << "\n";
+	}
+
+	os << "Body;\n";
+	os << req.body;
+	os << '\n';
+	os << "====================\n";
 	return os;
 }

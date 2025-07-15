@@ -1,4 +1,3 @@
-#include "Webserv.hpp"
 #include "Config.hpp"
 
 Token addToken(TokenType type, std::string value)
@@ -14,7 +13,7 @@ std::vector<Token> tokenize_config(const std::string &input)
 {
 	std::vector<Token> tokens;
 	std::string current;
-	char c;;
+	char c;
 	for (size_t i = 0; i < input.length(); ++i)
 	{
 		c = input[i];
