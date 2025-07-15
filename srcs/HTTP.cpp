@@ -81,19 +81,19 @@ std::string resolvePath(const HttpRequest &request, const ServerConfig &serverCo
 	return fullPath;
 }
 
-const LocationConfig* locate(const HttpRequest &request, const ServerConfig &serverConfig)
+// Finds the most appropriate LocationConfig for the given HttpRequest by matching the request path
+// or NULL if no match
+const LocationConfig *locate(const HttpRequest &request, const ServerConfig &serverConfig)
 {
-	// size_t bestLen = 0;
-
 	size_t len = request.path.find_last_of('/');
-	if (len == 0)
+	if (len == std::string::npos || len == 0)
 		return &serverConfig.locations[serverConfig.default_location_index];
 	for (size_t k = 0; k < serverConfig.locations.size(); k++)
 	{
-		if (serverConfig.locations[k].name.compare(0, len, request.path) == 0)
+		const std::string &locName = serverConfig.locations[k].name;
+		if (request.path.compare(0, locName.size(), locName) == 0)
 			return &serverConfig.locations[k];
 	}
-
 	return NULL;
 }
 
@@ -103,7 +103,8 @@ HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &se
 
 	Logger::debug("req: " + request.path);
 
-	const LocationConfig* location = locate(request, serverConfig);
+	Logger::debug(request.path.substr(request.path.find_last_of('/')));
+	const LocationConfig *location = locate(request, serverConfig);
 
 	// std::string requestFile = request.path.substr(request.path.find_last_of('/')+);
 	if (location)
