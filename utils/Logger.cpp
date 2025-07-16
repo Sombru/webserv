@@ -150,3 +150,12 @@ std::ostream &operator<<(std::ostream &os, const HttpRequest &req)
 	os << "====================\n";
 	return os;
 }
+
+std::ostream &operator<<(std::ostream& os, const std::vector<std::string>& vector)
+{
+	for (std::vector<std::string>::const_iterator it = vector.begin(); it != vector.end(); ++it)
+	{
+		os << *it << " ";
+	}
+	return os;
+}

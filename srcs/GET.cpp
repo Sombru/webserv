@@ -1,42 +1,41 @@
-#include "GET.hpp"
+#include "HTTP.hpp"
+#include "Webserv.hpp"
+#include "Config.hpp"
 #include "Logger.hpp"
 
-// populate GET request with data needed
-GET::GET(HttpResponse &response_src, const std::string &requestTarget_src, const LocationConfig *locaiont_src, const ServerConfig &server_src, const std::string& version_src)
-	: response(response_src), requestTargert(requestTarget_src), location(locaiont_src), server(server_src), version(version_src)
+HttpResponse GET(const HttpRequest &request, const ServerConfig &server)
 {
+	std::string fs_path = server.root;
+	if (request.best_location)
+		fs_path += request.best_location->root;
+	fs_path += request.target_file;
 
-}
+	std::string body = readFile(fs_path);
+	std::vector<std::string> contents = getLocationContents(server.root, request.best_location->root);
 
-GET::~GET()
-{
-}
+	Logger::debug(fs_path);
+	// Logger::debug(body);
+	if (body != "BAD")
+		return buildResponse(OK, body, HTTPVERSION);
+	if (body == "BAD" && !request.target_file.empty())
+		return buildErrorResponse(NOTFOUD, server.error_pages_dir, HTTPVERSION);
 
-
-void GET::buildResponse()
-{
-	std::string fs_path; // filesystem path
-	if (requestTargert.empty() == false)
+	Logger::debug(contents);
+	if (!contents.empty())
 	{
-		fs_path = server.root + location->root + requestTargert;
-		response.body = readFile(fs_path);
-		if (response.body == "BAD")
-			this->response = generateErrorResponse(NOTFOUD, this->server.error_pages_dir, this->version);
-		else
+		if (request.best_location->autoindex && fs_path.empty())
 		{
-			this->response.status_code = OK; 
-			this->response.status_text = "OK";
-			this->response.version = this->version;
+			body = "<ul>";
+			for (size_t i = 0; i < contents.size(); ++i)
+				body += "<li>" + contents[i] + "</li>";
+			body += "</ul>";
+			return buildResponse(OK, body, HTTPVERSION);
 		}
-		return ;
+		else if (!request.best_location->index.empty() && fs_path.empty())
+		{
+			body = readFile(server.root + request.best_location->root + request.best_location->index);
+			return buildResponse(OK, body, HTTPVERSION);
+		}
 	}
-	else 
-		fs_path = server.root + location->root;
-	
-	// serve index generate auto_indexing
-}
-
-HttpResponse &GET::getResponse()
-{
-	return this->response;
+	return buildErrorResponse(NOTFOUD, server.error_pages_dir, HTTPVERSION);
 }

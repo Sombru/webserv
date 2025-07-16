@@ -17,11 +17,7 @@ Client::Client(int poll_fd, int requset_size)
 
 Client::~Client()
 {
-	if (fd < -1) // (_fd >= 0)
-	{
-		std::cout << "closing " << fd << '\n';
-		close(fd);
-	}
+	close(fd);
 }
 
 int Client::getClientFd() const

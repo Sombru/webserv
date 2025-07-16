@@ -1,7 +1,6 @@
 #include "HTTP.hpp"
 #include "Config.hpp"
 #include "Logger.hpp"
-#include "GET.hpp"
 
 std::map<std::string, std::string> parse_query(const std::string &query_string)
 {
@@ -17,6 +16,24 @@ std::map<std::string, std::string> parse_query(const std::string &query_string)
 			params[pair] = ""; // no value
 	}
 	return params;
+}
+
+// Finds the most appropriate LocationConfig for the given HttpRequest by matching the request path
+// or NULL if no match
+const LocationConfig *locate(const HttpRequest &request, const ServerConfig &serverConfig)
+{
+	size_t len = request.path.find_last_of('/');
+	if (len == 0)
+		return &serverConfig.locations[serverConfig.default_location_index];
+	for (size_t k = 0; k < serverConfig.locations.size(); k++)
+	{
+		if (serverConfig.locations[k].name == "/")
+			continue ;
+		const std::string &locName = serverConfig.locations[k].name;
+		if (request.path.compare(0, locName.size(), locName) == 0)
+			return &serverConfig.locations[k];
+	}
+	return NULL;
 }
 
 HttpRequest parseRequset(const std::string &raw_request, const ServerConfig &config)
@@ -63,6 +80,8 @@ HttpRequest parseRequset(const std::string &raw_request, const ServerConfig &con
 			request.headers[key] = value;
 		}
 	}
+	request.target_file = request.path.substr(request.path.find_last_of('/')+1);
+	request.best_location = locate(request, config);
 	
 	std::string body;
     if (request.headers.count("Content-Length"))
@@ -79,41 +98,34 @@ HttpRequest parseRequset(const std::string &raw_request, const ServerConfig &con
     return (request);
 }
 
-// Finds the most appropriate LocationConfig for the given HttpRequest by matching the request path
-// or NULL if no match
-const LocationConfig *locate(const HttpRequest &request, const ServerConfig &serverConfig)
+bool isValidRequest(const HttpRequest& request)
 {
-	size_t len = request.path.find_last_of('/');
-	if (len == 0)
-		return &serverConfig.locations[serverConfig.default_location_index];
-	for (size_t k = 0; k < serverConfig.locations.size(); k++)
-	{
-		if (serverConfig.locations[k].name == "/")
-			continue ;
-		const std::string &locName = serverConfig.locations[k].name;
-		if (request.path.compare(0, locName.size(), locName) == 0)
-			return &serverConfig.locations[k];
-	}
-	return NULL;
+	if (request.method != "GET" && request.method != "POST" && request.method != "DELETE")
+		return false;
+	if (request.path.empty())
+		return false;
+	if (request.version != HTTPVERSION)
+		return false;
+	return true;
 }
 
 HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &serverConfig)
 {
-	struct HttpResponse response;
-
-	std::string requestTarget = request.path.substr(request.path.find_last_of('/')+1);
-	const LocationConfig *location = locate(request, serverConfig);
-
-	if (!location)
-		return generateErrorResponse(NOTFOUD, serverConfig.error_pages_dir, request.version);
-
+	if (!isValidRequest(request))
+		return buildErrorResponse(BADREQUEST, serverConfig.error_pages_dir, HTTPVERSION);
+	Logger::debug("Request is valid");
+	if (!request.best_location)
+		return buildErrorResponse(NOTFOUD, serverConfig.error_pages_dir, HTTPVERSION);
+	Logger::debug("Location found");
 	if (request.method == "GET")
 	{
-		GET get(response, requestTarget, location, serverConfig, request.version);
-		get.buildResponse();
-		return get.getResponse();
-	}	
-	return response;
+		return GET(request, serverConfig);
+	}
+	// else if (request.method == "POST")
+	// {
+	// 	return POST()
+	// }
+	return buildErrorResponse(BADREQUEST, serverConfig.error_pages_dir, HTTPVERSION);
 }
 
 // get a request body

@@ -39,6 +39,7 @@ class Logger {
 // Implementation moved to Logger.cpp
 
 std::ostream &operator<<(std::ostream &os, const HttpRequest &req);
+std::ostream &operator<<(std::ostream &os, const std::vector<std::string>& );
 
 template<typename T>
 void Logger::info(const T& message) {
