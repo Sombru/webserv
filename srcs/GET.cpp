@@ -6,23 +6,37 @@
 HttpResponse GET(const HttpRequest &request, const ServerConfig &server)
 {
 	std::string fs_path = server.root;
-	fs_path += request.best_location->root + request.target_file;
+	fs_path += request.best_location->root;
 
-	std::string body = readFile(fs_path);
 	std::vector<std::string> contents = getLocationContents(fs_path);
+	std::string body;
 
-	Logger::debug(fs_path);
+	// Logger::debug(fs_path);
 	// Logger::debug(contents);
+	// body = readFile(fs_path + request.best_location->index);
 
-	if (body != "BAD")
+	if (!request.target_file.empty())
 	{
+		fs_path += request.target_file;
+		body = readFile(fs_path);
+		if (body == "BAD")
+			return buildErrorResponse(NOTFOUD, server.error_pages_dir, HTTPVERSION);
 		Logger::debug(body);
 		return buildResponse(OK, body, HTTPVERSION);
 	}
 	else if (!contents.empty())
 	{
-		Logger::debug(fs_path += request.best_location->index);
+		if (request.best_location->index.empty())
+			return buildErrorResponse(FORBIDEN, server.error_pages_dir, HTTPVERSION);
 		body = readFile(fs_path + request.best_location->index);
+		if (request.best_location->autoindex)
+		{
+			body += "<ul>";
+			for (size_t i = 0; i < contents.size(); ++i)
+				body += "<li>" + contents[i] + "</li>";
+			body += "</ul>";
+			return buildResponse(OK, body, HTTPVERSION);
+		}
 		return buildResponse(OK, body, HTTPVERSION);
 	}
 	return buildErrorResponse(NOTFOUD, server.error_pages_dir, HTTPVERSION);

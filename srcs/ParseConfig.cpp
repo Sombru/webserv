@@ -55,6 +55,7 @@ size_t expect_word(const std::vector<Token> &tokens, size_t &i, const std::strin
 
 void parse_location(LocationConfig &location, const std::vector<Token> &tokens, size_t &i)
 {
+	location.autoindex = false;
 	location.root = tokens[i - 1].value; // previous token was the location path
 
 	if (tokens[i++].type != LBRACE)

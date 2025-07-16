@@ -5,12 +5,14 @@
 std::string readFile(const std::string &path)
 {
 	std::ifstream file(path.c_str());
-	if (file.bad())
+	if (!file.good())
 		return ("BAD");
 	std::stringstream buffer;
 
 	buffer << file.rdbuf();
 
+	if (buffer.str().empty())
+		return ("BAD");
 	return (buffer.str());
 }
 

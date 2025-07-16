@@ -57,6 +57,6 @@ ssize_t Client::sendResponse(const std::string& response)
 ssize_t Client::sendResponse(const HttpResponse& response)
 {
 	std::string res = serialize(response);
-	Logger::debug(res);
+	// Logger::debug(res);
 	return (send(this->fd, res.c_str(), res.size(), 0));
 }
