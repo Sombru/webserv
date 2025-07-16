@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Error {{code}}</title>
+  <style>
+
+    .container {
+      border: 2px dashed yellow;
+	  text-align: center;
+    }
+
+    h1 {
+      font-size: 6rem;
+      margin: 0;
+      color: #f85149;
+    }
+
+    p {
+      font-size: 1.5rem;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1 id="error-code">{{code}}</h1>
+    <p class="glitch" id="error-status_text">{{status_text}}</p>
+    <p>The page you're looking for encountered an error.</p>
+    <a href="/">← Back to homepage</a>
+  </div>
+
+  <script>
+    // Optional: You could set from query string or server-side replace
+    // If you server-render, replace placeholders like:
+    // {{code}} → 404, {{message}} → Not Found
+    document.getElementById("error-code").textContent = "{{code}}";
+    document.getElementById("error-message").textContent = "{{message}}";
+  </script>
+</body>
+
+</html>
