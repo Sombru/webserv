@@ -3,9 +3,6 @@
 #include "Config.hpp"
 #include "Logger.hpp"
 
-std::string loadTemplateErrorPage(int code, const std::string& message);
-std::string getStatusText(int code);
-
 HttpResponse generateErrorResponse(int code, const std::string &error_pages_dir, const std::string& version)
 {
 	HttpResponse resp;

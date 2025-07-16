@@ -36,3 +36,5 @@ struct HttpResponse
 HttpRequest parseRequset(const std::string& raw_request, const ServerConfig& config);
 HttpResponse generateResponse(const HttpRequest&, const ServerConfig&);
 HttpResponse generateErrorResponse(int code, const std::string &error_pages_dir, const std::string& version);
+std::string loadTemplateErrorPage(int code, const std::string& message);
+std::string getStatusText(int code);
