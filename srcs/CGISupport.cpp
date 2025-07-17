@@ -41,7 +41,6 @@ std::string run_cgi_script(const HttpRequest& request, const std::string& script
     // Forks a child process to run the CGI script.
     // Parent will read from the pipe, child will execve() the script.
     pid_t pid = fork();
-    
     if (pid < 0) {
         response.status_code = 500;
         response.status_text = getStatusText(response.status_code);
@@ -83,15 +82,45 @@ std::string run_cgi_script(const HttpRequest& request, const std::string& script
     }
     // parent
     close(pipefd[1]); // close write-end
-    waitpid(pid, NULL, 0); // Wait for child to finish
 
-    char buffer[1024];
     std::string output;
+    char buffer[1024];
+    int status; // traching child process status
+
+    // using poll same as what we are using in the main loop
+    struct pollfd pfd;
+    pfd.fd = pipefd[0]; // read end of pipe
+    pfd.events = POLLIN; // we're waiting for input (CGI output)
+
+    int timeout_ms = 2000; // 2 seconds timeout
+
+    int poll_result = poll(&pfd, 1, timeout_ms);
+
+    if (poll_result <= 0) {
+        // if poll failed
+        kill(pid, SIGKILL);
+        waitpid(pid, NULL, 0);
+        response.status_code = 500;
+        response.status_text = getStatusText(response.status_code);
+        return (loadTemplateErrorPage(response.status_code, response.status_text));
+    }
+
+    // Read data from the pipe
     int bytes_read;
-    // read from pipe
     while ((bytes_read = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
         output.append(buffer, bytes_read);
     }
+
     close(pipefd[0]);
+
+    waitpid(pid, &status, 0); // Wait for child to finish
+
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        // in case if script crashes or execve failed
+        response.status_code = 500;
+        response.status_text = getStatusText(response.status_code);
+        return (loadTemplateErrorPage(response.status_code, response.status_text));
+    }
+
     return (output);
     }
