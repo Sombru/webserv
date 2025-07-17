@@ -20,14 +20,14 @@ HttpResponse GET(const HttpRequest &request, const ServerConfig &server)
 		fs_path += request.target_file;
 		body = readFile(fs_path);
 		if (body == "BAD")
-			return buildErrorResponse(NOTFOUD, server.error_pages_dir, HTTPVERSION);
+			return buildErrorResponse(NOTFOUD, server);
 		Logger::debug(body);
-		return buildResponse(OK, body, HTTPVERSION);
+		return buildSuccessResponse(OK, body);
 	}
 	else if (!contents.empty())
 	{
 		if (request.best_location->index.empty())
-			return buildErrorResponse(FORBIDEN, server.error_pages_dir, HTTPVERSION);
+			return buildErrorResponse(FORBIDEN, server);
 		body = readFile(fs_path + request.best_location->index);
 		if (request.best_location->autoindex)
 		{
@@ -35,23 +35,10 @@ HttpResponse GET(const HttpRequest &request, const ServerConfig &server)
 			for (size_t i = 0; i < contents.size(); ++i)
 				body += "<li>" + contents[i] + "</li>";
 			body += "</ul>";
-			return buildResponse(OK, body, HTTPVERSION);
+			return buildSuccessResponse(OK, body);
 		}
-		return buildResponse(OK, body, HTTPVERSION);
+		return buildSuccessResponse(OK, body);
 	}
-	return buildErrorResponse(NOTFOUD, server.error_pages_dir, HTTPVERSION);
-
-	// if (request.best_location->autoindex && fs_path.empty())
-	// {
-	// 	body = "<ul>";
-	// 	for (size_t i = 0; i < contents.size(); ++i)
-	// 		body += "<li>" + contents[i] + "</li>";
-	// 	body += "</ul>";
-	// 	return buildResponse(OK, body, HTTPVERSION);
-	// }
-	// else if (!request.best_location->index.empty() && fs_path.empty())
-	// {
-
-	// }
+	return buildErrorResponse(NOTFOUD, server);
 
 }

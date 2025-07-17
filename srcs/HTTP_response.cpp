@@ -41,51 +41,57 @@ std::string getStatusText(int code)
 	}
 }
 
-std::string loadTemplateErrorPage(int code, const std::string &status_text)
+std::string loadErrorPage(int code, const ServerConfig& server)
 {
-	std::string content = readFile(DEFAULTERRORPAGE);
-	if (content == "BAD")
+	std::string status_text = getStatusText(code);
+	std::string body = readFile(server.error_pages_dir + "/" + intToString(code) + ".html");
+	if (body != "BAD")
+		return body;
+	body = readFile(DEFAULTERRORPAGE);
+	if (body == "BAD")
 		return "<h1>" + intToString(code) + " " + status_text + "</h1>";
-
+	
 	// Replace placeholders
 	size_t pos;
-	while ((pos = content.find("{{code}}")) != std::string::npos)
-		content.replace(pos, 8, intToString(code));
-	while ((pos = content.find("{{status_text}}")) != std::string::npos)
-		content.replace(pos, 15, status_text);
+	while ((pos = body.find("{{code}}")) != std::string::npos)
+		body.replace(pos, 8, intToString(code));
+	while ((pos = body.find("{{status_text}}")) != std::string::npos)
+		body.replace(pos, 15, status_text);
 
-	return content;
+	return body;
 }
 
-HttpResponse buildErrorResponse(int code, const std::string &error_pages_dir, const std::string &version)
-{
-	HttpResponse resp;
-	resp.status_code = code;
-	resp.status_text = getStatusText(code);
-	resp.version = version;
-
-	// Try to read custom error page
-	std::string filePath = error_pages_dir + "/" + intToString(code) + ".html";
-	// std::string body = readFile(filePath);
-	// if (body != "BAD")
-	// 	resp.body = body;
-
-	// else
-
-	// Default error page
-	resp.body = loadTemplateErrorPage(code, resp.status_text);
-
-	resp.headers = generateHeaders(resp);
-	return resp;
-}
-
-HttpResponse buildResponse(int code, const std::string &body, const std::string &version)
+// builds a HTTP response with given error and Server error page
+HttpResponse buildErrorResponse(int code, const ServerConfig& server)
 {
 	HttpResponse response;
 	response.status_code = code;
 	response.status_text = getStatusText(code);
-	response.version = version;
+	response.version = HTTPVERSION;
+	response.body = loadErrorPage(code, server);
+	response.headers = generateHeaders(response);
+	return response;
+}
+
+// builds a HTTP response with given succes code and body,
+// use overload for error responses
+HttpResponse buildSuccessResponse(int code, const std::string &body)
+{
+	HttpResponse response;
+	response.status_code = code;
+	response.status_text = getStatusText(code);
+	response.version = HTTPVERSION;
 	response.body = body;
 	response.headers = generateHeaders(response);
 	return response;
+}
+
+// builds a HTTP response with given code, body and server
+inline HttpResponse buildResponse(int code, const std::string &body, const ServerConfig& server)
+{
+	if (code >= 400)
+		return buildErrorResponse(code, server);
+	if (code < 400)
+		return buildSuccessResponse(code, body);
+	return(buildErrorResponse(500, server));
 }

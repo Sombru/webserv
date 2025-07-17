@@ -35,8 +35,14 @@ struct HttpResponse
 
 HttpRequest parseRequset(const std::string& raw_request, const ServerConfig& config);
 HttpResponse generateResponse(const HttpRequest&, const ServerConfig&);
-HttpResponse buildErrorResponse(int code, const std::string& error_pages_dir, const std::string& version);
-HttpResponse buildResponse(int code, const std::string& body, const std::string &version);
+
+HttpResponse buildSuccessResponse(int code, const std::string &body);
+
+HttpResponse buildErrorResponse(int code, const ServerConfig& server);
+
+inline HttpResponse buildResponse(int code, const std::string &body, const ServerConfig& server);
 
 HttpResponse GET(const HttpRequest& request, const ServerConfig& server);
+
+std::string loadErrorPage(int code, const ServerConfig& server);
 

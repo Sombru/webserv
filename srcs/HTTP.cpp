@@ -112,10 +112,10 @@ bool isValidRequest(const HttpRequest& request)
 HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &serverConfig)
 {
 	if (!isValidRequest(request))
-		return buildErrorResponse(BADREQUEST, serverConfig.error_pages_dir, HTTPVERSION);
+		return buildErrorResponse(BADREQUEST, serverConfig);
 	Logger::debug("Request is valid");
 	if (!request.best_location)
-		return buildErrorResponse(NOTFOUD, serverConfig.error_pages_dir, HTTPVERSION);
+		return buildErrorResponse(NOTFOUD, serverConfig);
 	Logger::debug("Location found");
 	if (request.method == "GET")
 	{
@@ -125,7 +125,7 @@ HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &se
 	// {
 	// 	return POST()
 	// }
-	return buildErrorResponse(BADREQUEST, serverConfig.error_pages_dir, HTTPVERSION);
+	return buildErrorResponse(BADREQUEST, serverConfig);
 }
 
 // get a request body
