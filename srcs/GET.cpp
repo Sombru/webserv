@@ -3,6 +3,8 @@
 #include "Config.hpp"
 #include "Logger.hpp"
 
+HttpResponse run_cgi_script(const HttpRequest &request, const ServerConfig& server, const std::string& fs_path);
+
 HttpResponse GET(const HttpRequest &request, const ServerConfig &server)
 {
 	std::string fs_path = server.root;
@@ -15,6 +17,8 @@ HttpResponse GET(const HttpRequest &request, const ServerConfig &server)
 	// Logger::debug(contents);
 	// body = readFile(fs_path + request.best_location->index);
 
+	if (request.best_location->name == "/cgi-bin/")
+			return run_cgi_script(request, server, fs_path);
 	if (!request.target_file.empty())
 	{
 		fs_path += request.target_file;
@@ -26,6 +30,7 @@ HttpResponse GET(const HttpRequest &request, const ServerConfig &server)
 	}
 	else if (!contents.empty())
 	{
+
 		if (request.best_location->index.empty())
 			return buildErrorResponse(FORBIDEN, server);
 		body = readFile(fs_path + request.best_location->index);
@@ -40,5 +45,4 @@ HttpResponse GET(const HttpRequest &request, const ServerConfig &server)
 		return buildSuccessResponse(OK, body);
 	}
 	return buildErrorResponse(NOTFOUD, server);
-
 }
