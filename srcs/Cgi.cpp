@@ -5,6 +5,7 @@
 #include "ServerManager.hpp"
 #include "Webserv.hpp"
 #include "HTTP.hpp"
+#include "CGI.hpp"
 
 /*  When a request matches a CGI-enabled path(e.g. /cgi-bin/script.py),
 	the server doesn't serve static HTML, bu launches the script
@@ -51,15 +52,15 @@ HttpResponse run_cgi_script(const HttpRequest &request, const ServerConfig& serv
 		dup2(pipefd[1], STDOUT_FILENO); // CGI writes to pipe
 		close(pipefd[0]);				// Close read end in child
 
-		// setup enviroment variables
-		// std::array<std::string, 5> env;
-		// env.data()
-		char *env[] = {
-			strdup(("REQUEST_METHOD=" + request.method).c_str()),
-			strdup(("QUERY_STRING=" + request.query_string).c_str()),
-			strdup(("SCRIPT_NAME=" + request.path).c_str()),
-			strdup(("SERVER_PROTOCOL=HTTP/1.1")),
-			NULL};
+		//updating the code to a clean, reusable helper function
+        // because of the bonus part - handling multiple CGI requests
+		// char *env[] = {
+		// 	strdup(("REQUEST_METHOD=" + request.method).c_str()),
+		// 	strdup(("QUERY_STRING=" + request.query_string).c_str()),
+		// 	strdup(("SCRIPT_NAME=" + request.path).c_str()),
+		// 	strdup(("SERVER_PROTOCOL=HTTP/1.1")),
+		// 	NULL};
+        EnvBlock env_block(request);
 
 		// setup arguments
 
@@ -68,7 +69,7 @@ HttpResponse run_cgi_script(const HttpRequest &request, const ServerConfig& serv
 			strdup((char *)(fs_path + request.target_file).c_str()), // script path
 			NULL};
 
-		execve(args[0], args, env); // replaces current process
+		execve(args[0], args, env_block.get()); // replaces current process
 		Logger::debug("execve failed");
 		_exit(1); // safe exit for child
 		// kill(0, SIGINT)
