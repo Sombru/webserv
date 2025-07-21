@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
   <meta charset="UTF-8" />
   <title>404 Not Found</title>
   <style>
@@ -57,11 +58,19 @@
   </style>
 </head>
 <body>
+
   <div class="container">
     <h1>404</h1>
+    <div class="glitch" id="messageid"><p>Oops! Page not found.</p></div>
     <p class="glitch">Oops! Page not found.</p>
     <p>The page you are looking for doesn't exist or has been moved.</p>
     <a href="/">← Back to homepage</a>
   </div>
+
+    <script>
+    // Change message dynamically
+    document.getElementById("messageid").innerText = "TESTING ERROR MESSAGE";
+  </script>
+
 </body>
 </html>
