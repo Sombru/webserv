@@ -53,7 +53,7 @@ bool Socket::setup()
 	{
 		throw std::runtime_error("Bind failed");
 	}
-
+	// delete res; 
 	Logger::info("Listening on socket");
 	if (listen(server_fd, 10) == -1)
 	{

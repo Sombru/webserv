@@ -3,8 +3,8 @@
 #include "Client.hpp"
 #include "HTTP.hpp"
 
-ServerManager::ServerManager(const std::vector<ServerConfig>& servers)
-: servers(servers), running(true)
+ServerManager::ServerManager(const std::vector<ServerConfig> &servers)
+	: servers(servers), running(true)
 {
 	this->sockets.reserve(this->servers.size()); // reserve just enought space for every socket
 
@@ -18,7 +18,6 @@ void ServerManager::setup()
 {
 	for (unsigned int i = 0; i < this->sockets.size(); i++)
 		this->sockets[i].setup();
-
 }
 
 void ServerManager::run()
@@ -42,7 +41,10 @@ void ServerManager::run()
 			perror("poll");
 			break;
 		}
-
+		if (g_sigint)
+		{
+			break;
+		}
 		for (size_t i = 0; i < poll_fds.size(); ++i)
 		{
 			if (poll_fds[i].revents & POLLIN)
@@ -52,7 +54,7 @@ void ServerManager::run()
 				HttpRequest request = parseRequset(client.getRaw_request(), this->servers[i]);
 				// TODO is valid request
 				// switch to GET POST DELTE in this section to minimze err cheks
-				// have a map of headers that are handled 
+				// have a map of headers that are handled
 				HttpResponse response = generateResponse(request, servers[i]);
 				client.sendResponse(response);
 				// Logger::debug(request);

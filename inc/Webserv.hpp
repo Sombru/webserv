@@ -20,14 +20,16 @@
 #include <poll.h>
 #include <sys/epoll.h>
 #include <dirent.h>
+#include <csignal>
 // #include "Client.hpp"
 // #include "Config.hpp"
 // #include "Logger.hpp"
 // #include "ServerManager.hpp"
 // #include "Socket.hpp"
 
-struct HttpResponse;
+extern volatile sig_atomic_t g_sigint;
 
+struct HttpResponse;
 
 std::string readFile(const std::string& path);
 std::string intToString(int n);
