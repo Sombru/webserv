@@ -2,6 +2,7 @@
 #include "Logger.hpp"
 #include "Client.hpp"
 #include "HTTP.hpp"
+#include "globals.hpp"
 
 ServerManager::ServerManager(const std::vector<ServerConfig>& servers)
 : servers(servers), running(true)
@@ -39,6 +40,9 @@ void ServerManager::run()
 		int ret = poll(&poll_fds[0], poll_fds.size(), -1);
 		if (ret < 0)
 		{
+			if (g_sigint) {
+				break;
+			}
 			perror("poll");
 			break;
 		}

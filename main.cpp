@@ -3,6 +3,10 @@
 #include "ServerManager.hpp"
 #include "Logger.hpp"
 #include "Client.hpp"
+#include "globals.hpp"
+
+// adding global variable used for handling Ctrl+C // defined here
+volatile sig_atomic_t g_sigint = 0;
 
 int parseConfig(const std::string& configPath, std::vector<ServerConfig>& servers)
 {
@@ -34,8 +38,18 @@ int parseConfig(const std::string& configPath, std::vector<ServerConfig>& server
 
 }
 
+void ft_signal_handler(int c) {
+	(void)c;
+	g_sigint = 1;
+	Logger::info("STOPPING THE SERVER...\n");
+}
+
 int main()
 {
+	// adding signal handling
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGINT, ft_signal_handler);
+
 	std::vector<ServerConfig> servers;
 
 	if (parseConfig("servers/default.conf", servers) == -1)
