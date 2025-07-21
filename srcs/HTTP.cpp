@@ -28,7 +28,7 @@ const LocationConfig *locate(const HttpRequest &request, const ServerConfig &ser
 	for (size_t k = 0; k < serverConfig.locations.size(); k++)
 	{
 		if (serverConfig.locations[k].name == "/")
-			continue ;
+			continue;
 		const std::string &locName = serverConfig.locations[k].name;
 		if (request.path.compare(0, locName.size(), locName) == 0)
 			return &serverConfig.locations[k];
@@ -77,28 +77,29 @@ HttpRequest parseRequset(const std::string &raw_request, const ServerConfig &con
 				value = value.substr(1);
 			if (!value.empty() && value[value.length() - 1] == '\r')
 				value = value.substr(0, value.length() - 1);
+			// request.keys.push_back(key);
 			request.headers[key] = value;
 		}
 	}
-	request.target_file = request.path.substr(request.path.find_last_of('/')+1);
+	request.target_file = request.path.substr(request.path.find_last_of('/') + 1);
 	request.best_location = locate(request, config);
-	
-	std::string body;
-    if (request.headers.count("Content-Length"))
-    {
-        int content_length = std::atoi(request.headers["Content-Length"].c_str());
-        if (content_length > 0)
-        {
-            body.resize(content_length);
-            stream.read(&body[0], content_length);
-            request.body = body;
-        }
-    }
 
-    return (request);
+	std::string body;
+	if (request.headers.count("Content-Length"))
+	{
+		int content_length = std::atoi(request.headers["Content-Length"].c_str());
+		if (content_length > 0)
+		{
+			body.resize(content_length);
+			stream.read(&body[0], content_length);
+			request.body = body;
+		}
+	}
+
+	return (request);
 }
 
-bool isValidRequest(const HttpRequest& request)
+bool isValidRequest(const HttpRequest &request)
 {
 	if (request.method != "GET" && request.method != "POST" && request.method != "DELETE")
 		return false;

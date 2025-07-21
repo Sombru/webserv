@@ -80,3 +80,11 @@ std::vector<std::string> getLocationContents(const std::string& path)
 	closedir(dir);
 	return contents;
 }
+
+std::string getFileExtension(const std::string& file)
+{
+	size_t pos = file.find_last_of('.');
+	if (pos == std::string::npos || pos == file.length() - 1)
+		return "";
+	return file.substr(pos);
+}

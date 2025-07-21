@@ -34,3 +34,4 @@ std::string intToString(int n);
 std::string serialize(const HttpResponse& response);
 std::vector<std::string> getLocationContents(const std::string& server_root, const std::string& location_root);
 std::vector<std::string> getLocationContents(const std::string& path);
+std::string getFileExtension(const std::string& file);

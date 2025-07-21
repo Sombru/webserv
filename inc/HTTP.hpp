@@ -12,6 +12,7 @@ struct HttpRequest
 	std::string query_string; // e.g ?alice=18 // how this differs from path you need find out
 	std::string version; //  e.g. "HTTP/1.1"
 	std::map<std::string, std::string> query_params; // e.g. query_params["alice"] == 18
+	// std::vector<std::string> keys; // e.g. "Content-lenght" keys for headers
 	std::map<std::string, std::string> headers; // e.g. headers["Authorization"] == <browser>
 	std::string body;
 };

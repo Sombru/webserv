@@ -13,10 +13,6 @@ HttpResponse GET(const HttpRequest &request, const ServerConfig &server)
 	std::vector<std::string> contents = getLocationContents(fs_path);
 	std::string body;
 
-	// Logger::debug(fs_path);
-	// Logger::debug(contents);
-	// body = readFile(fs_path + request.best_location->index);
-
 	if (request.best_location->name == "/cgi-bin/")
 			return run_cgi_script(request, server, fs_path);
 	if (!request.target_file.empty())
