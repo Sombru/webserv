@@ -108,6 +108,17 @@ bool isValidRequest(const HttpRequest& request)
 		return false;
 	return true;
 }
+HttpResponse checkMethod( const HttpRequest &request, const ServerConfig &ServerConfig) {
+	if (request.method == "GET") {
+		return GET(request, ServerConfig);
+	}
+	else if (request.method == "POST") {
+		return POST(request, ServerConfig);
+	}
+	else {
+		return DELETE(request, ServerConfig);
+	}
+}
 
 HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &serverConfig)
 {

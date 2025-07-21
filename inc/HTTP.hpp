@@ -43,6 +43,9 @@ HttpResponse buildErrorResponse(int code, const ServerConfig& server);
 inline HttpResponse buildResponse(int code, const std::string &body, const ServerConfig& server);
 
 HttpResponse GET(const HttpRequest& request, const ServerConfig& server);
+HttpResponse POST(const HttpRequest &request, const ServerConfig &server);
+HttpResponse DELETE(const HttpRequest &request, const ServerConfig &server);
 
 std::string loadErrorPage(int code, const ServerConfig& server);
-
+HttpResponse checkMethod(const HttpRequest &request, const ServerConfig &ServerConfig);
+bool unchunkBody(std::string &body);
