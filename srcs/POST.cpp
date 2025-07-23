@@ -104,7 +104,7 @@ HttpResponse POST(HttpRequest request, const ServerConfig &server)
         }
     }
 
-    // next - Deretmine the upload location -> folder uploads (or fallback)
+    // next - Determine the upload location -> folder uploads (or fallback)
     std::string upload_dir = location && !location->upload_dir.empty()
                             ? "./uploads":
                             location->upload_dir;

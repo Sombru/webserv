@@ -14,6 +14,12 @@ enum LogLevel {
     DEBUG
 };
 
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
+#define CYAN    "\033[36m"
+#define MAGENTA "\033[35m"
+#define RESET   "\033[0m"
+
 class Logger {
     public:
         //static void log(LogLevel level, const std::string& message);
@@ -43,30 +49,30 @@ std::ostream &operator<<(std::ostream &os, const std::vector<std::string>& );
 
 template<typename T>
 void Logger::info(const T& message) {
-    std::cout << "[" << getTimestamp() << "] "
+    std::cout << GREEN << "[" << getTimestamp() << "] "
               << "[" << "INFO" << "] "
-              << message << std::endl;
+              << message << RESET << std::endl;
 }
 
 template<typename T>
 void Logger::warning(const T& message) {
-    std::cout << "[" << getTimestamp() << "] "
+    std::cout << MAGENTA << "[" << getTimestamp() << "] "
               << "[" << "WARNING" << "] "
-              << message << std::endl;
+              << message << RESET << std::endl;
 }
 
 template<typename T>
 void Logger::error(const T& message) {
-    std::cout << "[" << getTimestamp() << "] "
+    std::cout << RED << "[" << getTimestamp() << "] "
               << "[" << "ERROR" << "] "
-              << message << std::endl;
+              << message << RESET << std::endl;
 }
 
 template<typename T>
 void Logger::debug(const T& message) {
-    std::cout << "[" << getTimestamp() << "] "
+    std::cout << CYAN << "[" << getTimestamp() << "] "
               << "[" << "DEBUG" << "] "
-              << message << std::endl;
+              << message << RESET << std::endl;
 }
 
 #endif

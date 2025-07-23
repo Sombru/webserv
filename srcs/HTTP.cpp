@@ -122,10 +122,11 @@ HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &se
 	{
 		return GET(request, serverConfig);
 	}
-	// else if (request.method == "POST")
-	// {
-	// 	return POST()
-	// }
+	if (request.method == "POST")
+	{
+		Logger::info("running post");
+		return POST(request, serverConfig);
+	}
 	return buildErrorResponse(BADREQUEST, serverConfig);
 }
 

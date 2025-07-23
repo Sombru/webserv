@@ -13,7 +13,7 @@ OBJS_DIR 	=	objs
 SRCS		=	main.cpp utils/Utils.cpp srcs/Tokenizer.cpp utils/Logger.cpp \
 				srcs/ParseConfig.cpp srcs/ServerManager.cpp srcs/Client.cpp srcs/Socket.cpp \
 				srcs/HTTP.cpp srcs/GET.cpp srcs/Cgi.cpp \
-				srcs/HTTP_response.cpp 
+				srcs/HTTP_response.cpp srcs/POST.cpp \
 # Object Files
 OBJS		=	$(SRCS:%.cpp=$(OBJS_DIR)/%.o)
 

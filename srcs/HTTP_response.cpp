@@ -22,6 +22,8 @@ std::string getStatusText(int code)
 	{
 	case 200:
 		return "OK";
+	case 201:
+		return "Created";
 	case 400:
 		return "Bad Request";
 	case 403:

@@ -32,17 +32,19 @@ void ServerManager::run()
 		pfd.events = POLLIN; // wait for incoming connections
 		poll_fds.push_back(pfd);
 	}
+	Logger::info("step is completed");
 
 	while (running)
 	{
 		int ret = poll(&poll_fds[0], poll_fds.size(), -1);
 		if (ret < 0)
-		{
-			perror("poll");
-			break;
-		}
 		if (g_sigint)
 		{
+			//Logger::debug("finishing");
+			break;
+		}
+		{
+			perror("poll");
 			break;
 		}
 		for (size_t i = 0; i < poll_fds.size(); ++i)
