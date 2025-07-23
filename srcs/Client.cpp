@@ -7,11 +7,12 @@
 // This waits for and accepts a new client connection.
 // If it fails, throws exception
 
-Client::Client(int poll_fd, int requset_size)
+Client::Client(int client_fd, int requset_size)
 {
-	sockaddr_in client_addr;
-	socklen_t addrlen = sizeof(client_addr);
-	this->fd = accept(poll_fd, (sockaddr*)&client_addr, &addrlen);
+	this->fd = client_fd;
+	// sockaddr_in client_addr;
+	// socklen_t addrlen = sizeof(client_addr);
+	// this->fd = accept(poll_fd, (sockaddr*)&client_addr, &addrlen);
 	this->request_size = requset_size;
 }
 

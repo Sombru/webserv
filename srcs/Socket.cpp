@@ -42,18 +42,32 @@ bool Socket::setup()
 	{
 		throw std::runtime_error("Setsockopt failed");
 	}
-	address.ai_family = AF_INET;
-	address.ai_socktype = SOCK_STREAM;
-	address.ai_flags = AI_PASSIVE;
+	// Proper hints setup
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+	// address.ai_family = AF_INET;
+	// address.ai_socktype = SOCK_STREAM;
+	// address.ai_flags = AI_PASSIVE;
 
 	struct addrinfo *res;
-	getaddrinfo(this->addres_str.c_str(), intToString(this->port).c_str(), &address, &res);
+	int status = getaddrinfo(this->addres_str.c_str(), intToString(this->port).c_str(), &hints, &res);
+	if (status != 0) {
+		throw std::runtime_error("getaddrinfo failed:");
+	}
+
 	Logger::info("Binding socket");
+	//getaddrinfo(this->addres_str.c_str(), intToString(this->port).c_str(), &address, &res);
+	//Logger::info("Binding socket");
 	if (bind(server_fd, res->ai_addr, res->ai_addrlen) == -1)
 	{
+		freeaddrinfo(res);
 		throw std::runtime_error("Bind failed");
 	}
-	// delete res; 
+	freeaddrinfo(res); // free result after use
+	
 	Logger::info("Listening on socket");
 	if (listen(server_fd, 10) == -1)
 	{

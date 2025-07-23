@@ -132,3 +132,6 @@ HttpResponse POST(HttpRequest request, const ServerConfig &server)
 
     return response;
 }
+
+// TESTING POST:
+// curl -X POST http://127.0.0.3:8080/upload/ -d "Hello World!"

@@ -118,13 +118,15 @@ HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &se
 	if (!request.best_location)
 		return buildErrorResponse(NOTFOUD, serverConfig);
 	Logger::debug("Location found");
+	Logger::debug("incoming method: " + request.method);
 	if (request.method == "GET")
 	{
+		Logger::info("running GET");
 		return GET(request, serverConfig);
 	}
 	if (request.method == "POST")
 	{
-		Logger::info("running post");
+		Logger::info("running POST");
 		return POST(request, serverConfig);
 	}
 	return buildErrorResponse(BADREQUEST, serverConfig);
