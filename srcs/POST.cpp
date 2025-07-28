@@ -106,32 +106,44 @@ HttpResponse POST(HttpRequest request, const ServerConfig &server)
 
     // next - Determine the upload location -> folder uploads (or fallback)
     std::string upload_dir = location && !location->upload_dir.empty()
-                            ? "./uploads":
-                            location->upload_dir;
+                         ? location->upload_dir
+                         : "./uploads"; // fallback
     
     std::string filename = "upload_" + intToString(std::time(0));
     std::string filepath = upload_dir + "/" + filename;
 
-    // next - save body to file
+    if (!upload_dir.empty()) {
+    std::string filename = "upload_" + intToString(std::time(0));
+    std::string filepath = upload_dir + "/" + filename;
+
     std::ofstream ofs(filepath.c_str());
     if (!ofs) {
         return buildErrorResponse(500, server);
-        // response.status_code = 500;
-        // response.status_text = getStatusText(500);
-        // return response;
     }
     ofs << request.body;
     ofs.close();
 
-    // finally - return the sucessful response
     response.status_code = 201;
     response.status_text = getStatusText(201);
     response.body = "File uploaded successfully to " + filepath;
+    } else {
+        response.status_code = 200;
+        response.status_text = getStatusText(200);
+        response.body = "Data received (not saved)";
+    }
+
     response.headers["Content-Length"] = intToString(response.body.size());
     response.headers["Content-Type"] = "text/plain";
+    response.version = "HTTP/1.1";
+
+    Logger::debug("show response");
+    std::string full_response = serialize(response);
+    std::cout << "=== RESPONSE SENT ===\n" << full_response << "\n=====================\n";
+
 
     return response;
 }
 
 // TESTING POST:
 // curl -X POST http://127.0.0.3:8080/upload/ -d "Hello World!"
+// TO TEST CURL - don't forget to open a separate terminal and use curl there
