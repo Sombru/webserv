@@ -3,17 +3,14 @@ NAME		=	webserv
 CPP         =  c++
 
 # Compiler Flags
-CPPFLAGS    =   -g -std=c++98 -Wall -Wextra -Werror -Wshadow -Wno-shadow -I. -Iinc
+CPPFLAGS    =   -g -std=c++98 -Wall -Wextra -Werror -I. -I inc
 RM          =   rm -rf
 
 # Directories
 OBJS_DIR 	=	objs
 
 # Source Files
-SRCS		=	main.cpp utils/Utils.cpp srcs/Tokenizer.cpp utils/Logger.cpp \
-				srcs/ParseConfig.cpp srcs/ServerManager.cpp srcs/Client.cpp srcs/Socket.cpp \
-				srcs/HTTP.cpp \
-				srcs/HTTP_errors.cpp 
+SRCS		=	main.cpp utils/Utils.cpp utils/Logger.cpp srcs/Config.cpp
 # Object Files
 OBJS		=	$(SRCS:%.cpp=$(OBJS_DIR)/%.o)
 

@@ -20,15 +20,3 @@
 #include <poll.h>
 #include <sys/epoll.h>
 #include <dirent.h>
-// #include "Client.hpp"
-// #include "Config.hpp"
-// #include "Logger.hpp"
-// #include "ServerManager.hpp"
-// #include "Socket.hpp"
-
-struct HttpResponse;
-
-
-std::string readFile(const std::string& path);
-std::string intToString(int n);
-std::string serialize(const HttpResponse& response);

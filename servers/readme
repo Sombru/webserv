@@ -1,0 +1,198 @@
+# Webserver Configuration File Documentation
+
+## Overview
+
+This document describes the configuration file format and rules for the webserver. Configuration files use a simple block-based syntax similar to Nginx, with directives and nested blocks.
+
+## File Format
+
+### Basic Syntax
+- **Comments**: Lines starting with `#` are treated as comments
+- **Blocks**: Defined with curly braces `{}`
+- **Directives**: Key-value pairs ending with semicolons `;`
+- **Whitespace**: Spaces, tabs, and newlines are ignored for parsing
+
+### Example Structure
+```
+server {
+    directive_name value;
+    directive_name value;
+    
+    location /name {
+        directive_name value;
+    }
+}
+```
+
+## Server Block Configuration
+
+Each `server` block defines a virtual server configuration. Multiple server blocks can exist in one file.
+
+### Mandatory Directives
+
+| Directive | Description | Example |
+|-----------|-------------|---------|
+| `listen` | Port number to listen on (1-65535) | `listen 8080;` |
+| `server_name` | Server identifier/hostname | `server_name example.local;` |
+| `root` | Document root directory | `root www/;` |
+| `client_max_body_size` | Maximum request body size in bytes | `client_max_body_size 1024;` |
+| `error_page` | Path to error page file | `error_page www/errors/404.html;` |
+
+### Optional Directives
+
+| Directive | Description | Default | Example |
+|-----------|-------------|---------|---------|
+| `host` | IP address to bind to | `127.0.0.1` | `host 192.168.1.100;` |
+
+### Server Block Example
+```
+server {
+    host 127.0.0.1;
+    listen 8080;
+    server_name portfolio.local;
+    root www/portfolio/;
+    client_max_body_size 1024;
+    error_page www/errors/default.html;
+    
+    # locations...
+}
+```
+
+## Location Block Configuration
+
+Each server must have at least one `location` block, and **must include a default location named "/"**.
+
+### Location Syntax
+```
+location /name {
+    # location directives
+}
+```
+
+### Location Directives
+
+| Directive | Description | Default | Example |
+|-----------|-------------|---------|---------|
+| `root` | Document root for this location | Server root | `root ./static/;` |
+| `index` | Index file name | `index.html` | `index welcome.html;` |
+| `allow_methods` | Allowed HTTP methods | `GET` (always enabled) | `allow_methods GET POST;` |
+| `autoindex` | Enable directory listing | `off` | `autoindex on;` |
+| `cgi_ext` | CGI file extensions | None | `cgi_ext .py .sh;` |
+| `cgi_path` | CGI interpreter paths | None | `cgi_path /usr/bin/python3 /usr/bin/bash;` |
+| `return` | Redirection path | None | `return /new-path;` |
+| `upload_dir` | Upload directory for POST | None | `upload_dir uploads/;` |
+
+### Location Block Example
+```
+location / {
+    root ./;
+    allow_methods GET POST;
+    index index.html;
+}
+
+location /cgi-bin/ {
+    root ./cgi-bin/;
+    cgi_ext .py .sh;
+    cgi_path /usr/bin/python3 /usr/bin/bash;
+    allow_methods GET POST;
+}
+
+location /files {
+    root /files/;
+    autoindex on;
+    allow_methods GET;
+}
+```
+
+## Validation Rules
+
+### Server Level Validation
+1. **Unique host:port combinations** - No two servers can have the same host and port
+2. **Port range** - Must be between 1 and 65535
+3. **Body size limit** - `client_max_body_size` cannot exceed 1GB (1073741824 bytes)
+4. **Default location required** - Must have a location named "/"
+
+### Location Level Validation
+1. **Location names cannot be empty**
+2. **GET method is always enabled** - Automatically added if not specified
+3. **CGI extensions and paths** - Must match in order (first extension maps to first path)
+
+### Default Value Assignment
+- **Server host**: Defaults to `127.0.0.1`
+- **Location root**: Inherits from server root if not specified
+- **HTTP methods**: `GET` is automatically included
+
+## Complete Configuration Example
+
+```
+# Portfolio server
+server {
+    host 127.0.0.1;
+    listen 8080;
+    server_name portfolio.local;
+    root www/portfolio/;
+    client_max_body_size 1024;
+    error_page www/errors/default.html;
+
+    # Default location (mandatory)
+    location / {
+        root ./;
+        allow_methods GET POST;
+        index index.html;
+    }
+
+    # CGI scripts
+    location /cgi-bin/ {
+        root ./cgi-bin/;
+        cgi_ext .py .sh;
+        cgi_path /usr/bin/python3 /usr/bin/bash;
+        allow_methods GET POST;
+    }
+}
+
+# File server
+server {
+    host 127.0.0.1;
+    listen 8081;
+    server_name files.local;
+    root www/;
+    client_max_body_size 2048;
+    error_page www/errors/default.html;
+
+    # Default location
+    location / {
+        root ./;
+        allow_methods GET;
+        index index.html;
+    }
+
+    # File browsing with autoindex
+    location /files {
+        root /files/;
+        autoindex on;
+        allow_methods GET;
+    }
+}
+```
+
+## Error Messages
+
+The configuration parser provides descriptive error messages:
+
+- `"Configuration validation failed: Server X missing mandatory 'directive' directive"`
+- `"Configuration validation failed: Server X missing mandatory default location '/'"`
+- `"Configuration validation failed: Duplicate server configuration for host:port"`
+- `"Configuration validation failed: Server X port Y is out of valid range (1-65535)"`
+
+## Best Practices
+
+1. **Always include a default location "/"** - Required for proper server operation
+2. **Use descriptive server names** - Helps with debugging and maintenance
+3. **Set appropriate body size limits** - Prevents resource exhaustion
+4. **Organize locations logically** - Group related functionality
+5. **Comment your configuration** - Use `#` for documentation
+6. **Test configurations** - The parser will validate and report errors
+
+## Testing Your Configuration
+
+The webserver will validate your configuration on startup and report any errors with specific details about what needs to be fixed.
