@@ -129,6 +129,11 @@ HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &se
 		Logger::info("running POST");
 		return POST(request, serverConfig);
 	}
+	if (request.method == "DELETE")
+	{
+		Logger::info("running DELETE");
+		return DELETE(request, serverConfig);
+	}
 	return buildErrorResponse(BADREQUEST, serverConfig);
 }
 

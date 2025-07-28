@@ -1,9 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Hello</title>
+    <meta charset="UTF-8">
+    <title>Webserv Upload</title>
 </head>
 <body>
-    this is server index
+    <h1>Post Data to Server</h1>
+    <form action="/upload/" method="post">
+        <textarea name="data" rows="8" cols="40" placeholder="Write your content here..."></textarea><br>
+        <button type="submit">Upload</button>
+    </form>
 </body>
 </html>

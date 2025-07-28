@@ -45,7 +45,7 @@ inline HttpResponse buildResponse(int code, const std::string &body, const Serve
 
 HttpResponse GET(const HttpRequest& request, const ServerConfig& server);
 HttpResponse POST(HttpRequest request, const ServerConfig &server);
-//HttpResponse DELETE(const HttpRequest &request, const ServerConfig &server);
+HttpResponse DELETE(HttpRequest request, const ServerConfig &server);
 
 std::string loadErrorPage(int code, const ServerConfig& server);
 

@@ -120,7 +120,13 @@ HttpResponse POST(HttpRequest request, const ServerConfig &server)
     if (!ofs) {
         return buildErrorResponse(500, server);
     }
-    ofs << request.body;
+    // in case if body is empty - create an empty file and add comment in it - "file created empty"
+    std::string decoded = urlDecode(request.body);
+    if (decoded.empty()) {
+        ofs << "# file was created empty.\n";
+    } else {
+        ofs << decoded;
+    }
     ofs.close();
 
     response.status_code = 201;
