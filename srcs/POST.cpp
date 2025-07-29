@@ -2,6 +2,7 @@
 #include "Webserv.hpp"
 #include "Config.hpp"
 #include "Logger.hpp"
+#include <sstream>
 
 static bool isMethodAllowed(const LocationConfig* location, const std::string& method) {
     if (!location)
@@ -76,79 +77,129 @@ static bool unchunkBody(std::string &body) {
 HttpResponse POST(HttpRequest request, const ServerConfig &server)
 {
     HttpResponse response;
-
-    // Validate POST is allowed in this location
-    // if !allowedMethod"post" -> buildError 405-Method not allowed
     const LocationConfig* location = request.best_location;
+
     if (!isMethodAllowed(location, request.method))
-    {
         return buildErrorResponse(405, server);
-        // response.status_code = 405;
-        // response.status_text = getStatusText(405);
-        // return response;
-    }
 
-    // Check body size
-    if (request.body.size() > server.client_max_body_size) {
+    if (request.body.size() > server.client_max_body_size)
         return buildErrorResponse(413, server);
-    }
 
-    // If body is transfer as chunked - using unchuked to return it correctly
-    std::map<std::string, std::string>::const_iterator it = request.headers.find("Transfer-Encoding");
-    if (it != request.headers.end() && it->second == "chunked") {
-        if (!unchunkBody(request.body)) {
+    if (request.headers.find("Transfer-Encoding") != request.headers.end() &&
+        request.headers.at("Transfer-Encoding") == "chunked") {
+        if (!unchunkBody(request.body))
             return buildErrorResponse(400, server);
-        // response.status_code = 400;
-        // response.status_text = getStatusText(400);
-        // return response;
+    }
+
+    std::string contentType = request.headers["Content-Type"];
+    std::string upload_dir = (location && !location->upload_dir.empty())
+                             ? location->upload_dir
+                             : "./uploads";
+    std::string filepath;
+    response.status_code = 200;
+    response.status_text = getStatusText(200);
+    response.body = "Data received (not saved)";
+
+    if (contentType.find("multipart/form-data") == 0) {
+        size_t boundary_pos = contentType.find("boundary=");
+        if (boundary_pos != std::string::npos) {
+            std::string boundary = contentType.substr(boundary_pos + 9);
+            std::string delimiter = "--" + boundary;
+            const std::string& body = request.body;
+            size_t start = 0;
+
+            while ((start = body.find(delimiter, start)) != std::string::npos) {
+                start += delimiter.size();
+
+                if (body.compare(start, 2, "--") == 0)
+                    break;
+                if (body.compare(start, 2, "\r\n") == 0)
+                    start += 2;
+
+                size_t header_end = body.find("\r\n\r\n", start);
+                if (header_end == std::string::npos)
+                    break;
+
+                std::string headers = body.substr(start, header_end - start);
+                size_t disp_start = headers.find("Content-Disposition:");
+                if (disp_start == std::string::npos)
+                    continue;
+
+                size_t filename_pos = headers.find("filename=\"", disp_start);
+                if (filename_pos == std::string::npos)
+                    continue;
+
+                filename_pos += 10;
+                size_t filename_end = headers.find("\"", filename_pos);
+                if (filename_end == std::string::npos)
+                    continue;
+
+                std::string filename = headers.substr(filename_pos, filename_end - filename_pos);
+                size_t content_start = header_end + 4;
+                size_t content_end = body.find(delimiter, content_start);
+                if (content_end == std::string::npos)
+                    break;
+
+                std::string file_data = body.substr(content_start, content_end - content_start);
+
+                //Strip trailing \r\n
+                if (file_data.size() >= 2 &&
+                    file_data[file_data.size() - 2] == '\r' &&
+                    file_data[file_data.size() - 1] == '\n') {
+                    file_data = file_data.substr(0, file_data.size() - 2);
+                }
+
+                filepath = upload_dir + "/" + filename;
+                int fd = open(filepath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                if (fd < 0)
+                    return buildErrorResponse(500, server);
+
+                write(fd, file_data.c_str(), file_data.size());
+                close(fd);
+
+                response.status_code = 201;
+                response.status_text = getStatusText(201);
+                response.body = "File uploaded successfully to " + filepath;
+                break; // Only handle one file
+            }
+        } else {
+            return buildErrorResponse(400, server);
         }
-    }
-
-    // next - Determine the upload location -> folder uploads (or fallback)
-    std::string upload_dir = location && !location->upload_dir.empty()
-                         ? location->upload_dir
-                         : "./uploads"; // fallback
-    
-    std::string filename = "upload_" + intToString(std::time(0));
-    std::string filepath = upload_dir + "/" + filename;
-
-    if (!upload_dir.empty()) {
-    std::string filename = "upload_" + intToString(std::time(0));
-    std::string filepath = upload_dir + "/" + filename;
-
-    std::ofstream ofs(filepath.c_str());
-    if (!ofs) {
-        return buildErrorResponse(500, server);
-    }
-    // in case if body is empty - create an empty file and add comment in it - "file created empty"
-    std::string decoded = urlDecode(request.body);
-    if (decoded.empty()) {
-        ofs << "# file was created empty.\n";
     } else {
-        ofs << decoded;
-    }
-    ofs.close();
+        // fallback for URL-encoded or raw body
+        std::string filename = "upload_" + intToString(std::time(0));
+        filepath = upload_dir + "/" + filename;
 
-    response.status_code = 201;
-    response.status_text = getStatusText(201);
-    response.body = "File uploaded successfully to " + filepath;
-    } else {
-        response.status_code = 200;
-        response.status_text = getStatusText(200);
-        response.body = "Data received (not saved)";
+        std::ofstream ofs(filepath.c_str());
+        if (!ofs)
+            return buildErrorResponse(500, server);
+
+        std::string decoded = urlDecode(request.body);
+        if (decoded.empty())
+            ofs << "# file was created empty.\n";
+        else
+            ofs << decoded;
+        ofs.close();
+
+        response.status_code = 201;
+        response.status_text = getStatusText(201);
+        response.body = "File uploaded successfully to " + filepath;
     }
 
+    // Common response headers
     response.headers["Content-Length"] = intToString(response.body.size());
     response.headers["Content-Type"] = "text/plain";
     response.version = "HTTP/1.1";
 
     Logger::debug("show response");
+    Logger::error(response.status_code);
+    Logger::error("Response body is " + response.body);
     std::string full_response = serialize(response);
     std::cout << "=== RESPONSE SENT ===\n" << full_response << "\n=====================\n";
 
-
     return response;
 }
+
 
 // TESTING POST:
 // curl -X POST http://127.0.0.3:8080/upload/ -d "Hello World!"
