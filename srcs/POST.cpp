@@ -96,95 +96,148 @@ HttpResponse POST(HttpRequest request, const ServerConfig &server)
                              ? location->upload_dir
                              : "./uploads";
     std::string filepath;
-    response.status_code = 200;
-    response.status_text = getStatusText(200);
-    response.body = "Data received (not saved)";
+    // response.status_code = 200;
+    // response.status_text = getStatusText(200);
+    // response.body = "Data received (not saved)";
 
-    if (contentType.find("multipart/form-data") == 0) {
+    //check if we're getting a file 
+    if (contentType.find("multipart/form-data") != std::string::npos) {
+        Logger::debug("Parsing multipart/form-data");
+
         size_t boundary_pos = contentType.find("boundary=");
-        if (boundary_pos != std::string::npos) {
-            std::string boundary = contentType.substr(boundary_pos + 9);
-            std::string delimiter = "--" + boundary;
-            const std::string& body = request.body;
-            size_t start = 0;
 
-            while ((start = body.find(delimiter, start)) != std::string::npos) {
-                start += delimiter.size();
+        if (boundary_pos == std::string::npos) {
+            Logger::error("No boundary found in Content-Type: " + contentType);
+            return buildErrorResponse(400, server);
+        }
 
-                if (body.compare(start, 2, "--") == 0)
-                    break;
-                if (body.compare(start, 2, "\r\n") == 0)
-                    start += 2;
+        std::string boundary = contentType.substr(boundary_pos + 9);
+        std::string delimiter = "--" + boundary;
+        
+        Logger::debug("Parsed boundary: " + boundary);
+        Logger::debug("Using delimiter: " + delimiter);
 
-                size_t header_end = body.find("\r\n\r\n", start);
-                if (header_end == std::string::npos)
-                    break;
+        const std::string& body = request.body;
+        size_t start = 0;
+        bool fileSaved = false;
 
-                std::string headers = body.substr(start, header_end - start);
-                size_t disp_start = headers.find("Content-Disposition:");
-                if (disp_start == std::string::npos)
-                    continue;
+        while ((start = body.find(delimiter, start)) != std::string::npos) {
+            start += delimiter.size();
 
-                size_t filename_pos = headers.find("filename=\"", disp_start);
-                if (filename_pos == std::string::npos)
-                    continue;
+            if (body.compare(start, 2, "--") == 0) {
+                Logger::debug("End of multipart body reached");
+                break;
+            }
 
-                filename_pos += 10;
-                size_t filename_end = headers.find("\"", filename_pos);
-                if (filename_end == std::string::npos)
-                    continue;
+            if (body.compare(start, 2, "\r\n") == 0)
+                start += 2;
 
-                std::string filename = headers.substr(filename_pos, filename_end - filename_pos);
-                size_t content_start = header_end + 4;
-                size_t content_end = body.find(delimiter, content_start);
-                if (content_end == std::string::npos)
-                    break;
+            size_t header_end = body.find("\r\n\r\n", start);
+            if (header_end == std::string::npos) {
+                Logger::error("Couldn't find header end");
+                break;
+            }
 
-                std::string file_data = body.substr(content_start, content_end - content_start);
+            std::string headers = body.substr(start, header_end - start);
+            Logger::debug("Part headers: " + headers);
 
-                //Strip trailing \r\n
-                if (file_data.size() >= 2 &&
-                    file_data[file_data.size() - 2] == '\r' &&
-                    file_data[file_data.size() - 1] == '\n') {
-                    file_data = file_data.substr(0, file_data.size() - 2);
+            size_t disp_start = headers.find("Content-Disposition:");
+            if (disp_start == std::string::npos) {
+                Logger::warning("No Content-Disposition header, skipping");
+                continue;
+            }
+
+            size_t filename_pos = headers.find("filename=\"", disp_start);
+            if (filename_pos == std::string::npos) {
+                Logger::warning("No filename in header, skipping");
+                continue;
+            }
+
+            filename_pos += 10;
+            size_t filename_end = headers.find("\"", filename_pos);
+            if (filename_end == std::string::npos) {
+                Logger::warning("Malformed filename, skipping");
+                continue;
+            }
+
+            std::string filename = headers.substr(filename_pos, filename_end - filename_pos);
+            Logger::debug("Extracted filename: " + filename);
+
+            if (filename.empty()) {
+                Logger::warning("Empty filename, skipping");
+                continue;
+            }
+
+            size_t content_start = header_end + 4;
+            size_t content_end = body.find(delimiter, content_start);
+            if (content_end == std::string::npos) {
+                Logger::error("Couldn't find end of content block");
+                break;
+            }
+
+            std::string file_data = body.substr(content_start, content_end - content_start);
+
+            //Strip trailing \r\n
+            if (file_data.size() >= 2 &&
+                file_data[file_data.size() - 2] == '\r' &&
+                file_data[file_data.size() - 1] == '\n') {
+                file_data = file_data.substr(0, file_data.size() - 2);
+            }
+
+            filepath = upload_dir + "/" + filename;
+
+            Logger::debug("SAving file to: " + filepath);
+            int fd = open(filepath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                if (fd < 0) {
+                    Logger::error("Failed to open file: " + filepath);
+                    return buildErrorResponse(500, server);
                 }
 
-                filepath = upload_dir + "/" + filename;
-                int fd = open(filepath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-                if (fd < 0)
-                    return buildErrorResponse(500, server);
-
-                write(fd, file_data.c_str(), file_data.size());
+                ssize_t written = write(fd, file_data.c_str(), file_data.size());
                 close(fd);
+
+                if (written < 0) {
+                    Logger::error("Failed to write to file");
+                    return buildErrorResponse(500, server);
+                }
+
+                Logger::info("Successfully wrote " + intToString(written) + " bytes to file");
 
                 response.status_code = 201;
                 response.status_text = getStatusText(201);
                 response.body = "File uploaded successfully to " + filepath;
+                fileSaved = true;
                 break; // Only handle one file
             }
+            
+            if (!fileSaved) {
+                Logger::error("No file was saved during multipart handling");
+                return buildErrorResponse(400, server);
+            }
         } else {
-            return buildErrorResponse(400, server);
+            Logger::error("Unsupported Content-Type: " + contentType);
+            return buildErrorResponse(400, server); // for unsupported media type
         }
-    } else {
-        // fallback for URL-encoded or raw body
-        std::string filename = "upload_" + intToString(std::time(0));
-        filepath = upload_dir + "/" + filename;
+    //  {
+    //     // fallback for URL-encoded or raw body
+    //     std::string filename = "upload_" + intToString(std::time(0));
+    //     filepath = upload_dir + "/" + filename;
 
-        std::ofstream ofs(filepath.c_str());
-        if (!ofs)
-            return buildErrorResponse(500, server);
+    //     std::ofstream ofs(filepath.c_str());
+    //     if (!ofs)
+    //         return buildErrorResponse(500, server);
 
-        std::string decoded = urlDecode(request.body);
-        if (decoded.empty())
-            ofs << "# file was created empty.\n";
-        else
-            ofs << decoded;
-        ofs.close();
+    //     std::string decoded = urlDecode(request.body);
+    //     if (decoded.empty())
+    //         ofs << "# file was created empty.\n";
+    //     else
+    //         ofs << decoded;
+    //     ofs.close();
 
-        response.status_code = 201;
-        response.status_text = getStatusText(201);
-        response.body = "File uploaded successfully to " + filepath;
-    }
+    //     response.status_code = 201;
+    //     response.status_text = getStatusText(201);
+    //     response.body = "File uploaded successfully to " + filepath;
+    // }
 
     // Common response headers
     response.headers["Content-Length"] = intToString(response.body.size());
