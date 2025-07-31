@@ -61,3 +61,41 @@ ssize_t Client::sendResponse(const HttpResponse& response)
 	// Logger::debug(res);
 	return (send(this->fd, res.c_str(), res.size(), 0));
 }
+
+void Client::appentToRaw(const char* data, size_t len) {
+	raw_request.append(data, len);
+	request_size += len;
+
+	if (!headers_parsed) {
+		size_t pos = raw_request.find("\r\n\r\n");
+		if (pos != std::string::npos) {
+			headers_parsed = true;
+			headers_end_pos = pos;
+			content_length = extractContentLength(raw_request);
+		}
+	}
+}
+
+// will return the full body size only
+size_t Client::extractTotalLength() const {
+	return headers_end_pos + 4 + content_length;
+}
+
+// will be used to know when it's safe to parse the request.
+size_t Client::extractContentLength(const std::string& request) {
+	size_t pos = request.find("Content-Length:");
+	if (pos == std::string::npos)
+		return 0;
+	
+	pos += std::string("Content-Length:").length();
+	while (pos < request.size() && isspace(request[pos]))
+		++pos;
+		
+	size_t end = request.find("\r\n", pos);
+	std::string len_str = request.substr(pos, end - pos);
+	return static_cast<size_t>(std::atoi(len_str.c_str()));
+}
+
+bool Client::headersParsed() const {
+	return headers_parsed;
+}

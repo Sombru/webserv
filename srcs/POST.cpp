@@ -99,6 +99,10 @@ HttpResponse POST(HttpRequest request, const ServerConfig &server)
     // response.status_code = 200;
     // response.status_text = getStatusText(200);
     // response.body = "Data received (not saved)";
+    
+    // bufferent file until the end of the body, then parse
+
+
 
     //check if we're getting a file 
     if (contentType.find("multipart/form-data") != std::string::npos) {
