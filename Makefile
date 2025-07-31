@@ -10,7 +10,8 @@ RM          =   rm -rf
 OBJS_DIR 	=	objs
 
 # Source Files
-SRCS		=	main.cpp utils/Utils.cpp utils/Logger.cpp srcs/Config.cpp
+SRCS		=	main.cpp utils/Utils.cpp utils/Logger.cpp srcs/Config.cpp srcs/Socket.cpp\
+				srcs/Client.cpp srcs/ServerManager.cpp srcs/HTTP_parse.cpp
 # Object Files
 OBJS		=	$(SRCS:%.cpp=$(OBJS_DIR)/%.o)
 

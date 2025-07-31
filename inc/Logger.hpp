@@ -8,7 +8,7 @@
 #define LOG_TIMESTAMP "\033[90m" // Bright Black (Gray)
 #define LOG_RESET "\033[0m"      // Reset to default
 
-// #include "HTTP.hpp"
+#include "HTTP.hpp"
 #include "Webserv.hpp"
 #include "Config.hpp"
 #include <ctime>
@@ -49,6 +49,7 @@ std::ostream &operator<<(std::ostream &os, const Token &token);
 std::ostream &operator<<(std::ostream &os, const std::vector<Token> &tokens);
 std::ostream &operator<<(std::ostream &os, const ServerConfig &coserver);
 std::ostream &operator<<(std::ostream &os, const LocationConfig &location);
+std::ostream &operator<<(std::ostream &os, const HttpRequest &req);
 // #include "../utils/Logger.cpp"
 
 
