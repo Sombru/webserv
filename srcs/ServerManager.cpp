@@ -53,11 +53,9 @@ void ServerManager::run()
 				client.makeRequest();
 				// Logger::debug(client.getRaw_request());
 				HttpRequest request = parseRequest(client.getRaw_request(), servers[i]);
-				Logger::debug(request);
-				// HttpRequest request = parseRequset(client.getRaw_request(), this->servers[i]);
-				// HttpResponse response = generateResponse(request, servers[i]);
-				// client.sendResponse(response);
-				// Logger::debug(request);
+				// Logger::debug(request.path);
+				HttpResponse response = generateResponse(request, servers[i]);
+				client.sendResponse(response);
 			}
 		}
 	}

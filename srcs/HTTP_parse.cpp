@@ -21,7 +21,7 @@ const LocationConfig *findBestLocation(const std::string &path, const ServerConf
 	{
 		for (size_t i = 0; i < server.locations.size(); i++)
 		{
-			if (!server.locations[i].name.compare(0, match, path))
+			if (!server.locations[i].name.compare(0, match, path, 0, match))
 				return &server.locations[i];
 		}
 		return NULL;
@@ -59,8 +59,7 @@ HttpRequest parseRequest(const std::string &rawRequest, const ServerConfig &serv
 	std::string line;
 
 	// Parse the request line (first line)
-	if (!std::getline(stream, line))
-		throw std::runtime_error("Invalid HTTP request: empty request");
+	!std::getline(stream, line);
 
 	// Remove carriage return if present
 	if (!line.empty() && line[line.length() - 1] == '\r')
@@ -69,8 +68,7 @@ HttpRequest parseRequest(const std::string &rawRequest, const ServerConfig &serv
 	std::istringstream requestLine(line);
 	std::string methodStr, uri, version;
 
-	if (!(requestLine >> methodStr >> uri >> version))
-		throw std::runtime_error("Invalid HTTP request line");
+	requestLine >> methodStr >> uri >> version;
 
 	// Parse method
 	request.method = methodStr;
@@ -137,6 +135,43 @@ HttpRequest parseRequest(const std::string &rawRequest, const ServerConfig &serv
 	// Find the best matching location for this request path
 	request.best_location = findBestLocation(request.path, server);
 	if (request.best_location)
-		request.path = server.root + request.best_location->root + request.path.substr(request.best_location->name.length());
+	{
+		std::string relativePath;
+		if (request.path.length() >= request.best_location->name.length())
+		{
+			relativePath = request.path.substr(request.best_location->name.length());
+		}
+		request.fs_path = server.root + request.best_location->root + relativePath;
+	}
 	return request;
+}
+
+bool isValidRequest(const HttpRequest &request)
+{
+	if (request.method != "GET" && request.method != "POST" && request.method != "DELETE")
+		return false;
+	if (request.path.empty())
+		return false;
+	if (request.version != HTTPVERSION)
+		return false;
+	return true;
+}
+
+HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &serverConfig)
+{
+	if (!isValidRequest(request))
+		return buildErrorResponse(BAD_REQUEST, serverConfig);
+	Logger::debug("Request is valid");
+	if (!request.best_location)
+		return buildErrorResponse(NOTFOUND, serverConfig);
+	Logger::debug("Location found");
+	if (request.method == "GET")
+	{
+		return GET(request, serverConfig);
+	}
+	// else if (request.method == "POST")
+	// {
+	// 	return POST()
+	// }
+	return buildErrorResponse(BAD_REQUEST, serverConfig);
 }

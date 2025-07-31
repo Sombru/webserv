@@ -2,6 +2,7 @@
 
 #include "Webserv.hpp"
 #include "Socket.hpp"
+#include "HTTP.hpp"
 
 class Client
 {
@@ -22,7 +23,7 @@ public:
 	
 	void makeRequest(); // Reads data sent by the client over the socket.
 
-	// ssize_t sendResponse(const HttpResponse& response);
+	ssize_t sendResponse(const HttpResponse& response);
 	ssize_t sendResponse(const std::string& response);
 
 };

@@ -1,6 +1,7 @@
 #include "Client.hpp"
 #include "Socket.hpp"
 #include "Logger.hpp"
+#include "Utils.hpp"
 
 // Calls acceptClient() from the passed-in Socket object.
 // This waits for and accepts a new client connection.
@@ -49,12 +50,12 @@ void Client::makeRequest()
 
 ssize_t Client::sendResponse(const std::string &response)
 {
-	return (send(this->fd, response.c_str(), this->request_size, 0));
+	return (send(this->fd, response.c_str(), response.size(), 0));
 }
 
-// ssize_t Client::sendResponse(const HttpResponse &response)
-// {
-// 	std::string res = serialize(response);
-// 	// Logger::debug(res);
-// 	return (send(this->fd, res.c_str(), res.size(), 0));
-// }
+ssize_t Client::sendResponse(const HttpResponse &response)
+{
+	std::string res = serialize(response);
+	// Logger::debug(res);
+	return (send(this->fd, res.c_str(), res.size(), 0));
+}

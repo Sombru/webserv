@@ -1,6 +1,7 @@
 #include "Webserv.hpp"
 #include "Utils.hpp"
-// #include "HTTP.hpp"
+#include "HTTP.hpp"
+#include "Logger.hpp"
 
 // takes a path to a file and returns it contents
 /// @returns file contens, BADFILE if cant open/read, EPMTY if contents is empty
@@ -25,20 +26,102 @@ std::string intToString(int n)
 	return ss.str();
 }
 
-// std::string serialize(const HttpResponse &response)
-// {
-// 	std::ostringstream oss;
+std::string serialize(const HttpResponse &response)
+{
+	std::ostringstream oss;
 
-// 	oss << response.version << " " << response.status_code << " " << response.status_text << "\r\n";
-// 	for (std::map<std::string, std::string>::const_iterator it = response.headers.begin(); it != response.headers.end(); ++it)
-// 	{
-// 		oss << it->first << ": " << it->second << "\r\n";
-// 	}
-// 	oss << "\r\n";
-// 	oss << response.body;
+	oss << response.version << " " << response.status_code << " " << response.status_text << "\r\n";
+	for (std::map<std::string, std::string>::const_iterator it = response.headers.begin(); it != response.headers.end(); ++it)
+	{
+		oss << it->first << ": " << it->second << "\r\n";
+	}
+	oss << "\r\n";
+	oss << response.body;
 
-// 	return oss.str();
-// }
+	return oss.str();
+}
+
+// helper to check if "path" is a directory 
+bool is_directory(const std::string &path)
+{
+	struct stat info;
+	if (stat(path.c_str(), &info) != 0)
+	{
+		return false; // cannot access path
+	}
+	return (info.st_mode & S_IFDIR) != 0;
+}
+
+// gets directory contents in a specified path
+std::vector<std::string> getDirectoryContents(const std::string &path)
+{
+	std::vector<std::string> contents;
+
+	DIR *dir = opendir(path.c_str());
+	if (!dir)
+		return contents; // Could not open directory
+
+	struct dirent *entry;
+	while ((entry = readdir(dir)) != NULL)
+	{
+		std::string name = entry->d_name;
+		if (name != "." && name != "..")
+			contents.push_back(name);
+	}
+	closedir(dir);
+	return contents;
+}
+
+// builds HTML page for directory listing (autoindex)
+std::string buildAutoIndexHTML(const std::string &path, const std::string &requestPath)
+{
+	std::string html;
+	std::vector<std::string> contents = getDirectoryContents(path);
+
+	// HTML header
+	html += "<!DOCTYPE html>\n";
+	html += "<html>\n<head>\n";
+	html += "<title>Index of " + requestPath + "</title>\n";
+	html += "<style>\n";
+	html += "body { font-family: Arial, sans-serif; margin: 40px; }\n";
+	html += "h1 { color: #333; }\n";
+	html += "ul { list-style-type: none; padding: 0; }\n";
+	html += "li { margin: 5px 0; }\n";
+	html += "a { text-decoration: none; color: #0066cc; }\n";
+	html += "a:hover { text-decoration: underline; }\n";
+	html += ".directory::before { content: '📁 '; }\n";
+	html += ".file::before { content: '📄 '; }\n";
+	html += "</style>\n";
+	html += "</head>\n<body>\n";
+	html += "<h1>Index of " + requestPath + "</h1>\n";
+	html += "<ul>\n";
+
+	// Add parent directory link if not root
+	if (requestPath != "/")
+	{
+		html += "<li><a href=\"../\" class=\"directory\">../</a></li>\n";
+	}
+
+	// Add directory entries
+	for (size_t i = 0; i < contents.size(); ++i)
+	{
+		std::string entry = contents[i];
+		std::string fullPath = path + "/" + entry;
+		
+		// Check if entry is a directory
+		if (is_directory(fullPath))
+		{
+			html += "<li><a href=\"" + entry + "/\" class=\"directory\">" + entry + "/</a></li>\n";
+		}
+		else
+		{
+			html += "<li><a href=\"" + entry + "\" class=\"file\">" + entry + "</a></li>\n";
+		}
+	}
+
+	html += "</ul>\n</body>\n</html>";
+	return html;
+}
 
 // // gets directory contets in a specified location of a server
 // std::vector<std::string> getLocationContents(const std::string &server_root, const std::string &location_root)

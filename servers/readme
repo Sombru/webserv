@@ -79,7 +79,7 @@ location /name {
 | `autoindex` | Enable directory listing | `off` | `autoindex on;` |
 | `cgi_ext` | CGI file extensions | None | `cgi_ext .py .sh;` |
 | `cgi_path` | CGI interpreter paths | None | `cgi_path /usr/bin/python3 /usr/bin/bash;` |
-| `return` | Redirection path | None | `return /new-path;` |
+| `return` | Redirection path | None | `return /new-location;` |
 | `upload_dir` | Upload directory for POST | None | `upload_dir uploads/;` |
 
 ### Location Block Example

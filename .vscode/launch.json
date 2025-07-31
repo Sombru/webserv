@@ -8,7 +8,7 @@
 			"name": "(gdb) Launch",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "/home/sombru/webserv3/webserv",
+			"program": "${cwd}/webserv",
 			"args": ["servers/default.conf"],
 			"stopAtEntry": false,
 			"cwd": "${fileDirname}",

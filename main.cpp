@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 	}
 	catch (const std::exception &e)
 	{
-		Logger::error("Parsing failed: " + std::string(e.what()));
+		Logger::error(std::string(e.what()));
 		return 3;
 	}
 }

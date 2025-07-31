@@ -20,5 +20,6 @@
 #include <poll.h>
 #include <sys/epoll.h>
 #include <dirent.h>
+#include <sys/stat.h>
 
 extern volatile sig_atomic_t g_sigint;
