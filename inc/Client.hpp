@@ -35,4 +35,6 @@ public:
 	ssize_t sendResponse(const HttpResponse& response);
 	ssize_t sendResponse(const std::string& response);
 
+	bool tryParseHeaders();
+	bool isRequestComplete() const;
 };
