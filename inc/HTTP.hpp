@@ -69,5 +69,6 @@ HttpResponse GET(const HttpRequest &request, const ServerConfig &server);
 // builders
 
 HttpResponse buildErrorResponse(int code, const ServerConfig& server);
+HttpResponse buildRedirction(const HttpRequest &request);
 HttpResponse buildSuccessResponse(int code, const std::string &body);
 inline HttpResponse buildResponse(int code, const std::string &body, const ServerConfig& server);

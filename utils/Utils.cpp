@@ -73,10 +73,10 @@ std::vector<std::string> getDirectoryContents(const std::string &path)
 }
 
 // builds HTML page for directory listing (autoindex)
-std::string buildAutoIndexHTML(const std::string &path, const std::string &requestPath)
+std::string buildAutoIndexHTML(const std::string &fs_path, const std::string &requestPath)
 {
 	std::string html;
-	std::vector<std::string> contents = getDirectoryContents(path);
+	std::vector<std::string> contents = getDirectoryContents(fs_path);
 
 	// HTML header
 	html += "<!DOCTYPE html>\n";
@@ -106,16 +106,21 @@ std::string buildAutoIndexHTML(const std::string &path, const std::string &reque
 	for (size_t i = 0; i < contents.size(); ++i)
 	{
 		std::string entry = contents[i];
-		std::string fullPath = path + "/" + entry;
+		std::string href;
+		if (requestPath[requestPath.size()] != '/')
+			href = requestPath + '/' + entry;
+		else
+			href = requestPath + entry;
+		std::string fullPath = fs_path + "/" + entry;
 		
 		// Check if entry is a directory
 		if (is_directory(fullPath))
 		{
-			html += "<li><a href=\"" + entry + "/\" class=\"directory\">" + entry + "/</a></li>\n";
+			html += "<li><a href=\"" + href + "\" class=\"directory\">" + entry + "/</a></li>\n";
 		}
 		else
 		{
-			html += "<li><a href=\"" + entry + "\" class=\"file\">" + entry + "</a></li>\n";
+			html += "<li><a href=\"" + href + "\" class=\"file\">" + entry + "</a></li>\n";
 		}
 	}
 

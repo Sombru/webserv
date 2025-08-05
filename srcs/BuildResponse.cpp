@@ -74,6 +74,19 @@ HttpResponse buildErrorResponse(int code, const ServerConfig &server)
 	return response;
 }
 
+HttpResponse buildRedirction(const HttpRequest &request)
+{
+	HttpResponse response;
+	response.body = "Redirecting...";
+	response.status_code = MOVED_PERMANENTLY;
+	response.status_text = "Moved Permanently";
+	response.version = HTTPVERSION;
+	response.headers["Location"] = request.best_location->returnPath;
+	response.headers["Connection"] = "close";
+	response.headers["Content-Length"] = intToString(response.body.size());
+	return response;
+}
+
 // builds a HTTP response with given succes code and body,
 // use overload for error responses
 HttpResponse buildSuccessResponse(int code, const std::string &body)

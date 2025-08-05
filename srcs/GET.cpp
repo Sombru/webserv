@@ -22,17 +22,7 @@ HttpResponse GET(const HttpRequest &request, const ServerConfig &server)
 	// 		return runCGI();
 	// Logger::debug(request.fs_path + (is_directory(request.fs_path) ? " true": " false"));
 	if (request.best_location->returnPath.empty() == false)
-	{
-		HttpResponse response;
-		response.body = "Redirecting...";
-		response.status_code = MOVED_PERMANENTLY;
-		response.status_text = "Moved Permanently";
-		response.version = "HTTP/1.1";
-		response.headers["Location"] = request.best_location->returnPath;
-		response.headers["Connection"] = "close";
-		response.headers["Content-Length"] = intToString(response.body.size());
-		return response;
-	}
+		return buildRedirction(request);
 	if (is_directory(request.fs_path))
 	{
 		if (request.best_location->autoindex)
