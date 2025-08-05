@@ -65,7 +65,8 @@ struct HttpResponse
 HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &serverConfig);
 
 HttpResponse GET(const HttpRequest &request, const ServerConfig &server);
-
+HttpResponse POST(HttpRequest request, const ServerConfig &server);
+HttpResponse DELETE(HttpRequest request, const ServerConfig &server);
 // builders
 
 HttpResponse buildErrorResponse(int code, const ServerConfig& server);

@@ -73,7 +73,7 @@ location /name {
 
 | Directive | Description | Default | Example |
 |-----------|-------------|---------|---------|
-| `root` | Document root for this location | Server root | `root ./static/;` |
+| `root` | Document root for this location(relative to server root) | Server root | `root ./static/;` |
 | `index` | Index file name | `index.html` | `index welcome.html;` |
 | `allow_methods` | Allowed HTTP methods | `GET` (always enabled) | `allow_methods GET POST;` |
 | `autoindex` | Enable directory listing | `off` | `autoindex on;` |

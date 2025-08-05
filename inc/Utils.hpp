@@ -12,3 +12,4 @@ std::string serialize(const HttpResponse &);
 bool is_directory(const std::string &path);
 std::vector<std::string> getDirectoryContents(const std::string &path);
 std::string buildAutoIndexHTML(const std::string &path, const std::string &requestPath);
+std::string urlDecode(const std::string &s);

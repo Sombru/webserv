@@ -21,6 +21,7 @@ HttpResponse GET(const HttpRequest &request, const ServerConfig &server)
 	// if (cgiExt(request.fs_path) == true)
 	// 		return runCGI();
 	// Logger::debug(request.fs_path + (is_directory(request.fs_path) ? " true": " false"));
+	Logger::debug(request.fs_path);
 	if (request.best_location->returnPath.empty() == false)
 		return buildRedirction(request);
 	if (is_directory(request.fs_path))

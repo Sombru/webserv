@@ -159,19 +159,29 @@ bool isValidRequest(const HttpRequest &request)
 
 HttpResponse generateResponse(const HttpRequest &request, const ServerConfig &serverConfig)
 {
+	// Logger::debug(request.best_location->name);
+	// Logger::debug(request.fs_path);
 	if (!isValidRequest(request))
 		return buildErrorResponse(BAD_REQUEST, serverConfig);
 	Logger::debug("Request is valid");
 	if (!request.best_location)
 		return buildErrorResponse(NOTFOUND, serverConfig);
 	Logger::debug("Location found");
+
+	// Logger::debug(serverConfig);
+	
+	// Logger::debug(request.method);
 	if (request.method == "GET")
 	{
 		return GET(request, serverConfig);
 	}
-	// else if (request.method == "POST")
-	// {
-	// 	return POST()
-	// }
+	else if (request.method == "POST")
+	{
+		return POST(request, serverConfig);
+	}
+	else if (request.method == "DELETE")
+	{
+		return DELETE(request, serverConfig);
+	}
 	return buildErrorResponse(BAD_REQUEST, serverConfig);
 }

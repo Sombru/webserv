@@ -4,7 +4,7 @@
 #include "Logger.hpp"
 #include "ServerManager.hpp"
 
-#define CONFIG_PATH "servers/test.conf"
+// #define CONFIG_PATH "servers/test.conf"
 volatile sig_atomic_t g_sigint = 0;
 
 void ft_signal_handler(int c)

@@ -41,7 +41,7 @@ std::string serialize(const HttpResponse &response)
 	return oss.str();
 }
 
-// helper to check if "path" is a directory 
+// helper to check if "path" is a directory
 bool is_directory(const std::string &path)
 {
 	struct stat info;
@@ -112,7 +112,7 @@ std::string buildAutoIndexHTML(const std::string &fs_path, const std::string &re
 		else
 			href = requestPath + entry;
 		std::string fullPath = fs_path + "/" + entry;
-		
+
 		// Check if entry is a directory
 		if (is_directory(fullPath))
 		{
@@ -126,6 +126,34 @@ std::string buildAutoIndexHTML(const std::string &fs_path, const std::string &re
 
 	html += "</ul>\n</body>\n</html>";
 	return html;
+}
+
+// adding a UrlDecoder - function helper that will transfor the request.body
+// from data=Hello+world%21 to "Hello world!", meaning to more readuble text version
+std::string urlDecode(const std::string &s)
+{
+	std::string out;
+	char ch;
+	int i, ii;
+	for (i = 0; i < static_cast<int>(s.length()); i++)
+	{
+		if (s[i] == '%')
+		{
+			sscanf(s.substr(i + 1, 2).c_str(), "%x", &ii);
+			ch = static_cast<char>(ii);
+			out += ch;
+			i = i + 2;
+		}
+		else if (s[i] == '+')
+		{
+			out += ' ';
+		}
+		else
+		{
+			out += s[i];
+		}
+	}
+	return out;
 }
 
 // // gets directory contets in a specified location of a server

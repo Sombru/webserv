@@ -13,10 +13,12 @@ Client::Client(int poll_fd, int requset_size)
 	socklen_t addrlen = sizeof(client_addr);
 	this->fd = accept(poll_fd, (sockaddr *)&client_addr, &addrlen);
 	this->request_size = requset_size;
+	Logger::debug("client: " + intToString(fd) + " connected");
 }
 
 Client::~Client()
 {
+	Logger::debug("client: " + intToString(fd) + " disconected");
 	close(fd);
 }
 
