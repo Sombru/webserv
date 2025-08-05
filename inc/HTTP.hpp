@@ -50,3 +50,4 @@ HttpResponse DELETE(HttpRequest request, const ServerConfig &server);
 std::string loadErrorPage(int code, const ServerConfig& server);
 
 std::string getStatusText(int code);
+std::string loadHtmlFile(const std::string& path);

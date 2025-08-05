@@ -157,9 +157,12 @@ HttpResponse POST(HttpRequest request, const ServerConfig &server)
                 write(fd, file_data.c_str(), file_data.size());
                 close(fd);
 
+                response.body = loadHtmlFile(filepath);
                 response.status_code = 201;
                 response.status_text = getStatusText(201);
-                response.body = "File uploaded successfully to " + filepath;
+                //response.body = "File uploaded successfully to " + filepath;
+                response.headers["Content-Type"] = "text/html";
+                response.headers["Content-Length"] = intToString(response.body.size());
                 break; // Only handle one file
             }
         } else {
@@ -181,16 +184,21 @@ HttpResponse POST(HttpRequest request, const ServerConfig &server)
             ofs << decoded;
         ofs.close();
 
+        response.body = loadHtmlFile(filepath); // load the body first
         response.status_code = 201;
         response.status_text = getStatusText(201);
-        response.body = "File uploaded successfully to " + filepath;
+        //response.body = "File uploaded successfully to " + filepath;
+        
+        
+        response.headers["Content-Type"] = "text/html; charset=UTF-8";
+        response.headers["Content-Length"] = intToString(response.body.size());
     }
 
     // Common response headers
     response.headers["Content-Length"] = intToString(response.body.size());
-    response.headers["Content-Type"] = "text/plain";
+    response.headers["Content-Type"] = "text/html; charset=UTF-8";
     response.version = "HTTP/1.1";
-
+    
     Logger::debug("show response");
     Logger::error(response.status_code);
     Logger::error("Response body is " + response.body);
@@ -198,6 +206,23 @@ HttpResponse POST(HttpRequest request, const ServerConfig &server)
     std::cout << "=== RESPONSE SENT ===\n" << full_response << "\n=====================\n";
 
     return response;
+}
+
+std::string loadHtmlFile(const std::string& filepath) {
+    std::ifstream file("www/portfolio/response.html");
+
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string body = buffer.str();
+
+    // Replace placeholder {{filepath}} with actual path
+    size_t pos;
+    while ((pos = body.find("{{filepath}}")) != std::string::npos) {
+        body.replace(pos, 12, filepath); // 12 = length of "{{filepath}}"
+    }
+
+    return body;
 }
 
 
