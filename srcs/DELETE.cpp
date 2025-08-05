@@ -68,4 +68,4 @@ HttpResponse DELETE(HttpRequest request, const ServerConfig &server) {
 
 
 // how to test it:example
-// curl -X DELETE http://127.0.3:8080/upload/upload_1753695010
+// curl -X DELETE http://127.0.3:8080/uploads/upload_1753695010
