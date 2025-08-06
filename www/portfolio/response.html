@@ -1,26 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Upload Success</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 2em; }
-        h3 { color: #2E8B57; }
-        .return-btn {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 15px;
-            background-color: #007BFF;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-        .return-btn:hover {
-            background-color: #0056b3;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Upload Success</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff;
+      padding: 2em;
+      margin: 0;
+    }
+
+    .container {
+      border: 2px dashed yellow;
+      padding: 2em;
+      text-align: center;
+      max-width: 600px;
+      margin: 5% auto;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5em;
+      color: #2E8B57;
+    }
+
+    p {
+      font-size: 1.2rem;
+      margin: 1em 0;
+    }
+
+    code {
+      background: #f0f0f0;
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    a.return-link {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 1rem;
+      color: #007BFF;
+      text-decoration: none;
+    }
+
+    a.return-link:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-    <h3>File uploaded successfully to <code>{{filepath}}</code></h3>
-    <a class="return-btn" href="/"> ← Return to Home page </a>
+  <div class="container">
+    <h1>Upload Successful</h1>
+    <p>Your file was saved to:</p>
+    <p><code>{{filepath}}</code></p>
+    <a class="return-link" href="/">← Back to homepage</a>
+  </div>
 </body>
 </html>
