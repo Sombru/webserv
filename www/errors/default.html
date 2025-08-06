@@ -5,10 +5,21 @@
   <meta charset="UTF-8" />
   <title>Error {{code}}</title>
   <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff;
+      padding: 2em;
+      margin: 0;
+    }
 
     .container {
-      border: 2px dashed yellow;
-	  text-align: center;
+      border: 2px dashed rgb(0, 255, 42);
+      padding: 2em;
+      text-align: center;
+      max-width: 600px;
+      margin: 5% auto;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
 
     h1 {
@@ -20,6 +31,16 @@
     p {
       font-size: 1.5rem;
       margin: 10px 0;
+    }
+
+    a {
+      text-decoration: none;
+      color: #007BFF;
+      font-size: 1rem;
+    }
+
+    a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
@@ -33,11 +54,8 @@
   </div>
 
   <script>
-    // Optional: You could set from query string or server-side replace
-    // If you server-render, replace placeholders like:
-    // {{code}} → 404, {{message}} → Not Found
     document.getElementById("error-code").textContent = "{{code}}";
-    document.getElementById("error-message").textContent = "{{message}}";
+    document.getElementById("error-status_text").textContent = "{{status_text}}";
   </script>
 </body>
 

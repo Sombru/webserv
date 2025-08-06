@@ -38,3 +38,4 @@ std::vector<std::string> getLocationContents(const std::string& server_root, con
 std::vector<std::string> getLocationContents(const std::string& path);
 std::string getFileExtension(const std::string& file);
 std::string urlDecode(const std::string &s);
+std::string generateFileListHtml(const std::string& directory);

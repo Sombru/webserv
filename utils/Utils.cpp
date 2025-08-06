@@ -109,3 +109,26 @@ std::string urlDecode(const std::string &s) {
     }
     return out;
 }
+
+// helper function to generate a file list for the existing files 
+// from uploads in the main page and call delete method from the
+// mainpage
+std::string generateFileListHtml(const std::string& directory) {
+    std::string html;
+    DIR* dir = opendir(directory.c_str());
+    if (!dir) return "<li>Could not open upload directory.</li>";
+
+    struct dirent* entry;
+    while ((entry = readdir(dir))) {
+        std::string name = entry->d_name;
+        if (name == "." || name == "..") continue;
+
+        html += "<li id=\"file-" + name + "\">";
+        html += "<a href=\"/uploads/" + name + "\">" + name + "</a> ";
+        html += "<button onclick=\"deleteFile('" + name + "')\" style=\"margin-left:10px;color:red;\">− Delete</button>";
+        html += "</li>\n";
+    }
+    closedir(dir);
+    return html;
+}
+
