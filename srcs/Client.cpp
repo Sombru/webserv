@@ -7,13 +7,14 @@
 // This waits for and accepts a new client connection.
 // If it fails, throws exception
 
-Client::Client(int client_fd, int requset_size)
+Client::Client(int client_fd, long requset_size)
 {
 	this->fd = client_fd;
 	// sockaddr_in client_addr;
 	// socklen_t addrlen = sizeof(client_addr);
 	// this->fd = accept(poll_fd, (sockaddr*)&client_addr, &addrlen);
 	this->request_size = requset_size;
+	this->raw_request = "";
 }
 
 Client::~Client()
@@ -36,15 +37,16 @@ std::string Client::getRaw_request() const
 
 void Client::makeRequest()
 {
-	char buffer[this->request_size];
-	std::memset(buffer, 0, sizeof(buffer));
+	char* buffer = (char*)malloc(this->request_size);
+	std::memset(buffer, 0, this->request_size);
 
-	read(this->fd, buffer, sizeof(buffer) - 1);
+	read(this->fd, buffer, this->request_size - 1);
 	// recv(this->fd, buffer, sizeof(buffer) - 1, 0);
 
 	//std::cout << "Received request:\n" << buffer << std::endl;
 	Logger::debug("Recieved a request and saved to buffer");
-	this->raw_request = buffer;
+	this->raw_request += buffer;
+	free(buffer);
 }
 // Reads data sent by the client over the socket.
 // Read() fill a buffer

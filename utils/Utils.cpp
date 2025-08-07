@@ -124,8 +124,8 @@ std::string generateFileListHtml(const std::string& directory) {
         if (name == "." || name == "..") continue;
 
         html += "<li id=\"file-" + name + "\">";
-        html += "<a href=\"/uploads/" + name + "\">" + name + "</a> ";
-        html += "<button onclick=\"deleteFile('" + name + "')\" style=\"margin-left:10px;color:red;\">− Delete</button>";
+        html += "<span>" + name + "</span> ";
+        html += "<button onclick=\"deleteFile('" + name + "')\" style=\"margin-left:10px;\">− Delete</button>";
         html += "</li>\n";
     }
     closedir(dir);

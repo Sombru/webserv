@@ -35,6 +35,9 @@ void ServerManager::run()
 	// Map from client FD to index in 'servers[]'
 	std::map<int, size_t> fd_to_server_index;
 
+	// Map of client fds to clients, in case we want to record big files
+	std::map<int, Client*> clients;
+
 	// Adding all listening server sockets to poll_fds
 	for (size_t i = 0; i < sockets.size(); ++i) {
 		int server_fd = sockets[i].getServerFD();
@@ -87,15 +90,12 @@ void ServerManager::run()
 				client_pfd.events = POLLIN;
 				poll_fds.push_back(client_pfd);
 
+				Client* client = new Client(client_fd, 10485760);
+				clients.insert(std::pair<int, Client*>(client_fd, client));
+
 				Logger::info("Accepted new client: fd " + intToString(client_fd));
 				continue; // skip further processing of this fd
 			}
-
-			// Otherwise: client is sending us a request
-			Client client(fd, 8192);
-
-			Logger::debug("===RAW REQUEST START ===");
-			client.makeRequest();
 
 			// Map fd to correct server
 			if (fd_to_server_index.find(fd) == fd_to_server_index.end()) {
@@ -104,15 +104,33 @@ void ServerManager::run()
 			}
 			size_t server_index = fd_to_server_index[fd];
 
+			// Otherwise: client is sending us a request
+			Client* client = clients.at(fd);
+			client->makeRequest();
+
 			// Parse and handle the request
-			HttpRequest request = parseRequset(client.getRaw_request(), this->servers[server_index]);
+			HttpRequest request = parseRequset(client->getRaw_request(), this->servers[server_index]);
+
+			size_t len = request.body.find('\0');
+			if (len == std::string::npos) {
+				len = request.body.length();
+			}
+			
+			if (len < (size_t)std::atoi(request.headers["Content-Length"].c_str())) {
+				continue;
+			}
+
+			Logger::debug("===RAW REQUEST START ===");
+
 			Logger::debug("Request is valid");
 			// TODO is valid request
 			// switch to GET POST DELTE in this section to minimze err cheks
 			// have a map of headers that are handled
 			HttpResponse response = generateResponse(request, servers[server_index]);
 
-			client.sendResponse(response);
+			client->sendResponse(response);
+			free(client);
+			clients.erase(fd);
 			Logger::debug(request);
 			close(fd);
 			poll_fds.erase(poll_fds.begin() + i);
