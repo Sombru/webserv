@@ -1,71 +1,75 @@
-#include "include/Webserv.hpp"
+#include "Config.hpp"
+#include "Logger.hpp"
+#include "Utils.hpp"
 
-void validateStartTitle(const std::string& line)
+static Token addToken(TokenType type, std::string value)
 {
-    std::string server, braces, leftover;
-    std::stringstream ss(line);
-    ss >> server >> braces;
-    if (server != "server" && braces != "{" && (ss >> leftover))
-        throw std::invalid_argument("Unexpected data in input title");
+	Token token;
+
+	token.type = type;
+	token.value = value;
+	return token;
 }
 
-void validateTitles(std::ifstream &file)
+/// @brief parses contens of a file into tokens of TYPE and VALUE, see Token
+/// @param fileBuff file contents(cant be empty)
+/// @return // vector of tokens read from file
+std::vector<Token> ConfigParse::tokenize(std::string &fileBuff)
 {
-    std::string line;
-    if (!std::getline(file, line))
-        throw std::runtime_error("File is empty or couldn't read line");
-    validateStartTitle(line);
-}
-
-void validateBraces(std::string filename)
-{   
-    std::ifstream file;
-	openFile(file, filename);
-    std::string line;
-    std::vector<std::string> braces;
-    while (std::getline(file, line))
+	std::vector<Token> tokens;
+	std::string current;
+	char c;
+	for (size_t i = 0; i < fileBuff.length(); ++i)
 	{
-        if (line.find("{") != std::string::npos)
-            braces.push_back("{");   
-        else if (line.find("}") != std::string::npos)
-            braces.push_back("}");
-	}
-    if (braces.size() % 2 != 0)
-        throw std::invalid_argument("Invalid braces in input title");
-    int end = braces.size();
-    for (int start = 0; start < end / 2; start++)
-    {
-        if(braces[start] != "{" && braces[end] != "}")
-            throw std::invalid_argument("Invalid braces in input title");
-        end--;
-    }
-}
-
-void validateFormat(std::string filename)
-{
-	std::ifstream file;
-	openFile(file, filename);
-    validateTitles(file);
-    validateBraces(filename);
-}
-
-
-std::map<std::string, std::string> storeConfig(std::string filename)
-{
-	std::string line;
-	std::ifstream index;
-	openFile(index, filename);
-	std::map<std::string, std::string> config;
-	while (std::getline(index, line))
-	{
-		std::stringstream ss(line);
-		std::string date, value;
-
-		if (std::getline(ss, date, ' ') && std::getline(ss, value))
+		c = fileBuff[i];
+		if (isspace(c))
 		{
-			if (!date.empty() && !value.empty())
-				config.insert(std::make_pair(date, value));
+			if (!current.empty())
+			{
+				tokens.push_back(addToken(WORD, current));
+				current.clear();
+			}
 		}
+		else if (c == '{')
+		{
+			if (!current.empty())
+			{
+				tokens.push_back(addToken(WORD, current));
+				current.clear();
+			}
+			tokens.push_back(addToken(LBRACE, "{"));
+		}
+		else if (c == '}')
+		{
+			if (!current.empty())
+			{
+				tokens.push_back(addToken(WORD, current));
+				current.clear();
+			}
+			tokens.push_back(addToken(RBRACE, "}"));
+		}
+		else if (c == ';')
+		{
+			if (!current.empty())
+			{
+				tokens.push_back(addToken(WORD, current));
+				current.clear();
+			}
+			tokens.push_back(addToken(SEMICOLON, ";"));
+		}
+		else if (c == '#')
+		{
+			while (fileBuff[i] && fileBuff[i] != '\n')
+			{
+				i++;
+			}
+		}
+		else
+			current += c;
 	}
-	return config;
+	if (!current.empty())
+	{
+		tokens.push_back(addToken(WORD, current));
+	}
+	return tokens;
 }
