@@ -14,7 +14,7 @@ static Token addToken(TokenType type, std::string value)
 /// @brief parses contens of a file into tokens of TYPE and VALUE, see Token
 /// @param fileBuff file contents(cant be empty)
 /// @return // vector of tokens read from file
-std::vector<Token> ConfigParse::tokenize(std::string &fileBuff)
+std::vector<Token> Config::tokenize(std::string &fileBuff)
 {
 	std::vector<Token> tokens;
 	std::string current;
@@ -72,4 +72,11 @@ std::vector<Token> ConfigParse::tokenize(std::string &fileBuff)
 		tokens.push_back(addToken(WORD, current));
 	}
 	return tokens;
+}
+
+ServerConfig Config::parseServerConfig(const std::vector<Token> &tokens, size_t &index)
+{
+	static const char *serverDirectives[] = {"types", "client_max_body_size",
+	"host", "root", "index", "error_page", "location"};
+	
 }

@@ -6,8 +6,9 @@
 
 struct LocationConfig
 {
-	std::string name;						 // name of loc mandatory
+	std::string path;						 // path of to mandatory
 	std::string root;						 // path to root of its folder, defaults to root of the server
+	std::string alias;						 // alias to root of the its folder(doesnt append with path) 
 	std::string index;						 // index a location
 	std::string returnPath;					 // redirection path
 	std::string uploadDir;					 // dir for POST request might be usefull
@@ -26,19 +27,7 @@ struct ServerConfig
 	size_t clientMaxBodySize;			   // max recv size, mandatory
 	std::string errorPath;				   // mandatory
 	std::vector<LocationConfig> locations; // locations for URI starting with location.name
-};
-
-struct http
-{
-	std::vector<ServerConfig> servers;
-	std::map<std::string, std::string> mimeTypes;
-};
-
-/// @brief a structure to hold fully parsed config file
-struct Config
-{
-	std::vector<http> https;
-	std::map<std::string, std::string> globalDirectives;
+	std::map<std::string, std::string> mimeTypes; // mime types for this server
 };
 
 // default values for config files
@@ -48,7 +37,6 @@ struct Config
 // #define DEFAULT_INDEX_PHP "index.php"
 // #define DEFAULT_REQUEST_BODY_SIZE 0
 
-// extern const std::map<std::string, std::string> defaults;
 
 enum TokenType
 {
@@ -64,7 +52,7 @@ struct Token
 	std::string value;
 };
 
-class ConfigParse
+class Config
 {
 private:
 	/* data */

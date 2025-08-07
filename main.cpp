@@ -4,12 +4,13 @@
 #include "Utils.hpp"
 
 #define PATH "configs/default.conf"
-std::string getWord(std::string &fileBuff, size_t &start);
 
 int main()
 {
 	std::string fileBuff = readFile(PATH);
-	DEBUG(ConfigParse::tokenize(fileBuff));
+	std::vector<Token> tokens = Config::tokenize(fileBuff);
 
+	size_t i = 0;
+	ServerConfig serv = Config::parseServerConfig(tokens, i)
 
 }
