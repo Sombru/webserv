@@ -51,7 +51,7 @@ HttpResponse DELETE(HttpRequest request, const ServerConfig &server) {
         return buildErrorResponse(403, server); // Forbidden (trying to delete directory not a file)
     }
 
-    // Try to delelte
+    // Try to delete
     if (remove(full_path.c_str()) != 0) {
         return buildErrorResponse(500, server); // Failed to delete
     }
