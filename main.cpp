@@ -10,7 +10,8 @@ int main()
 	std::string fileBuff = readFile(PATH);
 	std::vector<Token> tokens = Config::tokenize(fileBuff);
 
-	size_t i = 0;
-	ServerConfig serv = Config::parseServerConfig(tokens, i)
-
+	Logger::debug(tokens);
+	
+	// size_t i = 0;
+	// ServerConfig serv = Config::parseServerConfig(tokens, i);
 }

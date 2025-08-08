@@ -6,7 +6,7 @@
 
 struct LocationConfig
 {
-	std::string path;						 // path of to mandatory
+	std::string path;						 // uri of loc
 	std::string root;						 // path to root of its folder, defaults to root of the server
 	std::string alias;						 // alias to root of the its folder(doesnt append with path) 
 	std::string index;						 // index a location
@@ -21,7 +21,8 @@ struct LocationConfig
 
 struct ServerConfig
 {
-	std::string serverNname;			   // mandatory
+	std::string name;			  		   // mandatory
+	std::string index;					   // file to serve when server page requested default is index.html
 	std::string host;					   // defaults to 127.0.0.1:8080, mam
 	std::string root;					   // root of this server mandatory
 	size_t clientMaxBodySize;			   // max recv size, mandatory
@@ -55,12 +56,33 @@ struct Token
 class Config
 {
 private:
-	/* data */
-public:
-	static std::vector<Token> tokenize(std::string &fileBuff);
-	static std::vector<ServerConfig> parseConfig(const char*);
-	static ServerConfig parseServerConfig(const std::vector<Token> &tokens, size_t &index);
-	static LocationConfig parseLocation(const std::vector<Token> &tokens, size_t &index);
-	static void validateConfig(std::vector<ServerConfig> &config);
+	const char *configPath; // path to config file
+	std::string fileBuff; // contents of a config file
+	std::vector<Token> tokens; // tokens of config file
+	std::string errorMessage; // error messgae 
+	std::vector<ServerConfig> conf; // parsed config structure
 
+	ServerConfig serverBase; 
+	LocationConfig LocationBase;
+
+    std::string serverDirectives[8] = {
+        "types", "host", "index", "root",
+        "client_max_body_size", "error_page",
+        "location", "types"};
+	std::string locationDirectives[8] = {
+		"root", "alias", "index", "autoindex", 
+		"allowed methods", "cgi" "return"
+	};
+
+public:
+	Config(char *src);
+	~Config();
+
+	void tokenize();
+	int parseConfig();
+	int parseServerConfig(size_t &i);
+	int parseLocation(size_t &i);
+	int validateConfig();
+
+	std::vector<ServerConfig> getConf() const;
 };

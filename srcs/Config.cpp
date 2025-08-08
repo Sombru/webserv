@@ -2,7 +2,33 @@
 #include "Logger.hpp"
 #include "Utils.hpp"
 
-static Token addToken(TokenType type, std::string value)
+#define MAND "___MANDATORY___"
+#define DEFAULT "___DEFAULT___"
+
+Config::Config(char *src)
+: configPath(src)
+{
+	this->serverBase.name = MAND;	
+	this->serverBase.host = MAND;
+	this->serverBase.index = "index.html";
+	this->serverBase.root = MAND;
+	this->serverBase.clientMaxBodySize = 0;
+	this->serverBase.errorPath = MAND;
+	// this->serverBase.locations = NULL;
+	this->serverBase.mimeTypes["text/plain"] = "plain"; 
+
+	this->LocationBase.path = MAND;
+	this->LocationBase.root = DEFAULT;
+	// this->LocationBase.alias;
+	this->LocationBase.index = "index.html";
+	// this->LocationBase.index;
+	this->LocationBase.autoindex = false;
+	this->LocationBase.allowedMethods.push_back("GET");
+	// this->LocationBase.cgi;
+}
+
+
+static inline Token addToken(TokenType type, std::string value)
 {
 	Token token;
 
@@ -11,12 +37,8 @@ static Token addToken(TokenType type, std::string value)
 	return token;
 }
 
-/// @brief parses contens of a file into tokens of TYPE and VALUE, see Token
-/// @param fileBuff file contents(cant be empty)
-/// @return // vector of tokens read from file
-std::vector<Token> Config::tokenize(std::string &fileBuff)
+void Config::tokenize()
 {
-	std::vector<Token> tokens;
 	std::string current;
 	char c;
 	for (size_t i = 0; i < fileBuff.length(); ++i)
@@ -26,7 +48,7 @@ std::vector<Token> Config::tokenize(std::string &fileBuff)
 		{
 			if (!current.empty())
 			{
-				tokens.push_back(addToken(WORD, current));
+				this->tokens.push_back(addToken(WORD, current));
 				current.clear();
 			}
 		}
@@ -34,28 +56,28 @@ std::vector<Token> Config::tokenize(std::string &fileBuff)
 		{
 			if (!current.empty())
 			{
-				tokens.push_back(addToken(WORD, current));
+				this->tokens.push_back(addToken(WORD, current));
 				current.clear();
 			}
-			tokens.push_back(addToken(LBRACE, "{"));
+			this->tokens.push_back(addToken(LBRACE, "{"));
 		}
 		else if (c == '}')
 		{
 			if (!current.empty())
 			{
-				tokens.push_back(addToken(WORD, current));
+				this->tokens.push_back(addToken(WORD, current));
 				current.clear();
 			}
-			tokens.push_back(addToken(RBRACE, "}"));
+			this->tokens.push_back(addToken(RBRACE, "}"));
 		}
 		else if (c == ';')
 		{
 			if (!current.empty())
 			{
-				tokens.push_back(addToken(WORD, current));
+				this->tokens.push_back(addToken(WORD, current));
 				current.clear();
 			}
-			tokens.push_back(addToken(SEMICOLON, ";"));
+			this->tokens.push_back(addToken(SEMICOLON, ";"));
 		}
 		else if (c == '#')
 		{
@@ -69,14 +91,54 @@ std::vector<Token> Config::tokenize(std::string &fileBuff)
 	}
 	if (!current.empty())
 	{
-		tokens.push_back(addToken(WORD, current));
+		this->tokens.push_back(addToken(WORD, current));
 	}
-	return tokens;
 }
 
-ServerConfig Config::parseServerConfig(const std::vector<Token> &tokens, size_t &index)
+int Config::parseConfig()
 {
-	static const char *serverDirectives[] = {"types", "client_max_body_size",
-	"host", "root", "index", "error_page", "location"};
+	this->fileBuff = readFile(this->configPath);
+	if (fileBuff == "BAD")
+	{
+		ERROR("Could not opena provided configuratin or is empty");
+		return -1;
+	}
+	tokenize();
+
+	for (size_t i = 0; i < this->tokens.size(); ++i)
+	{
+		if (parseServerConfig(i) == -1)
+			return -1;
+	}
+	return EXIT_SUCCESS;
+}
+
+int parseConfigUnexpectedToken(const std::string &value)
+{
+	
+}
+
+int Config::parseServerConfig(size_t &i)
+{
+
+	while (i < this->tokens.size())
+	{
+		if (this->tokens[i].value != "server")
+		{
+			ERROR("Invalid directive `" + tokens[i].value + "'");
+			return -1;
+		}
+		i++;
+		if (tokens[i].type != WORD)
+		{
+			ERROR("Expected <name> after `server'");
+			return -1;
+		}
+		i++;
+		if (tokens[i].type != LBRACE)
+		{
+			ERROR("Expected `{' after server name");
+		}
+	}
 	
 }
