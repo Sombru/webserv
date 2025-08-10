@@ -2,16 +2,28 @@
 #include "Config.hpp"
 #include "Webserv.hpp"
 #include "Utils.hpp"
+#include <sstream>
 
 #define PATH "configs/default.conf"
 
 int main()
 {
-	std::string fileBuff = readFile(PATH);
-	std::vector<Token> tokens = Config::tokenize(fileBuff);
-
-	Logger::debug(tokens);
+	Config config(const_cast<char*>(PATH));
 	
-	// size_t i = 0;
-	// ServerConfig serv = Config::parseServerConfig(tokens, i);
+	if (config.parseConfig() == -1)
+	{
+		ERROR("Failed to parse configuration");
+		return 1;
+	}
+	
+	if (config.validateConfig() == -1)
+	{
+		ERROR("Configuration validation failed");
+		return 1;
+	}
+	
+	std::vector<ServerConfig> servers = config.getConf();
+	// DEBUG(config);
+	
+	return 0;
 }

@@ -23,6 +23,9 @@ enum LogLevel
 
 std::ostream &operator<<(std::ostream &os, const Token &token);
 std::ostream &operator<<(std::ostream &os, const std::vector<Token> &tokens);
+std::ostream &operator<<(std::ostream &os, const Config &conf);
+std::ostream &operator<<(std::ostream &os, const ServerConfig &server);
+std::ostream &operator<<(std::ostream &os, const LocationConfig &location);
 
 #define LOGGER_INFO(msg) Logger::info(msg, __func__, __FILE__, __LINE__)
 #define LOGGER_WARNING(msg) Logger::warning(msg, __func__, __FILE__, __LINE__)

@@ -21,5 +21,6 @@
 #include <sys/epoll.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <set>
 
 #include "Utils.hpp"

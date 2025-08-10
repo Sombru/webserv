@@ -7,8 +7,6 @@
 std::string readFile(const std::string &path)
 {
 	std::ifstream file(path.c_str());
-	if (!file)
-		return (BADFILE);
 	std::stringstream buffer;
 
 	buffer << file.rdbuf();
@@ -18,3 +16,9 @@ std::string readFile(const std::string &path)
 	return (buffer.str());
 }
 
+std::string intToString(int n)
+{
+	std::stringstream ss;
+	ss << n;
+	return ss.str();
+}

@@ -4,6 +4,8 @@
 #include <vector>
 #include <map>
 
+class TokenIterator;  // Forward declaration
+
 struct LocationConfig
 {
 	std::string path;						 // uri of loc
@@ -26,18 +28,10 @@ struct ServerConfig
 	std::string host;					   // defaults to 127.0.0.1:8080, mam
 	std::string root;					   // root of this server mandatory
 	size_t clientMaxBodySize;			   // max recv size, mandatory
-	std::string errorPath;				   // mandatory
+	std::string errorPage;				   // mandatory
 	std::vector<LocationConfig> locations; // locations for URI starting with location.name
 	std::map<std::string, std::string> mimeTypes; // mime types for this server
 };
-
-// default values for config files
-
-// #define DEFAULT_HOST "127.0.0.1"
-// #define DEFAULT_INDEX_HTML "index.html"
-// #define DEFAULT_INDEX_PHP "index.php"
-// #define DEFAULT_REQUEST_BODY_SIZE 0
-
 
 enum TokenType
 {
@@ -53,36 +47,41 @@ struct Token
 	std::string value;
 };
 
+#define MAND "___MANDATORY___"
+#define DEFAULT "___DEFAULT___"
+#define DEFAULT_INDEX "index.html"
+
 class Config
 {
 private:
 	const char *configPath; // path to config file
 	std::string fileBuff; // contents of a config file
 	std::vector<Token> tokens; // tokens of config file
-	std::string errorMessage; // error messgae 
 	std::vector<ServerConfig> conf; // parsed config structure
-
+	size_t currentTokenIndex; // current position in tokens
+	
+	int error;
+	std::string errorMsg;
+ 
 	ServerConfig serverBase; 
 	LocationConfig LocationBase;
 
-    std::string serverDirectives[8] = {
-        "types", "host", "index", "root",
-        "client_max_body_size", "error_page",
-        "location", "types"};
-	std::string locationDirectives[8] = {
-		"root", "alias", "index", "autoindex", 
-		"allowed methods", "cgi" "return"
-	};
+	// TokenIterator-based methods
+	int parseServerConfig(TokenIterator& iter);
+	int parseLocation(ServerConfig& server, TokenIterator& iter);
+	bool parseSimpleDirective(TokenIterator& iter, std::string& result);
+	bool parseAllowedMethods(LocationConfig& location, TokenIterator& iter);
+	bool parseCgiDirective(LocationConfig& location, TokenIterator& iter);
+	int parseTypesBlock(ServerConfig& server, TokenIterator& iter);
+
+	void tokenize();
+	int parseServerConfig(size_t &i);
 
 public:
 	Config(char *src);
 	~Config();
 
-	void tokenize();
 	int parseConfig();
-	int parseServerConfig(size_t &i);
-	int parseLocation(size_t &i);
 	int validateConfig();
-
 	std::vector<ServerConfig> getConf() const;
 };
