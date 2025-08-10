@@ -24,6 +24,9 @@ int main()
 	
 	std::vector<ServerConfig> servers = config.getConf();
 	// DEBUG(config);
+
 	
+	// DEBUG(address);
+	// DEBUG(port);
 	return 0;
 }

@@ -16,6 +16,7 @@ Config::Config(char *src)
 
 	this->LocationBase.path = MAND;
 	this->LocationBase.root = DEFAULT;
+	this->LocationBase.alias = DEFAULT;
 	this->LocationBase.index = DEFAULT;
 	this->LocationBase.autoindex = false;
 	this->LocationBase.allowedMethods.push_back("GET");
@@ -154,7 +155,6 @@ int Config::parseServerConfig(TokenIterator &iter)
 		return -1;
 
 	// Parse server block content
-	std::set<std::string> seenLocationPaths; // Track location paths for duplicates
 	while (iter.hasNext() && iter.currentType() != RBRACE)
 	{
 		if (iter.currentType() != WORD)
@@ -175,20 +175,6 @@ int Config::parseServerConfig(TokenIterator &iter)
 
 		if (directive == "location")
 		{
-			// Check for duplicate location paths
-			size_t currentPos = iter.getPosition();
-			iter.advance(); // temporarily advance to get path
-			if (iter.currentType() == WORD)
-			{
-				std::string locationPath = iter.currentValue();
-				if (seenLocationPaths.find(locationPath) != seenLocationPaths.end())
-				{
-					WARNING("Duplicate location path '" + locationPath + "'");
-				}
-				seenLocationPaths.insert(locationPath);
-			}
-			// Reset position
-			iter.setPosition(currentPos);
 			
 			if (parseLocation(server, iter) == -1)
 			{
@@ -463,13 +449,22 @@ int Config::validateConfig()
 			return -1;
 		}
 		if (server.index == DEFAULT)
+		{
+			WARNING("No index for '" + server.name + "' defaults to 'index.html'");
 			server.index = DEFAULT_INDEX;
+		}
 		for (size_t i = 0; i < server.locations.size(); ++i)
 		{
-			if (server.locations[i].root == DEFAULT)
+			if (server.locations[i].root == DEFAULT && server.locations[i].alias == DEFAULT)
+			{
+				WARNING("No root and alias for location '" + server.locations[i].path + "' defaults to server root");
 				server.locations[i].root = server.root;
+			}
 			if (server.locations[i].index == DEFAULT)
+			{
+				WARNING("No index for '" + server.locations[i].path + "' defaults to 'index.html'");
 				server.locations[i].index = DEFAULT_INDEX;
+			}
 		}
 	}
 	return 0;
