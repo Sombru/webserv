@@ -13,6 +13,8 @@ Config::Config(char *src)
 	this->serverBase.clientMaxBodySize = 0;
 	this->serverBase.errorPage = MAND;
 	this->serverBase.mimeTypes["text/plain"] = "plain";
+	this->serverBase.timeout = -1;
+	this->serverBase.maxEvents = DEFAULT_MAX_EVENTS;
 
 	this->LocationBase.path = MAND;
 	this->LocationBase.root = DEFAULT;
@@ -202,6 +204,22 @@ int Config::parseServerConfig(TokenIterator &iter)
 			std::string value;
 			if (parseSimpleDirective(iter, value))
 				server.clientMaxBodySize = std::atol(value.c_str());
+			else
+				iter.skipToNextDirective();
+		}
+		else if (directive == "max_events")
+		{
+			std::string value;
+			if (parseSimpleDirective(iter, value))
+				server.maxEvents = std::atol(value.c_str());
+			else
+				iter.skipToNextDirective();
+		}
+		else if (directive == "timeout")
+		{
+			std::string value;
+			if (parseSimpleDirective(iter, value))
+				server.timeout = std::atol(value.c_str());
 			else
 				iter.skipToNextDirective();
 		}
@@ -452,6 +470,21 @@ int Config::validateConfig()
 		{
 			WARNING("No index for '" + server.name + "' defaults to 'index.html'");
 			server.index = DEFAULT_INDEX;
+		}
+		if (server.clientMaxBodySize == 0)
+		{
+			ERROR("Invalid value for client_max_body_size in '" + server.name + "'");
+			return -1;
+		}
+		if (server.timeout == 0)
+		{
+			ERROR("Invalid value for timeout in '" + server.name + "'");
+			return -1;
+		}
+		if (server.maxEvents == 0)
+		{
+			ERROR("Invalid value for max_events in '" + server.name + "'");
+			return -1;
 		}
 		for (size_t i = 0; i < server.locations.size(); ++i)
 		{

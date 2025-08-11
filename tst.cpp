@@ -1,90 +1,160 @@
 // =====================================================
-// KeepAliveWebServer.h
+// PerServerConfigWebServer.h
 // =====================================================
 
-#ifndef KEEPALIVE_WEBSERVER_H
-#define KEEPALIVE_WEBSERVER_H
+#ifndef PER_SERVER_CONFIG_WEBSERVER_H
+#define PER_SERVER_CONFIG_WEBSERVER_H
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 #include <chrono>
+#include <functional>
+#include <queue>
 
-class KeepAliveWebServer
+struct ServerConfig;
+
+class PerServerConfigWebServer
 {
 public:
-	explicit KeepAliveWebServer(int port);
-	~KeepAliveWebServer();
+	// Enhanced server configuration with per-server settings
+	struct ServerConfig
+	{
+		int port;
+		std::string interface;
+		std::string name;
+		int keep_alive_timeout; // Per-server timeout in seconds
+		int max_connections;	// Per-server connection limit
+		bool enable_logging;	// Per-server logging
+
+		ServerConfig(int p, const std::string &iface = "0.0.0.0",
+					 const std::string &n = "", int timeout = 30,
+					 int max_conn = 1000, bool logging = true)
+			: port(p), interface(iface),
+			  name(n.empty() ? "Server-" + std::to_string(p) : n),
+			  keep_alive_timeout(timeout), max_connections(max_conn),
+			  enable_logging(logging) {}
+	};
+
+	// Request handler function type
+	using RequestHandler = std::function<std::string(const std::string &method,
+													 const std::string &path,
+													 const ServerConfig &server_config)>;
+
+public:
+	PerServerConfigWebServer();
+	~PerServerConfigWebServer();
+
+	// Server management
+	bool addServer(const ServerConfig &config);
+	bool addServer(int port, const std::string &interface = "0.0.0.0",
+				   const std::string &name = "", int timeout = 30,
+				   int max_conn = 1000, bool logging = true);
+	void setRequestHandler(RequestHandler handler);
 
 	// Main interface
 	bool start();
 	void run();
+	void stop();
 
-	// Configuration
-	void setKeepAliveTimeout(int seconds);
-	void setMaxEvents(int max_events);
+	// Global configuration (affects all servers)
+	void setGlobalMaxEvents(int max_events);
+	void setCleanupInterval(int seconds);
+
+	// Statistics
+	size_t getActiveConnections() const;
+	size_t getServerConnections(int server_fd) const;
+	std::vector<std::string> getDetailedServerInfo() const;
 
 private:
-	// Configuration constants
-	static const int DEFAULT_TIMEOUT_SECONDS = 30;
-	static const int DEFAULT_MAX_EVENTS = 1000;
+	// Server information with per-server tracking
+	struct ServerInfo
+	{
+		int fd;
+		ServerConfig config;
+		size_t active_connections;
+		std::chrono::steady_clock::time_point last_cleanup;
 
-	// Member variables
-	int server_fd_;
-	int epoll_fd_;
-	int port_;
-	int timeout_seconds_;
-	int max_events_;
+		// Per-server statistics
+		size_t total_requests;
+		size_t rejected_connections;
 
-	// Client information structure
+		ServerInfo(int socket_fd, const ServerConfig &cfg)
+			: fd(socket_fd), config(cfg), active_connections(0),
+			  last_cleanup(std::chrono::steady_clock::now()),
+			  total_requests(0), rejected_connections(0) {}
+	};
+
+	// Enhanced client info with server-specific tracking
 	struct ClientInfo
 	{
 		std::chrono::steady_clock::time_point last_activity;
 		std::string buffer;
+		int server_fd;
+		int timeout_seconds; // Inherited from server config
 
-		ClientInfo();
+		ClientInfo(int srv_fd, int timeout);
+		bool isTimedOut() const;
 	};
 
+	// Member variables
+	int epoll_fd_;
+	int global_max_events_;
+	int cleanup_interval_;
+	bool running_;
+
+	std::unordered_map<int, ServerInfo> servers_;
 	std::unordered_map<int, ClientInfo> clients_;
+	std::unordered_set<int> server_fds_;
+
+	RequestHandler request_handler_;
 
 	// Socket operations
-	bool createServerSocket();
-	bool bindAndListen();
+	bool createAndBindServer(const ServerConfig &config);
 	bool setupEpoll();
 	bool setNonBlocking(int fd);
 
-	// Event handling
-	void handleNewConnection();
+	// Event handling with per-server logic
+	void handleNewConnection(int server_fd);
 	void handleClientData(int client_fd);
 	void processHttpRequests(int client_fd, ClientInfo &client);
 
 	// HTTP processing
-	void handleHttpRequest(int client_fd, const std::string &request);
-	std::string createResponseBody(const std::string &method, const std::string &path);
-	std::string createHttpResponse(const std::string &body, bool keep_alive);
+	void handleHttpRequest(int client_fd, const std::string &request,
+						   const ServerInfo &server_info);
+	std::string createDefaultResponseBody(const std::string &method,
+										  const std::string &path,
+										  const ServerConfig &config);
+	std::string createHttpResponse(const std::string &body, bool keep_alive,
+								   int timeout);
 	void sendResponse(int client_fd, const std::string &response);
 
-	// Connection management
-	void cleanupTimeouts();
+	// Per-server connection management
+	void cleanupAllServers();
+	void cleanupServerConnections(ServerInfo &server);
 	void removeClient(int client_fd);
 	void cleanup();
 
 	// Utility
 	void setupSignalHandling();
+	void logMessage(const ServerConfig &config, const std::string &message);
 };
 
-#endif // KEEPALIVE_WEBSERVER_H
+#endif // PER_SERVER_CONFIG_WEBSERVER_H
 
 // =====================================================
-// KeepAliveWebServer.cpp
+// PerServerConfigWebServer.cpp
 // =====================================================
 
-// #include "KeepAliveWebServer.h"
 #include <iostream>
 #include <sstream>
-#include <vector>
+#include <algorithm>
+#include <iomanip>
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -95,48 +165,136 @@ private:
 // Constructor and Destructor
 // =====================================================
 
-KeepAliveWebServer::KeepAliveWebServer(int port)
-	: server_fd_(-1), epoll_fd_(-1), port_(port), timeout_seconds_(DEFAULT_TIMEOUT_SECONDS), max_events_(DEFAULT_MAX_EVENTS)
+PerServerConfigWebServer::PerServerConfigWebServer()
+	: epoll_fd_(-1), global_max_events_(1000), cleanup_interval_(5) // Check timeouts every 5 seconds
+	  ,
+	  running_(false)
 {
 	setupSignalHandling();
 }
 
-KeepAliveWebServer::~KeepAliveWebServer()
+PerServerConfigWebServer::~PerServerConfigWebServer()
 {
 	cleanup();
 }
 
 // =====================================================
-// ClientInfo Implementation
+// ClientInfo Implementation with Per-Server Timeout
 // =====================================================
 
-KeepAliveWebServer::ClientInfo::ClientInfo()
-	: last_activity(std::chrono::steady_clock::now())
+PerServerConfigWebServer::ClientInfo::ClientInfo(int srv_fd, int timeout)
+	: last_activity(std::chrono::steady_clock::now()), server_fd(srv_fd), timeout_seconds(timeout)
 {
+}
+
+bool PerServerConfigWebServer::ClientInfo::isTimedOut() const
+{
+	auto now = std::chrono::steady_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+						now - last_activity)
+						.count();
+	return duration >= timeout_seconds;
 }
 
 // =====================================================
 // Public Interface
 // =====================================================
 
-bool KeepAliveWebServer::start()
+bool PerServerConfigWebServer::addServer(const ServerConfig &config)
 {
-	return createServerSocket() &&
-		   bindAndListen() &&
-		   setupEpoll();
+	if (running_)
+	{
+		std::cerr << "Cannot add servers while running" << std::endl;
+		return false;
+	}
+
+	// Validate configuration
+	if (config.port <= 0 || config.port > 65535)
+	{
+		std::cerr << "Invalid port: " << config.port << std::endl;
+		return false;
+	}
+
+	if (config.keep_alive_timeout <= 0)
+	{
+		std::cerr << "Invalid timeout for " << config.name
+				  << ": " << config.keep_alive_timeout << std::endl;
+		return false;
+	}
+
+	if (config.max_connections <= 0)
+	{
+		std::cerr << "Invalid max connections for " << config.name
+				  << ": " << config.max_connections << std::endl;
+		return false;
+	}
+
+	return createAndBindServer(config);
 }
 
-void KeepAliveWebServer::run()
+bool PerServerConfigWebServer::addServer(int port, const std::string &interface,
+										 const std::string &name, int timeout,
+										 int max_conn, bool logging)
 {
-	std::vector<struct epoll_event> events(max_events_);
+	return addServer(ServerConfig(port, interface, name, timeout, max_conn, logging));
+}
 
-	std::cout << "Server running on port " << port_ << std::endl;
-	std::cout << "Keep-alive timeout: " << timeout_seconds_ << " seconds" << std::endl;
+void PerServerConfigWebServer::setRequestHandler(RequestHandler handler)
+{
+	request_handler_ = handler;
+}
+
+bool PerServerConfigWebServer::start()
+{
+	if (servers_.empty())
+	{
+		std::cerr << "No servers configured" << std::endl;
+		return false;
+	}
+
+	if (!setupEpoll())
+	{
+		return false;
+	}
+
+	running_ = true;
+	std::cout << "Multi-server started with " << servers_.size()
+			  << " server(s), using single epoll instance" << std::endl;
+	return true;
+}
+
+void PerServerConfigWebServer::run()
+{
+	if (!running_)
+	{
+		std::cerr << "Server not started" << std::endl;
+		return;
+	}
+
+	std::vector<struct epoll_event> events(global_max_events_);
+	auto last_cleanup = std::chrono::steady_clock::now();
+
+	std::cout << "=== SERVER CONFIGURATIONS ===" << std::endl;
+	for (const auto &pair : servers_)
+	{
+		const auto &server = pair.second;
+		std::cout << server.config.name << ":" << std::endl;
+		std::cout << "  Port: " << server.config.port << std::endl;
+		std::cout << "  Interface: " << server.config.interface << std::endl;
+		std::cout << "  Timeout: " << server.config.keep_alive_timeout << "s" << std::endl;
+		std::cout << "  Max Connections: " << server.config.max_connections << std::endl;
+		std::cout << "  Logging: " << (server.config.enable_logging ? "Yes" : "No") << std::endl;
+		std::cout << std::endl;
+	}
+
+	std::cout << "Global max events per epoll_wait: " << global_max_events_ << std::endl;
+	std::cout << "Cleanup interval: " << cleanup_interval_ << " seconds" << std::endl;
 	std::cout << "Press Ctrl+C to stop" << std::endl;
 
-	while (true)
+	while (running_)
 	{
-		int num_events = epoll_wait(epoll_fd_, events.data(), max_events_, 1000);
+		// Use the global max events for epoll_wait
+		int num_events = epoll_wait(epoll_fd_, events.data(), global_max_events_, 1000);
 
 		if (num_events < 0)
 		{
@@ -146,83 +304,354 @@ void KeepAliveWebServer::run()
 			break;
 		}
 
-		// Handle all events
+		// Handle all events (could be from different servers)
 		for (int i = 0; i < num_events; i++)
 		{
-			if (events[i].data.fd == server_fd_)
+			int fd = events[i].data.fd;
+
+			if (server_fds_.count(fd))
 			{
-				handleNewConnection();
+				handleNewConnection(fd);
 			}
 			else
 			{
-				handleClientData(events[i].data.fd);
+				handleClientData(fd);
 			}
 		}
 
-		// Cleanup expired connections
-		cleanupTimeouts();
+		// Cleanup based on interval
+		auto now = std::chrono::steady_clock::now();
+		auto cleanup_duration = std::chrono::duration_cast<std::chrono::seconds>(
+									now - last_cleanup)
+									.count();
+
+		if (cleanup_duration >= cleanup_interval_)
+		{
+			cleanupAllServers();
+			last_cleanup = now;
+		}
 	}
 }
 
-void KeepAliveWebServer::setKeepAliveTimeout(int seconds)
+void PerServerConfigWebServer::setGlobalMaxEvents(int max_events)
 {
-	timeout_seconds_ = seconds;
+	if (!running_)
+	{
+		global_max_events_ = max_events;
+	}
 }
 
-void KeepAliveWebServer::setMaxEvents(int max_events)
+void PerServerConfigWebServer::setCleanupInterval(int seconds)
 {
-	max_events_ = max_events;
+	cleanup_interval_ = seconds;
 }
 
 // =====================================================
-// Socket Setup
+// Enhanced Connection Handling
 // =====================================================
 
-bool KeepAliveWebServer::createServerSocket()
+void PerServerConfigWebServer::handleNewConnection(int server_fd)
 {
-	server_fd_ = socket(AF_INET, SOCK_STREAM, 0);
-	if (server_fd_ < 0)
+	auto server_it = servers_.find(server_fd);
+	if (server_it == servers_.end())
 	{
-		std::cerr << "Failed to create socket: " << strerror(errno) << std::endl;
-		return false;
+		return;
 	}
 
-	// Enable socket reuse
-	int opt = 1;
-	if (setsockopt(server_fd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+	ServerInfo &server_info = server_it->second;
+
+	// Check connection limit for this specific server
+	if (server_info.active_connections >= static_cast<size_t>(server_info.config.max_connections))
 	{
-		std::cerr << "Failed to set socket options: " << strerror(errno) << std::endl;
-		return false;
+		// Accept and immediately close to avoid connection queue buildup
+		struct sockaddr_in client_addr;
+		socklen_t client_len = sizeof(client_addr);
+		int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
+
+		if (client_fd >= 0)
+		{
+			close(client_fd);
+			server_info.rejected_connections++;
+
+			if (server_info.config.enable_logging)
+			{
+				logMessage(server_info.config,
+						   "Connection rejected - max connections reached (" +
+							   std::to_string(server_info.config.max_connections) + ")");
+			}
+		}
+		return;
 	}
 
-	return setNonBlocking(server_fd_);
+	while (true)
+	{
+		struct sockaddr_in client_addr;
+		socklen_t client_len = sizeof(client_addr);
+
+		int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
+		if (client_fd < 0)
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{
+				break;
+			}
+			std::cerr << "Accept failed on " << server_info.config.name
+					  << ": " << strerror(errno) << std::endl;
+			break;
+		}
+
+		// Check again after accepting (race condition protection)
+		if (server_info.active_connections >= static_cast<size_t>(server_info.config.max_connections))
+		{
+			close(client_fd);
+			server_info.rejected_connections++;
+			continue;
+		}
+
+		if (!setNonBlocking(client_fd))
+		{
+			close(client_fd);
+			continue;
+		}
+
+		struct epoll_event event;
+		event.events = EPOLLIN | EPOLLET;
+		event.data.fd = client_fd;
+
+		if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, client_fd, &event) < 0)
+		{
+			std::cerr << "Failed to add client to epoll: " << strerror(errno) << std::endl;
+			close(client_fd);
+			continue;
+		}
+
+		// Create client with server-specific timeout
+		clients_.emplace(client_fd, ClientInfo(server_fd, server_info.config.keep_alive_timeout));
+		server_info.active_connections++;
+
+		char client_ip[INET_ADDRSTRLEN];
+		inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, INET_ADDRSTRLEN);
+
+		if (server_info.config.enable_logging)
+		{
+			logMessage(server_info.config,
+					   "Client " + std::to_string(client_fd) + " connected from " +
+						   std::string(client_ip) + ":" + std::to_string(ntohs(client_addr.sin_port)) +
+						   " (timeout: " + std::to_string(server_info.config.keep_alive_timeout) + "s)");
+		}
+	}
 }
 
-bool KeepAliveWebServer::bindAndListen()
+void PerServerConfigWebServer::handleHttpRequest(int client_fd, const std::string &request,
+												 const ServerInfo &server_info)
 {
-	struct sockaddr_in address;
-	std::memset(&address, 0, sizeof(address));
+	std::istringstream iss(request);
+	std::string method, path, version;
+	iss >> method >> path >> version;
 
-	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port = htons(port_);
-
-	if (bind(server_fd_, (struct sockaddr *)&address, sizeof(address)) < 0)
+	if (server_info.config.enable_logging)
 	{
-		std::cerr << "Bind failed: " << strerror(errno) << std::endl;
-		return false;
+		logMessage(server_info.config,
+				   "Processing " + method + " " + path + " from client " + std::to_string(client_fd));
 	}
 
-	if (listen(server_fd_, SOMAXCONN) < 0)
+	// Update server statistics
+	const_cast<ServerInfo &>(server_info).total_requests++;
+
+	std::string response_body;
+	if (request_handler_)
 	{
-		std::cerr << "Listen failed: " << strerror(errno) << std::endl;
-		return false;
+		response_body = request_handler_(method, path, server_info.config);
+	}
+	else
+	{
+		response_body = createDefaultResponseBody(method, path, server_info.config);
 	}
 
-	return true;
+	std::string response = createHttpResponse(response_body, true,
+											  server_info.config.keep_alive_timeout);
+	sendResponse(client_fd, response);
 }
 
-bool KeepAliveWebServer::setupEpoll()
+std::string PerServerConfigWebServer::createDefaultResponseBody(const std::string &method,
+																const std::string &path,
+																const ServerConfig &config)
+{
+	auto now = std::chrono::system_clock::now();
+	auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(
+						 now.time_since_epoch())
+						 .count();
+
+	std::ostringstream body;
+	body << "<!DOCTYPE html>\n"
+		 << "<html><head><title>" << config.name << "</title></head>\n"
+		 << "<body style='font-family: Arial, sans-serif; margin: 40px;'>\n"
+		 << "<h1>🔧 " << config.name << " (Per-Server Config)</h1>\n"
+		 << "<div style='background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;'>\n"
+		 << "<h2>Request Information</h2>\n"
+		 << "<p><strong>Method:</strong> " << method << "</p>\n"
+		 << "<p><strong>Path:</strong> " << path << "</p>\n"
+		 << "<p><strong>Timestamp:</strong> " << timestamp << "</p>\n"
+		 << "</div>\n"
+		 << "<div style='background: #f0f8ff; padding: 20px; border-radius: 8px; margin: 20px 0;'>\n"
+		 << "<h2>Server Configuration</h2>\n"
+		 << "<p><strong>Server Name:</strong> " << config.name << "</p>\n"
+		 << "<p><strong>Port:</strong> " << config.port << "</p>\n"
+		 << "<p><strong>Interface:</strong> " << config.interface << "</p>\n"
+		 << "<p><strong>Keep-Alive Timeout:</strong> " << config.keep_alive_timeout << " seconds</p>\n"
+		 << "<p><strong>Max Connections:</strong> " << config.max_connections << "</p>\n"
+		 << "<p><strong>Logging Enabled:</strong> " << (config.enable_logging ? "Yes" : "No") << "</p>\n"
+		 << "</div>\n";
+
+	// Add statistics
+	auto server_it = std::find_if(servers_.begin(), servers_.end(),
+								  [&config](const auto &pair)
+								  { return pair.second.config.port == config.port; });
+
+	if (server_it != servers_.end())
+	{
+		const auto &server = server_it->second;
+		body << "<div style='background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0;'>\n"
+			 << "<h2>Server Statistics</h2>\n"
+			 << "<p><strong>Active Connections:</strong> " << server.active_connections << "</p>\n"
+			 << "<p><strong>Total Requests:</strong> " << server.total_requests << "</p>\n"
+			 << "<p><strong>Rejected Connections:</strong> " << server.rejected_connections << "</p>\n"
+			 << "</div>\n";
+	}
+
+	body << "<p><em>This connection uses server-specific timeout of "
+		 << config.keep_alive_timeout << " seconds</em></p>\n"
+		 << "</body></html>";
+
+	return body.str();
+}
+
+std::string PerServerConfigWebServer::createHttpResponse(const std::string &body,
+														 bool keep_alive, int timeout)
+{
+	std::ostringstream response;
+
+	response << "HTTP/1.1 200 OK\r\n"
+			 << "Content-Type: text/html; charset=UTF-8\r\n"
+			 << "Content-Length: " << body.length() << "\r\n"
+			 << "Server: PerServerConfigWebServer/1.0\r\n";
+
+	if (keep_alive)
+	{
+		response << "Connection: keep-alive\r\n"
+				 << "Keep-Alive: timeout=" << timeout << ", max=1000\r\n";
+	}
+	else
+	{
+		response << "Connection: close\r\n";
+	}
+
+	response << "\r\n"
+			 << body;
+	return response.str();
+}
+
+// =====================================================
+// Per-Server Cleanup Management
+// =====================================================
+
+void PerServerConfigWebServer::cleanupAllServers()
+{
+	for (auto &pair : servers_)
+	{
+		cleanupServerConnections(pair.second);
+	}
+}
+
+void PerServerConfigWebServer::cleanupServerConnections(ServerInfo &server)
+{
+	std::vector<int> to_remove;
+
+	// Find clients belonging to this server that are timed out
+	for (const auto &client_pair : clients_)
+	{
+		const auto &client = client_pair.second;
+
+		if (client.server_fd == server.fd && client.isTimedOut())
+		{
+			to_remove.push_back(client_pair.first);
+		}
+	}
+
+	// Remove timed-out clients
+	for (int client_fd : to_remove)
+	{
+		if (server.config.enable_logging)
+		{
+			auto client_it = clients_.find(client_fd);
+			if (client_it != clients_.end())
+			{
+				logMessage(server.config,
+						   "Client " + std::to_string(client_fd) + " timed out after " +
+							   std::to_string(client_it->second.timeout_seconds) + " seconds");
+			}
+		}
+		removeClient(client_fd);
+	}
+
+	server.last_cleanup = std::chrono::steady_clock::now();
+}
+
+void PerServerConfigWebServer::removeClient(int client_fd)
+{
+	auto client_it = clients_.find(client_fd);
+	if (client_it != clients_.end())
+	{
+		int server_fd = client_it->second.server_fd;
+		auto server_it = servers_.find(server_fd);
+		if (server_it != servers_.end())
+		{
+			server_it->second.active_connections--;
+		}
+	}
+
+	if (epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, client_fd, nullptr) < 0)
+	{
+		std::cerr << "Failed to remove client " << client_fd
+				  << " from epoll: " << strerror(errno) << std::endl;
+	}
+
+	close(client_fd);
+	clients_.erase(client_fd);
+}
+
+std::vector<std::string> PerServerConfigWebServer::getDetailedServerInfo() const
+{
+	std::vector<std::string> info;
+	for (const auto &pair : servers_)
+	{
+		const auto &server = pair.second;
+		std::ostringstream oss;
+		oss << server.config.name << " (:" << server.config.port << ") - "
+			<< "Active: " << server.active_connections << "/" << server.config.max_connections
+			<< ", Requests: " << server.total_requests
+			<< ", Rejected: " << server.rejected_connections
+			<< ", Timeout: " << server.config.keep_alive_timeout << "s";
+		info.push_back(oss.str());
+	}
+	return info;
+}
+
+void PerServerConfigWebServer::logMessage(const ServerConfig &config, const std::string &message)
+{
+	if (config.enable_logging)
+	{
+		auto now = std::chrono::system_clock::now();
+		auto time_t = std::chrono::system_clock::to_time_t(now);
+
+		std::cout << "[" << std::put_time(std::localtime(&time_t), "%H:%M:%S") << "] "
+				  << "[" << config.name << "] " << message << std::endl;
+	}
+}
+
+// ... (rest of the implementation - createAndBindServer, setupEpoll, etc. remain the same)
+
+bool PerServerConfigWebServer::setupEpoll()
 {
 	epoll_fd_ = epoll_create1(0);
 	if (epoll_fd_ < 0)
@@ -230,21 +659,96 @@ bool KeepAliveWebServer::setupEpoll()
 		std::cerr << "Failed to create epoll: " << strerror(errno) << std::endl;
 		return false;
 	}
+	return true;
+}
 
-	struct epoll_event event;
-	event.events = EPOLLIN;
-	event.data.fd = server_fd_;
-
-	if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, server_fd_, &event) < 0)
+bool PerServerConfigWebServer::createAndBindServer(const ServerConfig &config)
+{
+	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (server_fd < 0)
 	{
-		std::cerr << "Failed to add server socket to epoll: " << strerror(errno) << std::endl;
+		std::cerr << "Failed to create socket for " << config.name
+				  << ": " << strerror(errno) << std::endl;
 		return false;
 	}
+
+	// Enable socket reuse
+	int opt = 1;
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+	{
+		std::cerr << "Failed to set socket options for " << config.name
+				  << ": " << strerror(errno) << std::endl;
+		close(server_fd);
+		return false;
+	}
+
+	if (!setNonBlocking(server_fd))
+	{
+		close(server_fd);
+		return false;
+	}
+
+	// Bind socket
+	struct sockaddr_in address;
+	std::memset(&address, 0, sizeof(address));
+	address.sin_family = AF_INET;
+	address.sin_port = htons(config.port);
+
+	if (config.interface == "0.0.0.0" || config.interface.empty())
+	{
+		address.sin_addr.s_addr = INADDR_ANY;
+	}
+	else
+	{
+		if (inet_pton(AF_INET, config.interface.c_str(), &address.sin_addr) <= 0)
+		{
+			std::cerr << "Invalid interface address: " << config.interface << std::endl;
+			close(server_fd);
+			return false;
+		}
+	}
+
+	if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
+	{
+		std::cerr << "Bind failed for " << config.name << " on "
+				  << config.interface << ":" << config.port
+				  << ": " << strerror(errno) << std::endl;
+		close(server_fd);
+		return false;
+	}
+
+	if (listen(server_fd, SOMAXCONN) < 0)
+	{
+		std::cerr << "Listen failed for " << config.name
+				  << ": " << strerror(errno) << std::endl;
+		close(server_fd);
+		return false;
+	}
+
+	// Add to epoll
+	struct epoll_event event;
+	event.events = EPOLLIN;
+	event.data.fd = server_fd;
+
+	if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, server_fd, &event) < 0)
+	{
+		std::cerr << "Failed to add " << config.name << " to epoll: "
+				  << strerror(errno) << std::endl;
+		close(server_fd);
+		return false;
+	}
+
+	// Store server info
+	servers_.emplace(server_fd, ServerInfo(server_fd, config));
+	server_fds_.insert(server_fd);
+
+	std::cout << "Server " << config.name << " bound to "
+			  << config.interface << ":" << config.port << std::endl;
 
 	return true;
 }
 
-bool KeepAliveWebServer::setNonBlocking(int fd)
+bool PerServerConfigWebServer::setNonBlocking(int fd)
 {
 	int flags = fcntl(fd, F_GETFL, 0);
 	if (flags < 0)
@@ -263,300 +767,43 @@ bool KeepAliveWebServer::setNonBlocking(int fd)
 }
 
 // =====================================================
-// Event Handling
+// main.cpp - Demonstration
 // =====================================================
 
-void KeepAliveWebServer::handleNewConnection()
+int main()
 {
-	while (true)
-	{
-		struct sockaddr_in client_addr;
-		socklen_t client_len = sizeof(client_addr);
-
-		int client_fd = accept(server_fd_, (struct sockaddr *)&client_addr, &client_len);
-		if (client_fd < 0)
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				break; // No more connections
-			}
-			std::cerr << "Accept failed: " << strerror(errno) << std::endl;
-			break;
-		}
-
-		if (!setNonBlocking(client_fd))
-		{
-			close(client_fd);
-			continue;
-		}
-
-		// Add client to epoll
-		struct epoll_event event;
-		event.events = EPOLLIN | EPOLLET; // Edge-triggered
-		event.data.fd = client_fd;
-
-		if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, client_fd, &event) < 0)
-		{
-			std::cerr << "Failed to add client to epoll: " << strerror(errno) << std::endl;
-			close(client_fd);
-			continue;
-		}
-
-		clients_[client_fd] = ClientInfo();
-		std::cout << "New client connected: " << client_fd << " (Total clients: " << clients_.size() << ")" << std::endl;
-	}
-}
-
-void KeepAliveWebServer::handleClientData(int client_fd)
-{
-	auto it = clients_.find(client_fd);
-	if (it == clients_.end())
-	{
-		return;
-	}
-
-	ClientInfo &client = it->second;
-	client.last_activity = std::chrono::steady_clock::now();
-
-	char buffer[4096];
-
-	while (true)
-	{
-		ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer), 0);
-
-		if (bytes_read < 0)
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				break; // No more data
-			}
-			std::cerr << "Recv failed for client " << client_fd
-					  << ": " << strerror(errno) << std::endl;
-			removeClient(client_fd);
-			return;
-		}
-
-		if (bytes_read == 0)
-		{
-			std::cout << "Client " << client_fd << " disconnected gracefully" << std::endl;
-			removeClient(client_fd);
-			return;
-		}
-
-		client.buffer.append(buffer, bytes_read);
-		processHttpRequests(client_fd, client);
-	}
-}
-
-void KeepAliveWebServer::processHttpRequests(int client_fd, ClientInfo &client)
-{
-	size_t pos = 0;
-
-	while ((pos = client.buffer.find("\r\n\r\n")) != std::string::npos)
-	{
-		std::string request = client.buffer.substr(0, pos + 4);
-		client.buffer.erase(0, pos + 4);
-
-		handleHttpRequest(client_fd, request);
-	}
-}
-
-// =====================================================
-// HTTP Processing
-// =====================================================
-
-void KeepAliveWebServer::handleHttpRequest(int client_fd, const std::string &request)
-{
-	std::cout << "Processing request from client " << client_fd << std::endl;
-
-	// Parse request line
-	std::istringstream iss(request);
-	std::string method, path, version;
-	iss >> method >> path >> version;
-
-	// Create and send response
-	std::string response_body = createResponseBody(method, path);
-	std::string response = createHttpResponse(response_body, true);
-	sendResponse(client_fd, response);
-}
-
-std::string KeepAliveWebServer::createResponseBody(const std::string &method, const std::string &path)
-{
-	auto now = std::chrono::system_clock::now();
-	auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(
-						 now.time_since_epoch())
-						 .count();
-
-	std::ostringstream body;
-	body << "<!DOCTYPE html>\n"
-		 << "<html><head><title>Keep-Alive Server</title></head>\n"
-		 << "<body style='font-family: Arial, sans-serif; margin: 40px;'>\n"
-		 << "<h1>🚀 Keep-Alive Web Server</h1>\n"
-		 << "<div style='background: #f0f0f0; padding: 20px; border-radius: 8px;'>\n"
-		 << "<p><strong>Method:</strong> " << method << "</p>\n"
-		 << "<p><strong>Path:</strong> " << path << "</p>\n"
-		 << "<p><strong>Timestamp:</strong> " << timestamp << "</p>\n"
-		 << "<p><strong>Active Connections:</strong> " << clients_.size() << "</p>\n"
-		 << "<p><strong>Keep-Alive Timeout:</strong> " << timeout_seconds_ << " seconds</p>\n"
-		 << "</div>\n"
-		 << "<p><em>This connection will remain open until timeout or explicit close.</em></p>\n"
-		 << "</body></html>";
-
-	return body.str();
-}
-
-std::string KeepAliveWebServer::createHttpResponse(const std::string &body, bool keep_alive)
-{
-	std::ostringstream response;
-
-	response << "HTTP/1.1 200 OK\r\n"
-			 << "Content-Type: text/html; charset=UTF-8\r\n"
-			 << "Content-Length: " << body.length() << "\r\n"
-			 << "Server: KeepAliveWebServer/1.0\r\n";
-
-	if (keep_alive)
-	{
-		response << "Connection: keep-alive\r\n"
-				 << "Keep-Alive: timeout=" << timeout_seconds_ << ", max=1000\r\n";
-	}
-	else
-	{
-		response << "Connection: close\r\n";
-	}
-
-	response << "\r\n"
-			 << body;
-	return response.str();
-}
-
-void KeepAliveWebServer::sendResponse(int client_fd, const std::string &response)
-{
-	const char *data = response.c_str();
-	size_t total_sent = 0;
-	size_t total_size = response.length();
-
-	while (total_sent < total_size)
-	{
-		ssize_t sent = send(client_fd, data + total_sent, total_size - total_sent, MSG_NOSIGNAL);
-
-		if (sent < 0)
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				usleep(1000); // Wait 1ms and retry
-				continue;
-			}
-			std::cerr << "Send failed for client " << client_fd
-					  << ": " << strerror(errno) << std::endl;
-			removeClient(client_fd);
-			return;
-		}
-
-		total_sent += sent;
-	}
-}
-
-// =====================================================
-// Connection Management
-// =====================================================
-
-void KeepAliveWebServer::cleanupTimeouts()
-{
-	auto now = std::chrono::steady_clock::now();
-	std::vector<int> to_remove;
-
-	for (const auto &pair : clients_)
-	{
-		int client_fd = pair.first;
-		const ClientInfo &client = pair.second;
-
-		auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-							now - client.last_activity)
-							.count();
-
-		if (duration >= timeout_seconds_)
-		{
-			std::cout << "Client " << client_fd << " timed out after "
-					  << duration << " seconds" << std::endl;
-			to_remove.push_back(client_fd);
-		}
-	}
-
-	for (int client_fd : to_remove)
-	{
-		removeClient(client_fd);
-	}
-}
-
-void KeepAliveWebServer::removeClient(int client_fd)
-{
-	if (epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, client_fd, nullptr) < 0)
-	{
-		std::cerr << "Failed to remove client " << client_fd
-				  << " from epoll: " << strerror(errno) << std::endl;
-	}
-
-	close(client_fd);
-	clients_.erase(client_fd);
-}
-
-void KeepAliveWebServer::cleanup()
-{
-	// Close all client connections
-	for (const auto &pair : clients_)
-	{
-		close(pair.first);
-	}
-	clients_.clear();
-
-	if (epoll_fd_ >= 0)
-	{
-		close(epoll_fd_);
-		epoll_fd_ = -1;
-	}
-
-	if (server_fd_ >= 0)
-	{
-		close(server_fd_);
-		server_fd_ = -1;
-	}
-}
-
-void KeepAliveWebServer::setupSignalHandling()
-{
-	// Ignore SIGPIPE to handle broken connections gracefully
-	signal(SIGPIPE, SIG_IGN);
-}
-
-// =====================================================
-// main.cpp
-// =====================================================
-
-int main(int argc, char *argv[])
-{
-	int port = 8080;
-
-	if (argc > 1)
-	{
-		port = std::atoi(argv[1]);
-		if (port <= 0 || port > 65535)
-		{
-			std::cerr << "Error: Invalid port number. Use 1-65535." << std::endl;
-			return 1;
-		}
-	}
-
 	try
 	{
-		KeepAliveWebServer server(port);
+		PerServerConfigWebServer server;
 
-		// Optional: Configure server settings
-		// server.setKeepAliveTimeout(60);  // 60 seconds
-		// server.setMaxEvents(2000);       // Handle more events
+		// Add servers with different configurations
+		server.addServer(8080, "0.0.0.0", "FastServer", 15, 500, true);		// 15s timeout, 500 max conn
+		server.addServer(8443, "0.0.0.0", "SecureServer", 60, 200, true);	// 60s timeout, 200 max conn
+		server.addServer(9000, "127.0.0.1", "AdminServer", 120, 10, false); // 120s timeout, 10 max conn, no logs
+		server.addServer(8888, "0.0.0.0", "TestServer", 5, 1000, true);		// 5s timeout, 1000 max conn
+
+		// Set global epoll configuration
+		server.setGlobalMaxEvents(2000); // Handle up to 2000 events per epoll_wait
+		server.setCleanupInterval(3);	 // Check timeouts every 3 seconds
+
+		// Custom request handler that respects per-server settings
+		server.setRequestHandler([](const std::string &method, const std::string &path,
+									const ServerConfig &config) -> std::string
+								 {
+									 if (config.name == "AdminServer" && path.find("/admin") == 0)
+									 {
+										 return "<h1>Admin Panel</h1><p>Secure admin interface with " +
+												std::to_string(config.keep_alive_timeout) + "s timeout</p>";
+									 }
+									 else if (config.name == "FastServer" && path == "/fast")
+									 {
+										 return "<h1>Fast Response</h1><p>Optimized for quick responses!</p>";
+									 }
+									 return ""; // Use default
+								 });
 
 		if (!server.start())
 		{
-			std::cerr << "Failed to start server" << std::endl;
 			return 1;
 		}
 

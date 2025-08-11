@@ -29,6 +29,8 @@ struct ServerConfig
 	std::string root;					   // root of this server mandatory
 	size_t clientMaxBodySize;			   // max recv size, mandatory
 	std::string errorPage;				   // mandatory
+	int timeout;						   // timeout before closing connection
+	int maxEvents;						   // max number of events to handle in one request
 	std::vector<LocationConfig> locations; // locations for URI starting with location.name
 	std::map<std::string, std::string> mimeTypes; // mime types for this server
 };
@@ -50,6 +52,7 @@ struct Token
 #define MAND "___MANDATORY___"
 #define DEFAULT "___DEFAULT___"
 #define DEFAULT_INDEX "index.html"
+#define DEFAULT_MAX_EVENTS 1000;
 
 class Config
 {

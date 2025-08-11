@@ -51,6 +51,10 @@
 		"typeinfo": "cpp",
 		"set": "cpp",
 		"ranges": "cpp",
-		"span": "cpp"
+		"span": "cpp",
+		"chrono": "cpp",
+		"unordered_set": "cpp",
+		"ratio": "cpp",
+		"cerrno": "cpp"
 	}
 }

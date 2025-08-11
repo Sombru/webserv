@@ -55,6 +55,8 @@ std::ostream &operator<<(std::ostream &os, const ServerConfig &server)
 	os << "Root: " << server.root << '\n';
 	os << "Error Page: " << server.errorPage << '\n';
 	os << "Client Max Body Size: " << server.clientMaxBodySize << '\n';
+	os << "Timeout: " << server.timeout << '\n';
+	os << "Max Events: " << server.maxEvents << '\n';
 	os << "Number of Locations: " << server.locations.size() << '\n';
 	os << "  mime types: ";
 	for (std::map<std::string, std::string>::const_iterator it = server.mimeTypes.begin();

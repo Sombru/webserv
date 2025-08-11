@@ -27,6 +27,8 @@ std::ostream &operator<<(std::ostream &os, const Config &conf);
 std::ostream &operator<<(std::ostream &os, const ServerConfig &server);
 std::ostream &operator<<(std::ostream &os, const LocationConfig &location);
 
+#define errstr std::string(strerror(errno))
+
 #define LOGGER_INFO(msg) Logger::info(msg, __func__, __FILE__, __LINE__)
 #define LOGGER_WARNING(msg) Logger::warning(msg, __func__, __FILE__, __LINE__)
 #define LOGGER_ERROR(msg) Logger::error(msg, __func__, __FILE__, __LINE__)
