@@ -23,6 +23,12 @@ std::map<std::string, std::string> parse_query(const std::string &query_string)
 const LocationConfig *locate(const HttpRequest &request, const ServerConfig &serverConfig)
 {
 	size_t len = request.path.find_last_of('/');
+	std::string path = request.path;
+	std::string target_file = request.path.substr(request.path.find_last_of('/') + 1);
+
+	if (target_file.length() > 0)
+		path = path.substr(0, path.length() - target_file.length());
+
 	if (len == 0)
 		return &serverConfig.locations[serverConfig.default_location_index];
 	for (size_t k = 0; k < serverConfig.locations.size(); k++)
@@ -30,7 +36,7 @@ const LocationConfig *locate(const HttpRequest &request, const ServerConfig &ser
 		if (serverConfig.locations[k].name == "/")
 			continue;
 		const std::string &locName = serverConfig.locations[k].name;
-		if (request.path.compare(0, locName.size(), locName) == 0)
+		if (path.compare(0, locName.size(), locName) == 0)
 			return &serverConfig.locations[k];
 	}
 	return NULL;

@@ -27,12 +27,13 @@ std::string serialize(const HttpResponse &response)
 {
 	std::ostringstream oss;
 
-	oss << response.version << " " << response.status_code << " " << response.status_text << "\r\n";
-	for (std::map<std::string, std::string>::const_iterator it = response.headers.begin(); it != response.headers.end(); ++it)
-	{
-		oss << it->first << ": " << it->second << "\r\n";
+	if (response.is_download_file == false) {
+		oss << response.version << " " << response.status_code << " " << response.status_text << "\r\n";
+		for (std::map<std::string, std::string>::const_iterator it = response.headers.begin(); it != response.headers.end(); ++it) {
+			oss << it->first << ": " << it->second << "\r\n";
+		}
+		oss << "\r\n";
 	}
-	oss << "\r\n";
 	oss << response.body;
 
 	return oss.str();
@@ -126,7 +127,7 @@ std::string generateFileListHtml(const std::string& directory) {
         html += "<li id=\"file-" + name + "\">";
 
         // Make the file name a clickable download link
-        html += "<a href=\"/uploads/" + name + "\" download>" + name + "</a> ";
+        html += "<a href=\"/upload/" + name + "\" download>" + name + "</a> ";
 
         // Styled delete button
         html += "<button class=\"delete-btn\" onclick=\"deleteFile('" + name + "')\">Delete</button>";

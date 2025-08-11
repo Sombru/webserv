@@ -24,6 +24,7 @@ struct HttpResponse
 	std::string version; // e.g. "HTTP/1.1"
 	std::map<std::string, std::string> headers; // e.g. headers["Content-Length"] == body.size()
 	std::string body; // e.g. Hello, world!
+	bool is_download_file; // tracking if recognize downloadable file or web page
 };
 
 #define OK 200

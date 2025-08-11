@@ -8,13 +8,15 @@ HttpResponse run_cgi_script(const HttpRequest &request, const ServerConfig& serv
 // helper function Mime so the browser would know what kind of file is being served:
 static std::string getMimeType(const std::string &path) {
 	if (path.size() >= 4 && path.substr(path.size() - 4) == ".pdf") 
-		return "application/pdf"; 
+		return "application/pdf";
 	if (path.size() >= 4 && path.substr(path.size() - 4) == ".png")
 		return "image/png";
 	if (path.size() >= 4 && path.substr(path.size() - 4) == ".jpg")
 		return "image/jpeg";
 	if (path.size() >= 5 && path.substr(path.size() - 5) == ".html")
 		return "text/html";
+	if (path.size() >= 4 && path.substr(path.size() - 4) == ".txt") 
+		return "plain/text"; 
 	return "application/octet-stream"; // default for unknown files
 }
 
@@ -34,8 +36,13 @@ HttpResponse GET(const HttpRequest &request, const ServerConfig &server)
 		fs_path += request.target_file;
 
 		Logger::error("Print me this");
+		
 		// if this is the /upload/ location, serve the file as binary
-		if (request.best_location->name == "/uploads/") {
+		if (request.best_location->name == "/upload/") {
+			fs_path = "./uploads/" + request.target_file;
+
+			
+
 			std::ifstream file(fs_path.c_str(), std::ios::binary);
 			if (!file.is_open()) {
 				return buildErrorResponse(404, server);
@@ -50,6 +57,7 @@ HttpResponse GET(const HttpRequest &request, const ServerConfig &server)
 			res.headers["Content-Length"] = intToString(body.size());
 			res.headers["Content-Type"] = getMimeType(fs_path);
 			res.body = body;
+			res.is_download_file = true;
 			return res;
 		}
 		// otherwise execure regular HTML/text read

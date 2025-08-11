@@ -67,6 +67,7 @@ std::string loadErrorPage(int code, const ServerConfig& server)
 HttpResponse buildErrorResponse(int code, const ServerConfig& server)
 {
 	HttpResponse response;
+	response.is_download_file = false;
 	response.status_code = code;
 	response.status_text = getStatusText(code);
 	response.version = HTTPVERSION;
@@ -80,6 +81,7 @@ HttpResponse buildErrorResponse(int code, const ServerConfig& server)
 HttpResponse buildSuccessResponse(int code, const std::string &body)
 {
 	HttpResponse response;
+	response.is_download_file = false;
 	response.status_code = code;
 	response.status_text = getStatusText(code);
 	response.version = HTTPVERSION;
