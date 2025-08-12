@@ -17,7 +17,7 @@ int Socket::setup()
 	fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd < 0)
 	{
-		ERROR("Could not create socket: " + errstr);
+			ERROR("Could not create socket: " + errstr);
 		return -1;
 	}
 	int opt = 1;
@@ -58,19 +58,19 @@ int Socket::setup()
 	return EXIT_SUCCESS;
 }
 
-// bool setNonBlocking(int fd)
-// {
-// 	int flags = fcntl(fd, F_GETFL, 0); // GETFLAGS
-// 	if (flags < 0)
-// 	{
-// 		ERROR("Failed to get socket flags: " + errstr);
-// 		return false;
-// 	}
+bool setNonBlocking(int fd)
+{
+	int flags = fcntl(fd, F_GETFL, 0); // GETFLAGS (GETFLAGS NOT ALLOWED)
+	if (flags < 0)
+	{
+		ERROR("Failed to get socket flags: " + errstr);
+		return false;
+	}
 
-// 	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) // SETFLAGS of this fd to nonblocking
-// 	{
-// 		ERROR("Failed to set non-blocking: " + errstr);
-// 		return false;
-// 	}
-// 	return true;
-// }
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) // SETFLAGS of this fd to nonblocking
+	{
+		ERROR("Failed to set non-blocking: " + errstr);
+		return false;
+	}
+	return true;
+}
