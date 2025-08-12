@@ -99,7 +99,7 @@ std::string buildAutoIndexHTML(const std::string &fs_path, const std::string &re
 	// Add parent directory link if not root
 	if (requestPath != "/")
 	{
-		html += "<li><a href=\"../\" class=\"directory\">../</a></li>\n";
+		html += "<li><a href=\"" + requestPath.substr(0, requestPath.find_last_of('/')) + "\" class=\"directory\">../</a></li>\n";
 	}
 
 	// Add directory entries

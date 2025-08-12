@@ -10,7 +10,8 @@ std::map<std::string, std::string> generateHeaders(const HttpResponse &response)
 {
 	std::map<std::string, std::string> headers;
 
-	headers["Content-Type`"] = "text/html";
+	headers["Content-Type"] = "text/html";
+	headers["Content-Type"] += "; charset=UTF-8";
 	headers["Content-Length"] = intToString(response.body.length());
 	headers["Connection"] = "close";
 	headers["Server"] = "skbidi_rizzlers";
