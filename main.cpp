@@ -2,6 +2,7 @@
 #include "Config.hpp"
 #include "Webserv.hpp"
 #include "Utils.hpp"
+#include "ServerManager.hpp"
 #include <sstream>
 
 #define PATH "configs/default.conf"
@@ -22,7 +23,11 @@ int main()
 		return 1;
 	}
 	
-	DEBUG(config);
+	// DEBUG(config);
+	ServerManager webserv(config.config);
+	if (webserv.setup() < 0)
+		return 1;
+	webserv.run();
 	// DEBUG(address);
 	// DEBUG(port);
 	return 0;

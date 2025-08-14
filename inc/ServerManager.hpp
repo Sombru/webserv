@@ -8,17 +8,22 @@
 class ServerManager
 {
 private:
-	std::vector<ServerConfig> &configs;
-	std::map<Socket, int> sockets;
+	FullConfig &config;
+	std::vector<Socket> sockets;
 	std::vector<epoll_event> events;
 	int epoll_fd;
 	// int cleanupInterval; // an intervall to check if any connection is timed out (in seconds)
 
+	int biggest_fd;
 
 public:
 	bool runnig;
-	ServerManager(std::vector<ServerConfig> &configSrc);
+	ServerManager(FullConfig &configSrc);
 	int setup();
 	void run();
-	~ServerManager();
+	void acceptConnection(int &fd);
+	void handleClientData(int &fd);
+
+	~ServerManager() {};
+
 };

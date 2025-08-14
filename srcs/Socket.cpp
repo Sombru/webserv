@@ -54,7 +54,6 @@ int Socket::setup()
 		ERROR("Failed to listen for connection for " + name + ": " + errstr);
 		return -1;
 	}
-	INFO("Server '" + name + "' listenig on address: " + addresStr);
 	return EXIT_SUCCESS;
 }
 

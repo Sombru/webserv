@@ -10,9 +10,9 @@ class Socket
 private:
 	int port;
 	std::string addresStr;
-	struct addrinfo address;
-	socklen_t addrlen;
-	int bufferSize;
+	// struct addrinfo address;
+	// socklen_t addrlen;
+	// int bufferSize;
 
 	std::string name;
 

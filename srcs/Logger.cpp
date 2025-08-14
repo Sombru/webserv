@@ -44,7 +44,7 @@ std::ostream &operator<<(std::ostream &os, const Config &conf)
 	os << "Timeout: " << conf.config.timeout << "ms\n";
 	for (size_t i = 0; i < conf.config.servers.size(); ++i)
 	{
-		// os << conf.config.servers[i];
+		os << conf.config.servers[i];
 	}
 	return os;
 }
