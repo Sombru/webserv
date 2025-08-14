@@ -55,6 +55,10 @@
 		"chrono": "cpp",
 		"unordered_set": "cpp",
 		"ratio": "cpp",
-		"cerrno": "cpp"
+		"cerrno": "cpp",
+		"charconv": "cpp",
+		"format": "cpp",
+		"iomanip": "cpp",
+		"variant": "cpp"
 	}
 }

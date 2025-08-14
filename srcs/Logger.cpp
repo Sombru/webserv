@@ -39,9 +39,12 @@ std::ostream &operator<<(std::ostream &os, const std::vector<Token> &tokens)
 
 std::ostream &operator<<(std::ostream &os, const Config &conf)
 {
-	for (size_t i = 0; i < conf.getConf().size(); ++i)
+	os << "\n === Configuration ===" << '\n';
+	os << "Max Events: " << conf.config.maxEvents << '\n';
+	os << "Timeout: " << conf.config.timeout << "ms\n";
+	for (size_t i = 0; i < conf.config.servers.size(); ++i)
 	{
-		os << conf.getConf()[i];
+		// os << conf.config.servers[i];
 	}
 	return os;
 }
@@ -55,8 +58,6 @@ std::ostream &operator<<(std::ostream &os, const ServerConfig &server)
 	os << "Root: " << server.root << '\n';
 	os << "Error Page: " << server.errorPage << '\n';
 	os << "Client Max Body Size: " << server.clientMaxBodySize << '\n';
-	os << "Timeout: " << server.timeout << '\n';
-	os << "Max Events: " << server.maxEvents << '\n';
 	os << "Number of Locations: " << server.locations.size() << '\n';
 	os << "  mime types: ";
 	for (std::map<std::string, std::string>::const_iterator it = server.mimeTypes.begin();

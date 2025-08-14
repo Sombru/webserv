@@ -3,7 +3,7 @@
 #include "Webserv.hpp"
 #include "Logger.hpp"
 
-#define MAX_CONNECTIONS 4096 // maximum conection to listen to 
+#define MAX_CONNECTIONS SOMAXCONN // maximum conections to listen to 
 
 class Socket
 {

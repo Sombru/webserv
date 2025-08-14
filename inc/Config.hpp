@@ -35,6 +35,13 @@ struct ServerConfig
 	std::map<std::string, std::string> mimeTypes; // mime types for this server
 };
 
+struct FullConfig
+{
+	std::vector<ServerConfig> servers; // parsed config structure
+	int timeout;
+	int maxEvents;
+};
+
 enum TokenType
 {
 	WORD,	  // all
@@ -53,6 +60,7 @@ struct Token
 #define DEFAULT "___DEFAULT___"
 #define DEFAULT_INDEX "index.html"
 #define DEFAULT_MAX_EVENTS 1000;
+#define DEFAULT_TIMEOUT -1;
 
 class Config
 {
@@ -60,7 +68,6 @@ private:
 	const char *configPath;			// path to config file
 	std::string fileBuff;			// contents of a config file
 	std::vector<Token> tokens;		// tokens of config file
-	std::vector<ServerConfig> conf; // parsed config structure
 	size_t currentTokenIndex;		// current position in tokens
 
 	int error;
@@ -81,10 +88,12 @@ private:
 	int parseServerConfig(size_t &i);
 
 public:
+
+	FullConfig config;
+
 	Config(char *src);
 	~Config();
 
 	int parseConfig();
 	int validateConfig();
-	std::vector<ServerConfig> getConf() const;
 };

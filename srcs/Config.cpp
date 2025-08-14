@@ -22,14 +22,14 @@ Config::Config(char *src)
 	this->LocationBase.index = DEFAULT;
 	this->LocationBase.autoindex = false;
 	this->LocationBase.allowedMethods.push_back("GET");
+
+	this->config.maxEvents = DEFAULT_MAX_EVENTS;
+	this->config.timeout = DEFAULT_TIMEOUT;
 }
 
 Config::~Config() {}
 
-std::vector<ServerConfig> Config::getConf() const
-{
-	return this->conf;
-}
+
 
 static inline Token addToken(TokenType type, std::string value)
 {
@@ -129,6 +129,22 @@ int Config::parseConfig()
 					iter.advance(); // skip the closing brace
 			}
 		}
+		else if (iter.currentValue() == "max_events")
+		{
+			std::string value;
+			if (parseSimpleDirective(iter, value))
+				config.maxEvents = std::atol(value.c_str());
+			else
+				iter.skipToNextDirective();
+		}
+		else if (iter.currentValue() == "timeout")
+		{
+			std::string value;
+			if (parseSimpleDirective(iter, value))
+				config.timeout = std::atol(value.c_str());
+			else
+				iter.skipToNextDirective();
+		}
 		else
 		{
 			WARNING("Unknown top-level directive: " + iter.currentValue());
@@ -207,22 +223,6 @@ int Config::parseServerConfig(TokenIterator &iter)
 			else
 				iter.skipToNextDirective();
 		}
-		else if (directive == "max_events")
-		{
-			std::string value;
-			if (parseSimpleDirective(iter, value))
-				server.maxEvents = std::atol(value.c_str());
-			else
-				iter.skipToNextDirective();
-		}
-		else if (directive == "timeout")
-		{
-			std::string value;
-			if (parseSimpleDirective(iter, value))
-				server.timeout = std::atol(value.c_str());
-			else
-				iter.skipToNextDirective();
-		}
 		else if (directive == "error_page")
 		{
 			if (!parseSimpleDirective(iter, server.errorPage))
@@ -243,7 +243,7 @@ int Config::parseServerConfig(TokenIterator &iter)
 	if (!iter.expectAndConsume(RBRACE))
 		return -1;
 
-	this->conf.push_back(server);
+	this->config.servers.push_back(server);
 	return 0;
 }
 
@@ -441,9 +441,19 @@ int Config::parseTypesBlock(ServerConfig &server, TokenIterator &iter)
 
 int Config::validateConfig()
 {
-	for (size_t i = 0; i < this->conf.size(); ++i)
+	if (config.maxEvents == 0)
 	{
-		ServerConfig &server = this->conf[i];
+		ERROR("Invalid value for max_events");
+		return -1;
+	}
+	if (config.timeout == 0)
+	{
+		ERROR("Invalid value for timeout");
+		return -1;
+	}
+	for (size_t i = 0; i < this->config.servers.size(); ++i)
+	{
+		ServerConfig &server = this->config.servers[i];
 
 		// Check mandatory fields
 		if (server.name == MAND)
@@ -476,21 +486,11 @@ int Config::validateConfig()
 			ERROR("Invalid value for client_max_body_size in '" + server.name + "'");
 			return -1;
 		}
-		if (server.timeout == 0)
-		{
-			ERROR("Invalid value for timeout in '" + server.name + "'");
-			return -1;
-		}
-		if (server.maxEvents == 0)
-		{
-			ERROR("Invalid value for max_events in '" + server.name + "'");
-			return -1;
-		}
 		for (size_t i = 0; i < server.locations.size(); ++i)
 		{
 			if (server.locations[i].root == DEFAULT && server.locations[i].alias == DEFAULT)
 			{
-				WARNING("No root and alias for location '" + server.locations[i].path + "' defaults to server root");
+				WARNING("No root or alias for location '" + server.locations[i].path + "' defaults to server root");
 				server.locations[i].root = server.root;
 			}
 			if (server.locations[i].index == DEFAULT)
