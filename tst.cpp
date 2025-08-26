@@ -706,7 +706,7 @@ void MultiServerWebServer::removeClient(int client_fd)
 		int server_fd = client_it->second.server_fd;
 		auto server_it = servers_.find(server_fd);
 		if (server_it != servers_.end())
-		{
+		{	
 			server_it->second.connection_count--;
 		}
 	}

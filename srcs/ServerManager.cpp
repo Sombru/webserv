@@ -1,14 +1,13 @@
 #include "ServerManager.hpp"
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 
 ServerManager::ServerManager(FullConfig &configSrc)
-	: config(configSrc), epoll_fd(-1), runnig(false)
+	: config(configSrc), epoll_fd(-1), lastTimeoutCheck(time(NULL)), runnig(false)
 {
+	servers.reserve(config.servers.size());
 	for (size_t i = 0; i < config.servers.size(); i++)
 	{
-		sockets.push_back(config.servers[i]);
+		servers.push_back(Server(config.servers[i]));
 	}
 }
 
@@ -20,33 +19,23 @@ int ServerManager::setup()
 		ERROR("Failed to create epoll: " + errstr);
 		return -1;
 	}
-	events.reserve(sockets.size() + 1);
-	for (size_t i = 0; i < sockets.size(); ++i)
+	events.reserve(servers.size() + 1);
+	for (size_t i = 0; i < servers.size(); ++i)
 	{
-		if (sockets[i].setup() < 0)
+		if (servers[i].setup() < 0)
 			return -1;
+		
+		serversMap[servers[i].server_fd] = servers[i];
+		
 		epoll_event sock_event;
 		sock_event.events = EPOLLIN;
-		sock_event.data.fd = sockets[i].fd;
+		sock_event.data.fd = servers[i].server_fd;
 		events.push_back(sock_event);
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sockets[i].fd, &events[i]) < 0)
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, servers[i].server_fd, &events[i]) < 0)
 		{
 			ERROR("Failed to add " + config.servers[i].name + " to epoll: "+ errstr);
 			return -1;
 		}
-		int flags = fcntl(sockets[i].fd, F_GETFL, 0); // GETFLAGS (GETFLAGS NOT ALLOWED)
-		if (flags < 0)
-		{
-			ERROR("Failed to get socket flags: " + errstr);
-			return -1;
-		}
-
-		if (fcntl(sockets[i].fd, F_SETFL, flags | O_NONBLOCK) < 0) // SETFLAGS of this fd to nonblocking
-		{
-			ERROR("Failed to set non-blocking: " + errstr);
-			return -1;
-		}
-		biggest_fd = sockets[i].fd;
 	}
 	return 0; // success
 }
@@ -71,101 +60,94 @@ void ServerManager::run()
 			ERROR("Epoll wait failed: " + errstr);
 			break;
 		}
+
 		for (int i = 0; i < numEvents; ++i)
 		{
-			int fd = events[i].data.fd;
+			int event_fd = events[i].data.fd;
 
-			if (fd <= biggest_fd)
+			// Check if this is a server socket (new connection)
+			if (serversMap.find(event_fd) != serversMap.end())
 			{
-				acceptConnection(fd);
+				serversMap[event_fd].acceptConnection(epoll_fd, clientsMap);
 			}
-			else 
+			// Otherwise, it's a client socket (existing connection)
+			else if (clientsMap.find(event_fd) != clientsMap.end())
 			{
-				handleClientData(fd);
+				// updateClientActivity(event_fd);  // Update activity timestamp
+				clientsMap[event_fd].server.handleConnection(event_fd);
+				// removeClient(event_fd); if no keep-alive header = close connection immidietly
 			}
-		}	
-		// cleanupTimeouts();
+			else
+			{
+				WARNING("Unknown file descriptor in epoll event: " + intToString(event_fd));
+			}
+		}
+		WARNING("Someone should be disconected");
+		// Check for timeouts every few seconds (avoid checking too frequently)
+		time_t currentTime = time(NULL);
+		if (currentTime - lastTimeoutCheck >= 5)  // Check every 5 seconds
+		{
+			cleanupTimeouts();
+			lastTimeoutCheck = currentTime;
+		}
 	}	
 }
 
-void ServerManager::acceptConnection(int &fd)
+void ServerManager::updateClientActivity(int client_fd)
 {
-	int target = -1;
-
-	for (size_t i = 0; i < sockets.size(); ++i)
+	if (clientsMap.find(client_fd) != clientsMap.end())
 	{
-		if (sockets[i].fd == fd)
-			target = i;
+		clientsMap[client_fd].lastActivity = time(NULL);
 	}
-	
-	if (target == -1)
-		return;
-
-	while (true)
-	{
-		struct sockaddr_in client_addr;
-		socklen_t client_len = sizeof(client_addr);
-
-		int client_fd = accept(sockets[target].fd, (struct sockaddr *)&client_addr, &client_len);
-		if (client_fd < 0)
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				break; // No more connections
-			}
-			ERROR("Accept failed: " + errstr);
-			break;
-		}
-
-		if (fcntl(client_fd, F_SETFL, 0 | O_NONBLOCK) < 0)
-		{
-			std::cerr << "Failed to set non-blocking: " << strerror(errno) << std::endl;
-			close(client_fd);
-			return ;
-		}
-
-		struct epoll_event event;
-		event.events = EPOLLIN | EPOLLET;
-		event.data.fd = client_fd;
-		
-		if ((epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) < 0))
-		{
-			ERROR("Failed to add clinet to epoll: " + errstr);
-			close(client_fd);
-			return;
-		}
-
-		char clinetIP[INET_ADDRSTRLEN];
-		inet_ntop(AF_INET, &client_addr.sin_addr, clinetIP, INET_ADDRSTRLEN);
-		INFO("New clinet " + intToString(client_fd) + " connected");
-	}
-
-	
 }
 
-
-void ServerManager::handleClientData(int &fd)
+void ServerManager::removeClient(int client_fd)
 {
-	char buffer[4096];
-
-	while (true)
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL) < 0)
 	{
-		ssize_t bytesRead = recv(fd, buffer, sizeof(buffer), 0);
-		if (bytesRead < 0)
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				break; // No more data
-			}
-		}
-
-		if (bytesRead == 0)
-		{
-			INFO("Client " + intToString(fd) + " disconected");
-			close(fd);
-			return;
-		}
-		send(fd, "TESTO", 6, 0);
+		WARNING("Failed to remove client " + intToString(client_fd) + " from epoll: " + errstr);
 	}
 	
+	close(client_fd);
+	
+	clientsMap.erase(client_fd);
+	
+	INFO("Client " + intToString(client_fd) + " removed due to timeout or disconnect");
+}
+
+void ServerManager::cleanupTimeouts()
+{
+	time_t currentTime = time(NULL);
+	std::vector<int> clientsToRemove;
+	
+	// Collect clients that have timed out
+	for (std::map<int, ClientInfo>::iterator it = clientsMap.begin(); 
+		 it != clientsMap.end(); ++it)
+	{
+		int client_fd = it->first;
+		time_t lastActivity = it->second.lastActivity;
+		
+		// Check if client has been inactive for more than timeout seconds
+		// config.timeout is in milliseconds, so convert to seconds
+		int timeoutSeconds = (config.timeout > 0) ? config.timeout / 1000 : 30; // Default 30 seconds
+		
+		if (currentTime - lastActivity > timeoutSeconds)
+		{
+			clientsToRemove.push_back(client_fd);
+		}
+	}
+	
+	// Remove timed out clients
+	for (std::vector<int>::iterator it = clientsToRemove.begin(); 
+		 it != clientsToRemove.end(); ++it)
+	{
+		INFO("Client " + intToString(*it) + " timed out after " + 
+			 intToString(currentTime - clientsMap[*it].lastActivity) + " seconds");
+		removeClient(*it);
+	}
+	
+	if (!clientsToRemove.empty())
+	{
+		INFO("Cleaned up " + intToString(clientsToRemove.size()) + " timed out connections");
+	}
 }

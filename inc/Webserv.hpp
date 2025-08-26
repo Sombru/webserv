@@ -22,5 +22,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <set>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "Utils.hpp"
