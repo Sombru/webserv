@@ -5,3 +5,4 @@
 std::string readFile(const std::string &path);
 
 std::string intToString(int n);
+std::string getTimestamp();

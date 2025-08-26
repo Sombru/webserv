@@ -22,3 +22,14 @@ std::string intToString(int n)
 	ss << n;
 	return ss.str();
 }
+
+std::string getTimestamp()
+{
+	time_t now = time(0);
+	tm *localtm = localtime(&now);
+
+	char buf[20];
+	strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtm);
+
+	return (std::string(buf));
+}

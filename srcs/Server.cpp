@@ -1,5 +1,6 @@
 #include "Server.hpp"
-#include "ServerManager.hpp"  // For ClientInfo
+#include "ServerManager.hpp"
+#include "Client.hpp"
 #include "Logger.hpp"
 
 Server::Server()
@@ -97,7 +98,7 @@ int Server::setup()
 	return EXIT_SUCCESS;
 }
 
-void Server::acceptConnection(int &epoll_fd, std::map<int, ClientInfo> &clientsMap) 
+void Server::acceptConnection(int &epoll_fd, std::map<int, Client> &clientsMap) 
 {
 	while (true)
 	{
@@ -128,11 +129,11 @@ void Server::acceptConnection(int &epoll_fd, std::map<int, ClientInfo> &clientsM
 			close(client_fd);
 			return;
 		}
-		clientsMap[client_fd] = ClientInfo(*this);
+		clientsMap[client_fd] = this;
 
 		char clinetIP[INET_ADDRSTRLEN];
 		inet_ntop(AF_INET, &client_addr.sin_addr, clinetIP, INET_ADDRSTRLEN);
-		INFO("New clinet " + intToString(client_fd) + " connected to " + serverConfig.name);
+		INFO("New clinet " + intToString(client_fd) + " connected to " + serverConfig.name + " at " + getTimestamp());
 		INFO((std::string)"Client IP: " + clinetIP);
 	}
 }
@@ -146,17 +147,12 @@ bool Server::handleConnection(int fd)
 		ssize_t bytesRead = recv(fd, buffer, sizeof(buffer), 0);
 		if (bytesRead < 0)
 		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				break; // No more data
-			}
 			ERROR("Error reading from client " + intToString(fd) + ": " + errstr);
-			return false; // Signal to remove client
+			return false; // Signal to remove client	
 		}
 
 		if (bytesRead == 0)
 		{
-			INFO("Client " + intToString(fd) + " disconnected");
 			return false; // Signal to remove client
 		}
 
@@ -171,9 +167,9 @@ bool Server::handleConnection(int fd)
 			"Connection: keep-alive\r\n"
 			"\r\n" + body);
 		
-		DEBUG(response.length());
+		// DEBUG(response.length());
 		ssize_t bytesSent = send(fd, response.c_str(), response.size(), 0);
-		DEBUG(response);
+		// DEBUG(response);
 		if (bytesSent < 0)
 		{
 			ERROR("Failed to send response to client " + intToString(fd) + ": " + errstr);

@@ -73,24 +73,33 @@ void ServerManager::run()
 			// Otherwise, it's a client socket (existing connection)
 			else if (clientsMap.find(event_fd) != clientsMap.end())
 			{
-				// updateClientActivity(event_fd);  // Update activity timestamp
-				clientsMap[event_fd].server.handleConnection(event_fd);
-				// removeClient(event_fd); if no keep-alive header = close connection immidietly
+				updateClientActivity(event_fd);  // Update activity timestamp
+				if (clientsMap[event_fd].server->handleConnection(event_fd) == false)
+					removeClient(event_fd); // if no keep-alive header = close connection immidietly
 			}
 			else
 			{
 				WARNING("Unknown file descriptor in epoll event: " + intToString(event_fd));
 			}
 		}
-		WARNING("Someone should be disconected");
-		// Check for timeouts every few seconds (avoid checking too frequently)
-		time_t currentTime = time(NULL);
-		if (currentTime - lastTimeoutCheck >= 5)  // Check every 5 seconds
+		if (config.timeout != -1)
 		{
-			cleanupTimeouts();
-			lastTimeoutCheck = currentTime;
+			DEBUG("Check timeouts");
+			checkTimeouts();
 		}
 	}	
+}
+
+void ServerManager::removeClient(int client_fd)
+{
+	clientsMap.find(client_fd);
+
+	clientsMap.erase(client_fd);
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL) < 0)
+		WARNING("Failed to remove client " + intToString(client_fd) + " from epoll: " + errstr);
+	close(client_fd);
+
+	INFO("Client " + intToString(client_fd) + " disconnected at " + getTimestamp());
 }
 
 void ServerManager::updateClientActivity(int client_fd)
@@ -98,56 +107,41 @@ void ServerManager::updateClientActivity(int client_fd)
 	if (clientsMap.find(client_fd) != clientsMap.end())
 	{
 		clientsMap[client_fd].lastActivity = time(NULL);
+		INFO("Client " + intToString(client_fd) + " activity at " + getTimestamp());
 	}
+
 }
 
-void ServerManager::removeClient(int client_fd)
-{
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL) < 0)
-	{
-		WARNING("Failed to remove client " + intToString(client_fd) + " from epoll: " + errstr);
-	}
-	
-	close(client_fd);
-	
-	clientsMap.erase(client_fd);
-	
-	INFO("Client " + intToString(client_fd) + " removed due to timeout or disconnect");
-}
-
-void ServerManager::cleanupTimeouts()
+void ServerManager::checkTimeouts()
 {
 	time_t currentTime = time(NULL);
 	std::vector<int> clientsToRemove;
-	
-	// Collect clients that have timed out
-	for (std::map<int, ClientInfo>::iterator it = clientsMap.begin(); 
-		 it != clientsMap.end(); ++it)
+
+	for (std::map<int, Client>::iterator it = clientsMap.begin(); it != clientsMap.end(); ++it)
 	{
 		int client_fd = it->first;
 		time_t lastActivity = it->second.lastActivity;
 		
 		// Check if client has been inactive for more than timeout seconds
-		// config.timeout is in milliseconds, so convert to seconds
-		int timeoutSeconds = (config.timeout > 0) ? config.timeout / 1000 : 30; // Default 30 seconds
-		
-		if (currentTime - lastActivity > timeoutSeconds)
+		// config.timeout is in milliseconds, so convert to seconds		
+		if (currentTime - lastActivity > config.timeout / 1000) // to seconds
 		{
 			clientsToRemove.push_back(client_fd);
 		}
 	}
-	
-	// Remove timed out clients
+
 	for (std::vector<int>::iterator it = clientsToRemove.begin(); 
 		 it != clientsToRemove.end(); ++it)
 	{
 		INFO("Client " + intToString(*it) + " timed out after " + 
 			 intToString(currentTime - clientsMap[*it].lastActivity) + " seconds");
+		// clientsMap[*it].server. optionlay send a timeout response
 		removeClient(*it);
 	}
-	
+
 	if (!clientsToRemove.empty())
 	{
 		INFO("Cleaned up " + intToString(clientsToRemove.size()) + " timed out connections");
 	}
+
 }
