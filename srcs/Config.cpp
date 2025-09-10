@@ -492,6 +492,16 @@ int Config::validateConfig()
 			{
 				WARNING("No root or alias for location '" + server.locations[i].path + "' defaults to server root");
 				server.locations[i].root = server.root;
+
+				// assign filessystem path to location
+				if (server.locations[i].alias != DEFAULT)
+				{
+					server.locations[i].fs_path = server.locations[i].alias;
+				}
+				else
+				{
+					server.locations[i].fs_path = server.locations[i].root + server.locations[i].path;
+				}
 			}
 			if (server.locations[i].index == DEFAULT)
 			{

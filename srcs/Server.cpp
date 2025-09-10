@@ -1,6 +1,7 @@
 #include "Server.hpp"
 #include "ServerManager.hpp"
 #include "Client.hpp"
+#include "HTTP.hpp"
 #include "Logger.hpp"
 
 Server::Server()
@@ -141,44 +142,77 @@ void Server::acceptConnection(int &epoll_fd, std::map<int, Client> &clientsMap)
 bool Server::handleConnection(int fd)
 {
 	char buffer[4096];
+	std::string rawRequest;
 
 	while (true)
 	{
-		ssize_t bytesRead = recv(fd, buffer, sizeof(buffer), 0);
+		ssize_t bytesRead = recv(fd, buffer, sizeof(buffer) - 1, 0);
 		if (bytesRead < 0)
 		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{
+				break; // No more data available right now
+			}
 			ERROR("Error reading from client " + intToString(fd) + ": " + errstr);
 			return false; // Signal to remove client	
 		}
 
 		if (bytesRead == 0)
 		{
+			INFO("Client " + intToString(fd) + " disconnected");
 			return false; // Signal to remove client
 		}
 
 		// Null-terminate the buffer for safety
 		buffer[bytesRead] = '\0';
-		// DEBUG("Received from client " + intToString(fd) + ": " + std::string(buffer, bytesRead));
-
-		std::string body("<html><body><h1>Hello from " + serverConfig.name + "!</h1></body></html>");
-		std::string response("HTTP/1.1 200 OK\r\n"
-			"Content-Type: text/html\r\n"
-			"Content-Length: " + intToString(body.length()) + "\r\n"
-			"Connection: keep-alive\r\n"
-			"\r\n" + body);
+		rawRequest += buffer;
 		
-		// DEBUG(response.length());
-		ssize_t bytesSent = send(fd, response.c_str(), response.size(), 0);
-		// DEBUG(response);
-		if (bytesSent < 0)
+		// Check if we have a complete HTTP request (ends with \r\n\r\n)
+		if (rawRequest.find("\r\n\r\n") != std::string::npos || 
+			rawRequest.find("\n\n") != std::string::npos)
 		{
-			ERROR("Failed to send response to client " + intToString(fd) + ": " + errstr);
-			return false; // Signal to remove client
+			// We have a complete request, process it
+			HTTP httpHandler(rawRequest, serverConfig);
+			httpHandler.parseRequest();
+			
+			const HttpRequest& request = httpHandler.request;
+			
+			// Log the parsed request
+			INFO("HTTP Request - Method: " + request.method + 
+				 ", Path: " + request.path + 
+				 ", Version: " + request.version);
+			// httpHandler.generateResponse();
+			// Generate a simple response
+			std::string body = "<html><body><h1>Hello from " + serverConfig.name + "!</h1>"
+							  "<p>Method: " + request.method + "</p>"
+							  "<p>Path: " + request.path + "</p>";
+			
+			if (!request.query_string.empty())
+			{
+				body += "<p>Query: " + request.query_string + "</p>";
+			}
+			
+			body += "</body></html>";
+			
+			std::string response = "HTTP/1.1 200 OK\r\n"
+								  "Content-Type: text/html\r\n"
+								  "Content-Length: " + intToString(body.length()) + "\r\n"
+								  "Connection: close\r\n"
+								  "\r\n" + body;
+			
+			ssize_t bytesSent = send(fd, response.c_str(), response.size(), 0);
+			if (bytesSent < 0)
+			{
+				ERROR("Failed to send response to client " + intToString(fd) + ": " + errstr);
+			}
+			else
+			{
+				DEBUG("Sent " + intToString(bytesSent) + " bytes to client " + intToString(fd));
+			}
+			
+			// return false; // Close connection after sending response
 		}
-		
-		// For HTTP/1.0 or Connection: close, we close after response
-		return false; // Signal to remove client after sending response
 	}
 	
-	return true; // Keep connection alive
+	return true; // Keep connection alive, waiting for more data
 }

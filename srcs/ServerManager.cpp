@@ -5,7 +5,7 @@ ServerManager::ServerManager(FullConfig &configSrc)
 	: config(configSrc), epoll_fd(-1), lastTimeoutCheck(time(NULL)), runnig(false)
 {
 	servers.reserve(config.servers.size());
-	for (size_t i = 0; i < config.servers.size(); i++)
+	for (size_t i = 0; i < config.servers.size(); ++i)
 	{
 		servers.push_back(Server(config.servers[i]));
 	}
@@ -84,7 +84,7 @@ void ServerManager::run()
 		}
 		if (config.timeout != -1)
 		{
-			DEBUG("Check timeouts");
+			// DEBUG("Check timeouts");
 			checkTimeouts();
 		}
 	}	
