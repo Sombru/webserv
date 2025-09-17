@@ -198,51 +198,6 @@ void HTTP::generateResponse()
 	}
 }
 
-std::string HTTP::replaceAllOccurrences(std::string source,
-										const std::string &from,
-										const std::string &to)
-{
-	if (from.empty())
-		return source;
-	size_t startPos = 0;
-	while ((startPos = source.find(from, startPos)) != std::string::npos)
-	{
-		source.replace(startPos, from.length(), to);
-		startPos += to.length();
-	}
-	return source;
-}
-
-std::string HTTP::getStatusText(int code)
-{
-	switch (code)
-	{
-	case 200:
-		return "OK";
-	case 201:
-		return "Created";
-	case 400:
-		return "Bad Request";
-	case 403:
-		return "Forbidden";
-	case 404:
-		return "Not Found";
-	case 405:
-		return "Method Not Allowed";
-	case 413:
-		return "Payload Too Large";
-	case 500:
-		return "Internal Server Error";
-	case 502:
-		return "Bad Gateway";
-	default:
-		return "Error";
-	}
-}
-
-
-#include "HTTP.hpp"
-
 // Helper method to replace placeholders in error pages
 void HTTP::replacePlaceholders(std::string &content, int code,
 							   const std::string &statusText)
