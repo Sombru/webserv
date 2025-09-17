@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
-  <title>Error {{code}}</title>
+  <title>Upload Success</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -23,40 +22,42 @@
     }
 
     h1 {
-      font-size: 6rem;
-      margin: 0;
-      color: #f85149;
+      font-size: 2.5rem;
+      margin-bottom: 0.5em;
+      color: #2E8B57;
     }
 
     p {
-      font-size: 1.5rem;
-      margin: 10px 0;
+      font-size: 1.2rem;
+      margin: 1em 0;
     }
 
-    a {
-      text-decoration: none;
-      color: #007BFF;
+    code {
+      background: #f0f0f0;
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
       font-size: 1rem;
     }
 
-    a:hover {
+    a.return-link {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 1rem;
+      color: #007BFF;
+      text-decoration: none;
+    }
+
+    a.return-link:hover {
       text-decoration: underline;
     }
   </style>
 </head>
-
 <body>
   <div class="container">
-    <h1 id="error-code">{{code}}</h1>
-    <p class="glitch" id="error-status_text">{{status_text}}</p>
-    <p>The page you're looking for encountered an error.</p>
-    <a href="/">← Back to homepage</a>
+    <h1>Upload Successful</h1>
+    <p>Your file was saved to:</p>
+    <p><code>{{filepath}}</code></p>
+    <a class="return-link" href="/">← Back to homepage</a>
   </div>
-
-  <script>
-    document.getElementById("error-code").textContent = "{{code}}";
-    document.getElementById("error-status_text").textContent = "{{status_text}}";
-  </script>
 </body>
-
 </html>

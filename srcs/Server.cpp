@@ -181,24 +181,24 @@ bool Server::handleConnection(int fd)
 			INFO("HTTP Request - Method: " + request.method + 
 				 ", Path: " + request.path + 
 				 ", Version: " + request.version);
-			// httpHandler.generateResponse();
-			// Generate a simple response
-			std::string body = "<html><body><h1>Hello from " + serverConfig.name + "!</h1>"
-							  "<p>Method: " + request.method + "</p>"
-							  "<p>Path: " + request.path + "</p>";
+			// Generate configured response (serves index/error/success per config)
+			httpHandler.generateResponse();
+			const HttpResponse& resp = httpHandler.response;
 			
-			if (!request.query_string.empty())
+			// Ensure Content-Length and Content-Type are set
+			if (resp.headers.find("Content-Length") == resp.headers.end())
+				httpHandler.response.headers["Content-Length"] = intToString(resp.body.size());
+			if (resp.headers.find("Content-Type") == resp.headers.end())
+				httpHandler.response.headers["Content-Type"] = "text/html";
+			
+			// Build raw HTTP response
+			std::string response = resp.version + " " + intToString(resp.status_code) + " " + resp.status_text + "\r\n";
+			for (std::map<std::string, std::string>::const_iterator it = httpHandler.response.headers.begin(); it != httpHandler.response.headers.end(); ++it)
 			{
-				body += "<p>Query: " + request.query_string + "</p>";
+				response += it->first + ": " + it->second + "\r\n";
 			}
-			
-			body += "</body></html>";
-			
-			std::string response = "HTTP/1.1 200 OK\r\n"
-								  "Content-Type: text/html\r\n"
-								  "Content-Length: " + intToString(body.length()) + "\r\n"
-								  "Connection: close\r\n"
-								  "\r\n" + body;
+			response += "\r\n";
+			response += resp.body;
 			
 			ssize_t bytesSent = send(fd, response.c_str(), response.size(), 0);
 			if (bytesSent < 0)

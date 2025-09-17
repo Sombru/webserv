@@ -11,7 +11,7 @@ Config::Config(char *src)
 	this->serverBase.index = DEFAULT;
 	this->serverBase.root = MAND;
 	this->serverBase.clientMaxBodySize = 0;
-	this->serverBase.errorPage = MAND;
+	this->serverBase.errorPage = "error.html";
 	this->serverBase.mimeTypes["text/plain"] = "plain";
 	this->serverBase.timeout = -1;
 	this->serverBase.maxEvents = DEFAULT_MAX_EVENTS;
@@ -467,11 +467,6 @@ int Config::validateConfig()
 		if (server.root == MAND)
 		{
 			ERROR("Server root is mandatory");
-			return -1;
-		}
-		if (server.errorPage == MAND)
-		{
-			ERROR("Server error_page is mandatory");
 			return -1;
 		}
 		if (server.index == DEFAULT)

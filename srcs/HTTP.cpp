@@ -1,7 +1,8 @@
 #include "HTTP.hpp"
+#include "Utils.hpp"
 
 HTTP::HTTP(const std::string &rawRequest, const ServerConfig &serverConfig)
-: rawRequest(rawRequest), serverConfig(serverConfig)
+	: rawRequest(rawRequest), serverConfig(serverConfig)
 {
 	// Initialize request and response
 	request.method = "";
@@ -76,7 +77,8 @@ void HTTP::parseRequest()
 	std::string body;
 	if (request.headers.count("Content-Length"))
 	{
-		int content_length = std::atoi(request.headers["Content-Length"].c_str());
+		int content_length =
+			std::atoi(request.headers["Content-Length"].c_str());
 		if (content_length > 0)
 		{
 			body.resize(content_length);
@@ -86,7 +88,8 @@ void HTTP::parseRequest()
 	}
 }
 
-std::map<std::string, std::string> HTTP::parseQuery(const std::string &query_string)
+std::map<std::string, std::string>
+HTTP::parseQuery(const std::string &query_string)
 {
 	std::map<std::string, std::string> params;
 	std::istringstream ss(query_string);
@@ -134,8 +137,9 @@ void HTTP::findBestLocation()
 void HTTP::handleConnectionHeader()
 {
 	// Check if client sent Connection header
-	std::map<std::string, std::string>::iterator it = request.headers.find("Connection");
-	
+	std::map<std::string, std::string>::iterator it =
+		request.headers.find("Connection");
+
 	if (it != request.headers.end())
 	{
 		std::string connectionValue = it->second;
@@ -163,12 +167,14 @@ void HTTP::handleConnectionHeader()
 		if (request.version == "HTTP/1.1")
 		{
 			response.headers["Connection"] = "keep-alive";
-			DEBUG("No Connection header, defaulting to keep-alive for HTTP/1.1");
+			DEBUG(
+				"No Connection header, defaulting to keep-alive for HTTP/1.1");
 		}
 		else
 		{
 			response.headers["Connection"] = "close";
-			DEBUG("No Connection header, defaulting to close for HTTP/1.0 or unknown version");
+			DEBUG("No Connection header, defaulting to close for HTTP/1.0 or "
+				  "unknown version");
 		}
 	}
 }
@@ -177,9 +183,103 @@ void HTTP::generateResponse()
 {
 	// call before methods
 	handleConnectionHeader();
-	
-	// if (request.method == "GET")
-	// 	GET();
-	// else
-	// 	ERROR("Unhandled request method");
+
+	if (request.method == "GET")
+		GET();
+	else
+	{
+		// Minimal fallback: show error page with 405
+		std::string body = readFile(serverConfig.errorPage);
+		response.status_code = 405;
+		response.status_text = "Method Not Allowed";
+		response.body = (body == BADFILE) ? std::string("") : body;
+		response.headers["Content-Type"] = "text/html";
+		response.headers["Content-Length"] = intToString(response.body.size());
+	}
+}
+
+std::string HTTP::replaceAllOccurrences(std::string source,
+										const std::string &from,
+										const std::string &to)
+{
+	if (from.empty())
+		return source;
+	size_t startPos = 0;
+	while ((startPos = source.find(from, startPos)) != std::string::npos)
+	{
+		source.replace(startPos, from.length(), to);
+		startPos += to.length();
+	}
+	return source;
+}
+
+std::string HTTP::getStatusText(int code)
+{
+	switch (code)
+	{
+	case 200:
+		return "OK";
+	case 201:
+		return "Created";
+	case 400:
+		return "Bad Request";
+	case 403:
+		return "Forbidden";
+	case 404:
+		return "Not Found";
+	case 405:
+		return "Method Not Allowed";
+	case 413:
+		return "Payload Too Large";
+	case 500:
+		return "Internal Server Error";
+	case 502:
+		return "Bad Gateway";
+	default:
+		return "Error";
+	}
+}
+
+
+#include "HTTP.hpp"
+
+// Helper method to replace placeholders in error pages
+void HTTP::replacePlaceholders(std::string &content, int code,
+							   const std::string &statusText)
+{
+	size_t pos;
+	while ((pos = content.find("{{code}}")) != std::string::npos)
+		content.replace(pos, 8, intToString(code));
+	while ((pos = content.find("{{status_text}}")) != std::string::npos)
+		content.replace(pos, 15, statusText);
+}
+
+// Helper method to load and prepare error pages
+std::string HTTP::loadErrorPage(int code, const std::string &statusText)
+{
+	// Resolve error page path relative to server root if needed
+	std::string errorPath = serverConfig.errorPage;
+	if (!errorPath.empty() && errorPath[0] != '/')
+	{
+		std::string base = serverConfig.root;
+		if (!base.empty() && base[base.size() - 1] == '/' &&
+			!errorPath.empty() && errorPath[0] == '/')
+			base.resize(base.size() - 1);
+		else if (!base.empty() && base[base.size() - 1] != '/' &&
+				 !errorPath.empty() && errorPath[0] != '/')
+			base += "/";
+		errorPath = base + errorPath;
+	}
+	// Try to load the server's error page
+	std::string errorBody = readFile(errorPath);
+	// If error page doesn't exist, use a simple fallback
+	if (errorBody == BADFILE)
+	{
+		return "<html><body><h1>" + intToString(code) + " " + statusText +
+			   "</h1></body></html>";
+	}
+
+	// Replace placeholders in the error page
+	replacePlaceholders(errorBody, code, statusText);
+	return errorBody;
 }
