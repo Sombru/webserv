@@ -1,14 +1,28 @@
 #include "HTTP.hpp"
 
+std::string HTTP::resolveRequestPath()
+{
+	if (!request.best_location)
+	{
+		if (!request.path.c_str() || request.path == "/")
+			request.path += "/" + serverConfig.index;
+		return serverConfig.root + request.path;
+	}
+	
+	if (request.path == request.best_location->path)
+		request.path += "/" + request.best_location->index;
+	DEBUG(request.best_location->fs_path);
+	request.path.erase(0, request.best_location->path.size());
+
+
+	return request.best_location->fs_path + request.path;
+}
+
 void HTTP::GET()
 {
-	std::string requestedPath = request.path;
-	if (requestedPath.empty() || requestedPath == "/")
-		requestedPath = "/index.html";
+	std::string fsPath = resolveRequestPath();
 
-	// Build filesystem path from server root
-	std::string fsPath = serverConfig.root + requestedPath;
-
+	DEBUG("Resolved path for a request: " + fsPath);
 	// Check if file exists
 	std::ifstream testFile(fsPath.c_str());
 	if (!testFile.good())
@@ -25,8 +39,9 @@ void HTTP::GET()
 	// Determine content type
 	std::string mime = getMimeType(fsPath);
 
+	// DEBUG(mime);
 	// Read file content
-	std::string bodyContent = readFileBinary(fsPath);
+	std::string bodyContent = readFile(fsPath);
 
 	// Handle case where file exists but can't be read
 	if (bodyContent == BADFILE)
@@ -44,6 +59,7 @@ void HTTP::GET()
 	response.status_text = "OK";
 	response.body = bodyContent;
 	response.headers["Content-Type"] = mime;
+	// response.headers["Content-Type"] = "text/html";
 	response.headers["Content-Length"] = intToString(response.body.size());
 
 	// Ensure proper content disposition

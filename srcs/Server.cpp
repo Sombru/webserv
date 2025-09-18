@@ -159,7 +159,7 @@ bool Server::handleConnection(int fd)
 
 		if (bytesRead == 0)
 		{
-			INFO("Client " + intToString(fd) + " disconnected");
+			// INFO("Client " + intToString(fd) + " disconnected");
 			return false; // Signal to remove client
 		}
 

@@ -2,36 +2,6 @@
 #include "Logger.hpp"
 #include "Webserv.hpp"
 
-
-// gets the MIME type based on file extension
-std::string getMimeType(const std::string &path)
-{
-	size_t dotPos = path.find_last_of('.');
-	if (dotPos == std::string::npos)
-		return "application/octet-stream";
-
-	std::string extension = path.substr(dotPos);
-
-	if (extension == ".html" || extension == ".htm")
-		return "text/html";
-	else if (extension == ".css")
-		return "text/css";
-	else if (extension == ".js")
-		return "application/javascript";
-	else if (extension == ".png")
-		return "image/png";
-	else if (extension == ".jpg" || extension == ".jpeg")
-		return "image/jpeg";
-	else if (extension == ".gif")
-		return "image/gif";
-	else if (extension == ".pdf")
-		return "application/pdf";
-	else if (extension == ".txt")
-		return "text/plain";
-	else
-		return "application/octet-stream";
-}
-
 // Read file in binary mode for images and other binary content
 std::string readFileBinary(const std::string &path)
 {

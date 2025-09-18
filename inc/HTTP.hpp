@@ -13,10 +13,8 @@ struct HttpRequest
 	const LocationConfig *best_location; // e.g. /files/
 	std::string query_string;			 // e.g ?alice=18
 	std::string version;				 //  e.g. "HTTP/1.1"
-	std::map<std::string, std::string>
-		query_params; // e.g. query_params["alice"] == 18
-	std::map<std::string, std::string>
-		headers; // e.g. headers["Authorization"] == <browser>
+	std::map<std::string, std::string> query_params; // e.g. query_params["alice"] == 18
+	std::map<std::string, std::string> headers; // e.g. headers["Authorization"] == <browser>
 	std::string body;
 };
 
@@ -25,20 +23,20 @@ struct HttpResponse
 	int status_code;		 // e.g. 200
 	std::string status_text; // e.g. "OK"
 	std::string version;	 // e.g. "HTTP/1.1"
-	std::map<std::string, std::string>
-		headers;	  // e.g. headers["Content-Length"] == body.size()
+	std::map<std::string, std::string> headers;	  // e.g. headers["Content-Length"] == body.size()
 	std::string body; // e.g. Hello, world!
-	bool
-		is_download_file; // tracking if recognize downloadable file or web page
+	bool is_download_file; // tracking if recognize downloadable file or web page
 };
 
 class HTTP
 {
-  private:
+private:
 	std::string loadErrorPage(int code, const std::string &statusText);
 	void replacePlaceholders(std::string &content, int code,
 							 const std::string &statusText);
 	std::string getStatusText(int code);
+	std::string resolveRequestPath();
+	std::string getMimeType(const std::string &path);
 	const std::string &rawRequest;
 	const ServerConfig &serverConfig;
 
@@ -57,7 +55,7 @@ class HTTP
 	void POST();
 	void DELETE();
 
-  public:
+public:
 	char *data;
 	HttpRequest request;
 	HttpResponse response;

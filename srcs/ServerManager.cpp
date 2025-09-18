@@ -107,7 +107,7 @@ void ServerManager::updateClientActivity(int client_fd)
 	if (clientsMap.find(client_fd) != clientsMap.end())
 	{
 		clientsMap[client_fd].lastActivity = time(NULL);
-		INFO("Client " + intToString(client_fd) + " activity at " + getTimestamp());
+		// INFO("Client " + intToString(client_fd) + " activity at " + getTimestamp());
 	}
 
 }
