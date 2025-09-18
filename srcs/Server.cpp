@@ -177,10 +177,7 @@ bool Server::handleConnection(int fd)
 			
 			const HttpRequest& request = httpHandler.request;
 			
-			// Log the parsed request
-			INFO("HTTP Request - Method: " + request.method + 
-				 ", Path: " + request.path + 
-				 ", Version: " + request.version);
+			DEBUG(request);
 			// httpHandler.generateResponse();
 			// Generate a simple response
 			std::string body = "<html><body><h1>Hello from " + serverConfig.name + "!</h1>"

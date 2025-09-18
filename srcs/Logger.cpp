@@ -1,6 +1,7 @@
 #include "Logger.hpp"
 #include "Config.hpp"
 #include "Webserv.hpp"
+#include "HTTP.hpp"
 
 std::ostream &operator<<(std::ostream &os, const Token &token)
 {
@@ -102,5 +103,33 @@ std::ostream &operator<<(std::ostream &os, const LocationConfig &location)
 		os << it->first << " -> " << it->second << "; ";
 	}
 	os << '\n';
+	return os;
+}
+
+
+std::ostream &operator<<(std::ostream &os, const HttpRequest &req)
+{
+	os << "HTTP REQUEST - ";
+	os << "Method:  " << req.method << ", ";
+	os << "Path:    " << req.path << ", ";
+	os << "Version: " << req.version << ", ";
+	os << "Location: " << (req.best_location ? req.best_location->path :"NOTFOUND") << ", ";
+
+	os << "Query Parameters:\n";
+	for (std::map<std::string, std::string>::const_iterator it = req.query_params.begin(); it != req.query_params.end(); ++it)
+	{
+		os << "  " << it->first << " = " << it->second << "\n";
+	}
+
+	os << "Headers:\n";
+	for (std::map<std::string, std::string>::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it)
+	{
+		os << "  " << it->first << ": " << it->second << "\n";
+	}
+
+	os << "Body;\n";
+	os << req.body;
+	os << '\n';
+	os << "====================\n";
 	return os;
 }

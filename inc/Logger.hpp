@@ -12,6 +12,7 @@
 #include <string>
 #include <iostream>
 #include "Config.hpp"
+#include "HTTP.hpp"
 
 enum LogLevel
 {
@@ -26,6 +27,7 @@ std::ostream &operator<<(std::ostream &os, const std::vector<Token> &tokens);
 std::ostream &operator<<(std::ostream &os, const Config &conf);
 std::ostream &operator<<(std::ostream &os, const ServerConfig &server);
 std::ostream &operator<<(std::ostream &os, const LocationConfig &location);
+std::ostream &operator<<(std::ostream &os, const HttpRequest &req);
 
 #define errstr std::string(strerror(errno))
 

@@ -84,7 +84,6 @@ void HTTP::parseRequest()
 			request.body = body;
 		}
 	}
-
 }
 
 std::map<std::string, std::string> HTTP::parseQuery(const std::string &query_string)
