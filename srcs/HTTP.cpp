@@ -186,6 +186,13 @@ void HTTP::generateResponse()
 
 	if (request.method == "GET")
 		GET();
+	else if (request.method == "POST")
+		POST();
+	else if (request.method == "DELETE")
+		{
+			DEBUG("DELETE method called");
+			DELETE();
+		}
 	else
 	{
 		// Minimal fallback: show error page with 405
@@ -239,22 +246,22 @@ std::string HTTP::loadErrorPage(int code, const std::string &statusText)
 	return errorBody;
 }
 
-
 std::string HTTP::getMimeType(const std::string &path)
 {
-    size_t dotPos = path.find_last_of('.');
-    if (dotPos == std::string::npos)
-        return "application/octet-stream";
+	size_t dotPos = path.find_last_of('.');
+	if (dotPos == std::string::npos)
+		return "application/octet-stream";
 
-    std::string extension = path.substr(dotPos + 1); // skip the '.'
+	std::string extension = path.substr(dotPos + 1); // skip the '.'
 
-    if (extension.empty())
-        return "application/octet-stream";
+	if (extension.empty())
+		return "application/octet-stream";
 	// DEBUG(serverConfig.mimeTypes.at("text/html"));
 
-    std::map<std::string, std::string>::const_iterator it = serverConfig.mimeTypes.find(extension);
-    if (it != serverConfig.mimeTypes.end())
-        return it->second;
+	std::map<std::string, std::string>::const_iterator it =
+		serverConfig.mimeTypes.find(extension);
+	if (it != serverConfig.mimeTypes.end())
+		return it->second;
 
-    return "application/octet-stream";
+	return "application/octet-stream";
 }

@@ -1,10 +1,9 @@
 #include "Config.hpp"
-#include "TokenIterator.hpp"
 #include "Logger.hpp"
+#include "TokenIterator.hpp"
 #include "Utils.hpp"
 
-Config::Config(char *src)
-	: configPath(src), currentTokenIndex(0), error(0)
+Config::Config(char *src) : configPath(src), currentTokenIndex(0), error(0)
 {
 	this->serverBase.name = MAND;
 	this->serverBase.host = MAND;
@@ -182,16 +181,19 @@ int Config::parseServerConfig(TokenIterator &iter)
 
 		std::string directive = iter.currentValue();
 
-		// Check for redefinition (except location which can appear multiple times)
-		if (directive != "location" && seenDirectives.find(directive) != seenDirectives.end())
+		// Check for redefinition (except location which can appear multiple
+		// times)
+		if (directive != "location" &&
+			seenDirectives.find(directive) != seenDirectives.end())
 		{
-			WARNING("Redefinition of directive '" + directive + "' to " + iter.peekValue(1));
+			WARNING("Redefinition of directive '" + directive + "' to " +
+					iter.peekValue(1));
 		}
 		seenDirectives.insert(directive);
 
 		if (directive == "location")
 		{
-			
+
 			if (parseLocation(server, iter) == -1)
 			{
 				iter.skipToNextDirective(); // Error recovery
@@ -265,7 +267,8 @@ bool Config::parseSimpleDirective(TokenIterator &iter, std::string &result)
 int Config::parseLocation(ServerConfig &server, TokenIterator &iter)
 {
 	LocationConfig location = this->LocationBase;
-	std::set<std::string> seenLocationDirectives; // Track seen location directives
+	std::set<std::string>
+		seenLocationDirectives; // Track seen location directives
 
 	// Parse: location <path> {
 	iter.advance(); // consume "location"
@@ -290,20 +293,28 @@ int Config::parseLocation(ServerConfig &server, TokenIterator &iter)
 		std::string directive = iter.currentValue();
 
 		// Check for redefinition in location block
-		if (seenLocationDirectives.find(directive) != seenLocationDirectives.end())
+		if (seenLocationDirectives.find(directive) !=
+			seenLocationDirectives.end())
 		{
-			WARNING("Redefinition of directive '" + directive + "' in location '" + location.path + "'");
+			WARNING("Redefinition of directive '" + directive +
+					"' in location '" + location.path + "'");
 		}
 		seenLocationDirectives.insert(directive);
 
 		// Special validation: root and alias are mutually exclusive
-		if (directive == "root" && seenLocationDirectives.find("alias") != seenLocationDirectives.end())
+		if (directive == "root" && seenLocationDirectives.find("alias") !=
+									   seenLocationDirectives.end())
 		{
-			WARNING("Location '" + location.path + "' has both 'root' and 'alias' directives - this may cause conflicts");
+			WARNING("Location '" + location.path +
+					"' has both 'root' and 'alias' directives - this may cause "
+					"conflicts");
 		}
-		if (directive == "alias" && seenLocationDirectives.find("root") != seenLocationDirectives.end())
+		if (directive == "alias" &&
+			seenLocationDirectives.find("root") != seenLocationDirectives.end())
 		{
-			WARNING("Location '" + location.path + "' has both 'root' and 'alias' directives - this may cause conflicts");
+			WARNING("Location '" + location.path +
+					"' has both 'root' and 'alias' directives - this may cause "
+					"conflicts");
 		}
 
 		if (directive == "root")
@@ -342,6 +353,11 @@ int Config::parseLocation(ServerConfig &server, TokenIterator &iter)
 		else if (directive == "return")
 		{
 			if (!parseSimpleDirective(iter, location.returnPath))
+				iter.skipToNextDirective();
+		}
+		else if (directive == "upload_dir")
+		{
+			if (!parseSimpleDirective(iter, location.uploadDir))
 				iter.skipToNextDirective();
 		}
 		else
@@ -471,19 +487,23 @@ int Config::validateConfig()
 		}
 		if (server.index == DEFAULT)
 		{
-			WARNING("No index for '" + server.name + "' defaults to 'index.html'");
+			WARNING("No index for '" + server.name +
+					"' defaults to 'index.html'");
 			server.index = DEFAULT_INDEX;
 		}
 		if (server.clientMaxBodySize == 0)
 		{
-			ERROR("Invalid value for client_max_body_size in '" + server.name + "'");
+			ERROR("Invalid value for client_max_body_size in '" + server.name +
+				  "'");
 			return -1;
 		}
 		for (size_t i = 0; i < server.locations.size(); ++i)
 		{
-			if (server.locations[i].root == DEFAULT && server.locations[i].alias == DEFAULT)
+			if (server.locations[i].root == DEFAULT &&
+				server.locations[i].alias == DEFAULT)
 			{
-				WARNING("No root or alias for location '" + server.locations[i].path + "' defaults to server root");
+				WARNING("No root or alias for location '" +
+						server.locations[i].path + "' defaults to server root");
 				server.locations[i].root = server.root;
 			}
 			// assign filessystem path to location
@@ -493,11 +513,13 @@ int Config::validateConfig()
 			}
 			else
 			{
-				server.locations[i].fs_path = server.locations[i].root + server.locations[i].path;
+				server.locations[i].fs_path =
+					server.locations[i].root + server.locations[i].path;
 			}
 			if (server.locations[i].index == DEFAULT)
 			{
-				WARNING("No index for '" + server.locations[i].path + "' defaults to 'index.html'");
+				WARNING("No index for '" + server.locations[i].path +
+						"' defaults to 'index.html'");
 				server.locations[i].index = DEFAULT_INDEX;
 			}
 		}

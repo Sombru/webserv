@@ -121,6 +121,7 @@
                 method: 'DELETE'
             }).then(response => {
                 if (response.ok) {
+                    // Remove the file from the DOM
                     const el = document.getElementById('file-' + CSS.escape(filename));
                     if (el) el.remove();
                 } else {
