@@ -59,6 +59,21 @@ std::string HTTP::resolveRequestPath()
 
 void HTTP::GET()
 {
+	if (request.path == "/" || request.path == "/index.html")
+	{
+		// Check if user is logged in via cookie
+		if (request.cookies.find("logged_in") == request.cookies.end() ||
+			request.cookies["logged_in"] != "true")
+		{
+			// Not logged in, redirect to login
+			response.status_code = 302;
+			response.status_text = "Found";
+			response.headers["Location"] = "/login.html";
+			response.body = "";
+			return;
+		}
+	}
+
 	std::string fsPath = resolveRequestPath();
 
 	DEBUG("Resolved path for a request: " + fsPath);

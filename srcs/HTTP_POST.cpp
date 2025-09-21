@@ -4,7 +4,12 @@
 
 void HTTP::POST()
 {
-	// Check if we have an upload directory configured
+	if (request.path == "/login")
+	{
+		handleLogin();
+		return;
+	}
+	// check for upload
 	if (!request.best_location || request.best_location->uploadDir.empty())
 	{
 		response.status_code = 403;
@@ -17,7 +22,7 @@ void HTTP::POST()
 
 	std::string uploadDir = request.best_location->uploadDir;
 
-	// Create upload directory if it doesn't exist
+	// create one if it doesn't exist
 	struct stat st;
 	if (stat(uploadDir.c_str(), &st) == -1)
 	{
@@ -32,7 +37,6 @@ void HTTP::POST()
 			return;
 		}
 	}
-
 	// Extract filename from Content-Disposition header if present
 	std::string filename;
 	if (request.headers.find("Content-Disposition") != request.headers.end())
@@ -43,9 +47,7 @@ void HTTP::POST()
 		{
 			filename = disposition.substr(filenamePos + 9);
 			if (filename[0] == '"' && filename[filename.size() - 1] == '"')
-			{
 				filename = filename.substr(1, filename.size() - 2);
-			}
 		}
 	}
 
@@ -110,3 +112,44 @@ void HTTP::POST()
 	response.headers["Content-Length"] = intToString(response.body.size());
 	response.headers["Location"] = "/upload/" + filename;
 }
+
+void HTTP::handleLogin()
+{
+	// Parse form data
+	std::map<std::string, std::string> formData;
+	std::istringstream ss(request.body);
+	std::string pair;
+
+	while (std::getline(ss, pair, '&'))
+	{
+		size_t eq = pair.find('=');
+		if (eq != std::string::npos)
+		{
+			std::string key = pair.substr(0, eq);
+			std::string value = pair.substr(eq + 1);
+			formData[key] = value;
+		}
+	}
+
+	// usernmae/password here
+	if (formData["username"] == "admin" && formData["password"] == "admin")
+	{
+		// sets cookie for 20 seconds (shortened for testing)
+		response.headers["Set-Cookie"] = "logged_in=true; Path=/; Max-Age=20";
+
+		// Redirect to index
+		response.status_code = 302;
+		response.status_text = "Found";
+		response.headers["Location"] = "/";
+		response.body = "";
+	}
+	else
+	{
+		// Redirect back to login with error
+		response.status_code = 302;
+		response.status_text = "Found";
+		response.headers["Location"] = "/login.html?error=1";
+		response.body = "";
+	}
+}
+

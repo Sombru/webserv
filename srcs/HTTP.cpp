@@ -86,6 +86,26 @@ void HTTP::parseRequest()
 			request.body = body;
 		}
 	}
+	std::string cookieHeader;
+	if (request.headers.find("Cookie") != request.headers.end())
+	{
+		cookieHeader = request.headers["Cookie"];
+		std::istringstream cookieStream(cookieHeader);
+		std::string cookie;
+		while (std::getline(cookieStream, cookie, ';'))
+		{
+			size_t eqPos = cookie.find('=');
+			if (eqPos != std::string::npos)
+			{
+				std::string name = cookie.substr(0, eqPos);
+				std::string value = cookie.substr(eqPos + 1);
+				// Trim whitespace
+				name.erase(0, name.find_first_not_of(" "));
+				name.erase(name.find_last_not_of(" ") + 1);
+				request.cookies[name] = value;
+			}
+		}
+	}
 }
 
 std::map<std::string, std::string>
@@ -189,10 +209,10 @@ void HTTP::generateResponse()
 	else if (request.method == "POST")
 		POST();
 	else if (request.method == "DELETE")
-		{
-			DEBUG("DELETE method called");
-			DELETE();
-		}
+	{
+		DEBUG("DELETE method called");
+		DELETE();
+	}
 	else
 	{
 		// Minimal fallback: show error page with 405
