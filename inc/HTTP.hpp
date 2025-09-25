@@ -32,10 +32,6 @@ struct HttpResponse
 class HTTP
 {
   private:
-	std::string loadErrorPage(int code, const std::string &statusText);
-	void replacePlaceholders(std::string &content, int code,
-							 const std::string &statusText);
-	std::string getStatusText(int code);
 	std::string resolveRequestPath();
 	std::string getMimeType(const std::string &path);
 	const std::string &rawRequest;
@@ -47,9 +43,17 @@ class HTTP
 	void findBestLocation();
 	void handleConnectionHeader();
 
-	std::string replaceAllOccurrences(std::string source,
+	void buildResponse(int code, std::string &fsTarget);
+	void buildErrorRespose(int code);
+	void buildResponse(int code);
+
+	void addHeaders(const std::string &header, const std::string &value);
+
+	std::string loadErrorPage(int code);
+	std::string replacePlaceHolders(std::string source,
 									  const std::string &from,
 									  const std::string &to);
+	std::string getStatusText(int code);
 
 	void GET();
 	void POST();

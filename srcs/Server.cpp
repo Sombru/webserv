@@ -186,10 +186,10 @@ bool Server::handleConnection(int fd)
 			const HttpResponse& resp = httpHandler.response;
 			
 			// Ensure Content-Length and Content-Type are set
-			if (resp.headers.find("Content-Length") == resp.headers.end())
-				httpHandler.response.headers["Content-Length"] = intToString(resp.body.size());
-			if (resp.headers.find("Content-Type") == resp.headers.end())
-				httpHandler.response.headers["Content-Type"] = "text/html";
+			// if (resp.headers.find("Content-Length") == resp.headers.end())
+			// 	httpHandler.response.headers["Content-Length"] = intToString(resp.body.size());
+			// if (resp.headers.find("Content-Type") == resp.headers.end())
+			// 	httpHandler.response.headers["Content-Type"] = "text/html";
 			
 			// Build raw HTTP response
 			std::string response = resp.version + " " + intToString(resp.status_code) + " " + resp.status_text + "\r\n";
@@ -197,8 +197,9 @@ bool Server::handleConnection(int fd)
 			{
 				response += it->first + ": " + it->second + "\r\n";
 			}
-			response += "\r\n";
+			response += "\r\n\r\n";
 			response += resp.body;
+			DEBUG(response);
 			
 			ssize_t bytesSent = send(fd, response.c_str(), response.size(), 0);
 			if (bytesSent < 0)

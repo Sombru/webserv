@@ -226,18 +226,18 @@ void HTTP::generateResponse()
 }
 
 // Helper method to replace placeholders in error pages
-void HTTP::replacePlaceholders(std::string &content, int code,
-							   const std::string &statusText)
+std::string HTTP::replacePlaceHolders(std::string source,
+									const std::string &from,
+									const std::string &to)
 {
 	size_t pos;
-	while ((pos = content.find("{{code}}")) != std::string::npos)
-		content.replace(pos, 8, intToString(code));
-	while ((pos = content.find("{{status_text}}")) != std::string::npos)
-		content.replace(pos, 15, statusText);
+	while ((pos = source.find((from)) != std::string::npos))
+		source.replace(pos, from.size(), to);
+	return source;
 }
 
 // Helper method to load and prepare error pages
-std::string HTTP::loadErrorPage(int code, const std::string &statusText)
+std::string HTTP::loadErrorPage(int code)
 {
 	// Resolve error page path relative to server root if needed
 	std::string errorPath = serverConfig.errorPage;
@@ -257,31 +257,13 @@ std::string HTTP::loadErrorPage(int code, const std::string &statusText)
 	// If error page doesn't exist, use a simple fallback
 	if (errorBody == BADFILE)
 	{
-		return "<html><body><h1>" + intToString(code) + " " + statusText +
+		return "<html><body><h1>" + intToString(code) + " " + getStatusText(code) +
 			   "</h1></body></html>";
 	}
 
 	// Replace placeholders in the error page
-	replacePlaceholders(errorBody, code, statusText);
+	replacePlaceHolders(errorBody, "{{code}}", intToString(code));
+	replacePlaceHolders(errorBody, "{{status_text}}", getStatusText(code));
 	return errorBody;
 }
 
-std::string HTTP::getMimeType(const std::string &path)
-{
-	size_t dotPos = path.find_last_of('.');
-	if (dotPos == std::string::npos)
-		return "application/octet-stream";
-
-	std::string extension = path.substr(dotPos + 1); // skip the '.'
-
-	if (extension.empty())
-		return "application/octet-stream";
-	// DEBUG(serverConfig.mimeTypes.at("text/html"));
-
-	std::map<std::string, std::string>::const_iterator it =
-		serverConfig.mimeTypes.find(extension);
-	if (it != serverConfig.mimeTypes.end())
-		return it->second;
-
-	return "application/octet-stream";
-}

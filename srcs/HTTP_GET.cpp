@@ -66,10 +66,8 @@ void HTTP::GET()
 			request.cookies["logged_in"] != "true")
 		{
 			// Not logged in, redirect to login
-			response.status_code = 302;
-			response.status_text = "Found";
-			response.headers["Location"] = "/login.html";
-			response.body = "";
+			buildResponse(302);
+			addHeaders("Location", "/login");
 			return;
 		}
 	}
@@ -82,11 +80,7 @@ void HTTP::GET()
 	if (!testFile.good())
 	{
 		// File not found - serve error page
-		response.status_code = 404;
-		response.status_text = "Not Found";
-		response.body = loadErrorPage(404, "Not Found");
-		response.headers["Content-Type"] = "text/html";
-		response.headers["Content-Length"] = intToString(response.body.size());
+		buildErrorRespose(404);
 		return;
 	}
 
@@ -99,11 +93,7 @@ void HTTP::GET()
 	// Handle case where file exists but can't be read
 	if (bodyContent == BADFILE)
 	{
-		response.status_code = 500;
-		response.status_text = "Internal Server Error";
-		response.body = loadErrorPage(500, "Internal Server Error");
-		response.headers["Content-Type"] = "text/html";
-		response.headers["Content-Length"] = intToString(response.body.size());
+		buildErrorRespose(500);
 		return;
 	}
 
@@ -120,15 +110,11 @@ void HTTP::GET()
 	}
 
 	// Set successful response
-	response.status_code = 200;
-	response.status_text = "OK";
-	response.body = bodyContent;
-	response.headers["Content-Type"] = mime;
-	response.headers["Content-Length"] = intToString(response.body.size());
+	buildResponse(200, fsPath);
 
 	// Ensure proper content disposition
-	if (mime.find("text/") == 0 || mime == "application/javascript")
-	{
-		response.headers["Content-Disposition"] = "inline";
-	}
+	// if (mime.find("text/") == 0 || mime == "application/javascript")
+	// {
+	// 	response.headers["Content-Disposition"] = "inline";
+	// }
 }

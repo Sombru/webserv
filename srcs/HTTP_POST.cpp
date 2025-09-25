@@ -12,11 +12,7 @@ void HTTP::POST()
 	// check for upload
 	if (!request.best_location || request.best_location->uploadDir.empty())
 	{
-		response.status_code = 403;
-		response.status_text = "Forbidden";
-		response.body = loadErrorPage(403, "Forbidden");
-		response.headers["Content-Type"] = "text/html";
-		response.headers["Content-Length"] = intToString(response.body.size());
+		buildErrorRespose(403);
 		return;
 	}
 
@@ -28,12 +24,7 @@ void HTTP::POST()
 	{
 		if (mkdir(uploadDir.c_str(), 0755) == -1)
 		{
-			response.status_code = 500;
-			response.status_text = "Internal Server Error";
-			response.body = loadErrorPage(500, "Internal Server Error");
-			response.headers["Content-Type"] = "text/html";
-			response.headers["Content-Length"] =
-				intToString(response.body.size());
+			buildErrorRespose(500);
 			return;
 		}
 	}
@@ -69,11 +60,7 @@ void HTTP::POST()
 	std::ofstream outFile(fullPath.c_str(), std::ios::binary);
 	if (!outFile)
 	{
-		response.status_code = 500;
-		response.status_text = "Internal Server Error";
-		response.body = loadErrorPage(500, "Internal Server Error");
-		response.headers["Content-Type"] = "text/html";
-		response.headers["Content-Length"] = intToString(response.body.size());
+		buildErrorRespose(500);
 		return;
 	}
 
@@ -135,21 +122,16 @@ void HTTP::handleLogin()
 	if (formData["username"] == "admin" && formData["password"] == "admin")
 	{
 		// sets cookie for 20 seconds (shortened for testing)
-		response.headers["Set-Cookie"] = "logged_in=true; Path=/; Max-Age=20";
+		addHeaders("Set-Cookie", "logged_in=true; Path=/; Max-Age=20");
 
 		// Redirect to index
-		response.status_code = 302;
-		response.status_text = "Found";
-		response.headers["Location"] = "/";
-		response.body = "";
+		buildResponse(302);
+		addHeaders("Location", "/");
 	}
 	else
 	{
-		// Redirect back to login with error
-		response.status_code = 302;
-		response.status_text = "Found";
-		response.headers["Location"] = "/login.html?error=1";
-		response.body = "";
+		buildResponse(302);
+		addHeaders("Location", "/?error=1");
 	}
 }
 

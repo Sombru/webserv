@@ -31,11 +31,7 @@ void HTTP::DELETE()
 	// Check if we're in an upload location that allows DELETE
 	if (!request.best_location)
 	{
-		response.status_code = 403;
-		response.status_text = "Forbidden";
-		response.body = loadErrorPage(403, "Forbidden");
-		response.headers["Content-Type"] = "text/html";
-		response.headers["Content-Length"] = intToString(response.body.size());
+		buildErrorRespose(403);
 		return;
 	}
 
@@ -52,12 +48,7 @@ void HTTP::DELETE()
 
 	if (!deleteAllowed)
 	{
-		response.status_code = 405;
-		response.status_text = "Method Not Allowed";
-		response.body = loadErrorPage(405, "Method Not Allowed");
-		response.headers["Content-Type"] = "text/html";
-		response.headers["Content-Length"] = intToString(response.body.size());
-		response.headers["Allow"] = "GET, POST";
+		buildErrorRespose(405);
 		return;
 	}
 
@@ -65,44 +56,25 @@ void HTTP::DELETE()
 	struct stat fileStat;
 	if (stat(fsPath.c_str(), &fileStat) != 0)
 	{
-		response.status_code = 404;
-		response.status_text = "Not Found";
-		response.body = loadErrorPage(404, "File Not Found");
-		response.headers["Content-Type"] = "text/html";
-		response.headers["Content-Length"] = intToString(response.body.size());
+		buildErrorRespose(404);
 		return;
 	}
 
 	// Check if it's a regular file (not a directory)
 	if (!S_ISREG(fileStat.st_mode))
 	{
-		response.status_code = 403;
-		response.status_text = "Forbidden";
-		response.body = loadErrorPage(403, "Cannot delete directories");
-		response.headers["Content-Type"] = "text/html";
-		response.headers["Content-Length"] = intToString(response.body.size());
+		buildErrorRespose(404);
 		return;
 	}
 
 	// Attempt to delete the file
 	if (remove(fsPath.c_str()) == 0)
 	{
-		response.status_code = 200;
-		response.status_text = "OK";
-		response.body = "";
-		response.headers["Content-Length"] = "0";
-		DEBUG("Successfully deleted file: " + fsPath);
+		buildResponse(200);
 	}
 	else
 	{
 		// Failed to delete
-		response.status_code = 500;
-		response.status_text = "Internal Server Error";
-		response.body = loadErrorPage(500, "Failed to delete file: " +
-											   std::string(strerror(errno)));
-		response.headers["Content-Type"] = "text/html";
-		response.headers["Content-Length"] = intToString(response.body.size());
-		DEBUG("Failed to delete file: " + fsPath +
-			  " - Error: " + strerror(errno));
+		buildErrorRespose(500);
 	}
 }
