@@ -10,13 +10,13 @@ void HTTP::POST()
 		return;
 	}
 	// check for upload
-	if (!request.best_location || request.best_location->uploadDir.empty())
+	if (request.best_location.uploadDir.empty())
 	{
 		buildErrorRespose(403);
 		return;
 	}
 
-	std::string uploadDir = request.best_location->uploadDir;
+	std::string uploadDir = request.best_location.uploadDir;
 
 	// create one if it doesn't exist
 	struct stat st;

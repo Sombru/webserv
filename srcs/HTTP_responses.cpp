@@ -16,7 +16,7 @@ void HTTP::buildResponse(int code, std::string &fsTarget)
 	response.status_text = getStatusText(code);
 	std::string buffer = readFile(fsTarget);
 	if (buffer == BADFILE)
-		return buildErrorRespose(500);
+		return buildErrorRespose(404);
 	response.body = buffer;
 	response.headers["Content-Type"] = getMimeType(fsTarget);
 	response.headers["Content-Length"] = intToString(response.body.size());
@@ -48,34 +48,9 @@ std::string HTTP::getMimeType(const std::string &path)
 	return "application/octet-stream";
 }
 
-void HTTP::addHeaders(const std::string &header, const std::string &value)
+void HTTP::redirect(const std::string &returnPath)
 {
-	response.headers[header] = value;
+	buildResponse(302);
+	addHeaders("Location", returnPath);
 }
 
-std::string HTTP::getStatusText(int code)
-{
-	switch (code)
-	{
-	case 200:
-		return "OK";
-	case 302:
-		return "Found";
-	case 400:
-		return "Bad Request";
-	case 403:
-		return "Forbidden";
-	case 404:
-		return "Not Found";
-	case 405:
-		return "Method not allowed";
-	case 413:
-		return "Payload Too Large";
-	case 500:
-		return "Internal Server Error";
-	case 502:
-		return "Bad Gateway";
-	default:
-		return "Error";
-	}
-}

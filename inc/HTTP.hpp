@@ -10,13 +10,13 @@ struct HttpRequest
 	std::string method;								 // e.g. GET
 	std::string path;								 // e.g. /about.html
 	std::string target_file;						 // e.g. about.html
-	const LocationConfig *best_location;			 // e.g. /files/
 	std::string query_string;						 // e.g ?alice=18
 	std::string version;							 //  e.g. "HTTP/1.1"
 	std::map<std::string, std::string> query_params; // e.g. query_params["alice"] == 18
 	std::map<std::string, std::string> headers;		 // e.g. headers["Authorization"] == <browser>
 	std::string body;
 	std::map<std::string, std::string> cookies;
+	LocationConfig best_location;					 // e.g. /files/
 };
 
 struct HttpResponse
@@ -40,6 +40,9 @@ class HTTP
 	std::map<std::string, std::string>
 	parseQuery(const std::string &query_string);
 
+	int methodAllowed(std::string &requestMethod);
+	void redirect(const std::string &returnPath);
+
 	void findBestLocation();
 	void handleConnectionHeader();
 
@@ -55,7 +58,7 @@ class HTTP
 									  const std::string &to);
 	std::string getStatusText(int code);
 
-	void GET();
+	void GET(std::string &fsPath);
 	void POST();
 	void DELETE();
 	void handleLogin();

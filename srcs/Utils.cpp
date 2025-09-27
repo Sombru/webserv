@@ -45,3 +45,23 @@ std::string getTimestamp()
 
 	return (std::string(buf));
 }
+
+bool is_directory(const std::string &path)
+{
+	struct stat info;
+	if (stat(path.c_str(), &info) != 0)
+	{
+		return false; // cannot access path
+	}
+	return (info.st_mode & S_IFDIR) != 0;
+}
+
+bool hasLoginLocation(const std::vector<LocationConfig> &locations)
+{
+	for (size_t i = 0; i < locations.size(); ++i)
+	{
+		if (locations[i].path == "/login")
+			return true;
+	}
+	return false;
+}

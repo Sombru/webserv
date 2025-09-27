@@ -185,21 +185,15 @@ bool Server::handleConnection(int fd)
 			httpHandler.generateResponse();
 			const HttpResponse& resp = httpHandler.response;
 			
-			// Ensure Content-Length and Content-Type are set
-			// if (resp.headers.find("Content-Length") == resp.headers.end())
-			// 	httpHandler.response.headers["Content-Length"] = intToString(resp.body.size());
-			// if (resp.headers.find("Content-Type") == resp.headers.end())
-			// 	httpHandler.response.headers["Content-Type"] = "text/html";
-			
 			// Build raw HTTP response
 			std::string response = resp.version + " " + intToString(resp.status_code) + " " + resp.status_text + "\r\n";
 			for (std::map<std::string, std::string>::const_iterator it = httpHandler.response.headers.begin(); it != httpHandler.response.headers.end(); ++it)
 			{
 				response += it->first + ": " + it->second + "\r\n";
 			}
-			response += "\r\n\r\n";
+			response += "\r\n";
 			response += resp.body;
-			DEBUG(response);
+			// DEBUG(response);
 			
 			ssize_t bytesSent = send(fd, response.c_str(), response.size(), 0);
 			if (bytesSent < 0)

@@ -21,8 +21,7 @@ int main()
 	{
 		ERROR("Configuration validation failed");
 		return 1;
-	}
-	
+	}	
 	// DEBUG(config);
 	ServerManager webserv(config.config);
 	if (webserv.setup() < 0)

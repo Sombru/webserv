@@ -8,7 +8,7 @@ void HTTP::DELETE()
 	std::string fsPath;
 
 	// Special handling for upload location due to config issue
-	if (request.best_location && request.best_location->path == "/upload")
+	if (request.best_location.path == "/upload")
 	{
 		// Extract filename after /upload/
 		std::string filename = request.path;
@@ -25,21 +25,20 @@ void HTTP::DELETE()
 
 	DEBUG("DELETE request for path: " + fsPath);
 	DEBUG("Original request path: " + request.path);
-	DEBUG("Best location: " +
-		  (request.best_location ? request.best_location->path : "NULL"));
+	DEBUG("Best location: " + (request.best_location.path));
 
-	// Check if we're in an upload location that allows DELETE
-	if (!request.best_location)
-	{
-		buildErrorRespose(403);
-		return;
-	}
+	// // Check if we're in an upload location that allows DELETE
+	// if (!request.best_location)
+	// {
+	// 	buildErrorRespose(403);
+	// 	return;
+	// }
 
 	// Check if DELETE method is allowed for this location
 	bool deleteAllowed = false;
-	for (size_t i = 0; i < request.best_location->allowedMethods.size(); ++i)
+	for (size_t i = 0; i < request.best_location.allowedMethods.size(); ++i)
 	{
-		if (request.best_location->allowedMethods[i] == "DELETE")
+		if (request.best_location.allowedMethods[i] == "DELETE")
 		{
 			deleteAllowed = true;
 			break;

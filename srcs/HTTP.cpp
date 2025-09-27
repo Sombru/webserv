@@ -1,6 +1,11 @@
 #include "HTTP.hpp"
 #include "Utils.hpp"
 
+// make serverLoc to always have location to access +
+// make /login location that will redirect you to logind page for cookies bonus part
+// add fsIndex to location have easy access of location's indexes +
+// fucking CGI and autoindex
+
 HTTP::HTTP(const std::string &rawRequest, const ServerConfig &serverConfig)
 	: rawRequest(rawRequest), serverConfig(serverConfig)
 {
@@ -8,7 +13,6 @@ HTTP::HTTP(const std::string &rawRequest, const ServerConfig &serverConfig)
 	request.method = "";
 	request.path = "";
 	request.target_file = "";
-	request.best_location = NULL;
 	request.query_string = "";
 	request.version = "";
 
@@ -127,7 +131,7 @@ HTTP::parseQuery(const std::string &query_string)
 
 void HTTP::findBestLocation()
 {
-	const LocationConfig *bestMatch = NULL;
+	const LocationConfig *bestMatch = 0;
 	size_t longestMatch = 0;
 
 	// Find the location with the longest matching path prefix
@@ -147,11 +151,8 @@ void HTTP::findBestLocation()
 		}
 	}
 
-	request.best_location = bestMatch;
-	if (bestMatch)
-		DEBUG("Found matching location: " + bestMatch->path);
-	else
-		DEBUG("No matching location found for path: " + request.path);
+	request.best_location = *bestMatch;
+	// DEBUG("Found matching location: " + bestMatch->path);
 }
 
 void HTTP::handleConnectionHeader()
@@ -203,38 +204,39 @@ void HTTP::generateResponse()
 {
 	// call before methods
 	handleConnectionHeader();
+	if (!methodAllowed(request.method))
+		return buildErrorRespose(405);
+	if (!request.best_location.returnPath.empty())
+		return redirect(request.best_location.returnPath);
+
+	std::string fsPath = resolveRequestPath();
+	// DEBUG(fsPath);
+	
+	if (hasLoginLocation(serverConfig.locations))
+	{
+		if (request.best_location.path == "/login")
+			handleLogin();
+		// Check if user is logged in via cookie
+		if (request.cookies.find("logged_in") == request.cookies.end() ||
+			request.cookies["logged_in"] != "true")
+		{
+			// Not logged in, redirect to login
+			return redirect("/login");
+		}
+
+	}
 
 	if (request.method == "GET")
-		GET();
+		GET(fsPath);
 	else if (request.method == "POST")
 		POST();
 	else if (request.method == "DELETE")
-	{
-		DEBUG("DELETE method called");
 		DELETE();
-	}
 	else
-	{
-		// Minimal fallback: show error page with 405
-		std::string body = readFile(serverConfig.errorPage);
-		response.status_code = 405;
-		response.status_text = "Method Not Allowed";
-		response.body = (body == BADFILE) ? std::string("") : body;
-		response.headers["Content-Type"] = "text/html";
-		response.headers["Content-Length"] = intToString(response.body.size());
-	}
+		buildErrorRespose(405);
 }
 
-// Helper method to replace placeholders in error pages
-std::string HTTP::replacePlaceHolders(std::string source,
-									const std::string &from,
-									const std::string &to)
-{
-	size_t pos;
-	while ((pos = source.find((from)) != std::string::npos))
-		source.replace(pos, from.size(), to);
-	return source;
-}
+
 
 // Helper method to load and prepare error pages
 std::string HTTP::loadErrorPage(int code)

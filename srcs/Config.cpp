@@ -279,7 +279,7 @@ int Config::parseLocation(ServerConfig &server, TokenIterator &iter)
 
 	if (!iter.expectAndConsume(LBRACE))
 		return -1;
-
+	
 	// Parse location directives
 	while (iter.hasNext() && iter.currentType() != RBRACE)
 	{
@@ -521,8 +521,18 @@ int Config::validateConfig()
 				WARNING("No index for '" + server.locations[i].path +
 						"' defaults to 'index.html'");
 				server.locations[i].index = DEFAULT_INDEX;
+				server.locations[i].fs_index = server.locations[i].fs_path + "/" + server.locations[i].index;
 			}
 		}
+		LocationConfig serverLoc = LocationBase;
+		serverLoc.root = server.root;
+		serverLoc.allowedMethods.push_back("GET");
+		serverLoc.autoindex = false;
+		serverLoc.fs_path = server.root;
+		serverLoc.index = server.index;
+		serverLoc.fs_index = serverLoc.fs_path + "/" + serverLoc.index;
+		serverLoc.path = "/";
+		server.locations.push_back(serverLoc);
 	}
 	return 0;
 }
