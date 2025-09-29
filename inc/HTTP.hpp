@@ -37,8 +37,7 @@ class HTTP
 	const std::string &rawRequest;
 	const ServerConfig &serverConfig;
 
-	std::map<std::string, std::string>
-	parseQuery(const std::string &query_string);
+	std::map<std::string, std::string> parseQuery(const std::string &query_string);
 
 	int methodAllowed(std::string &requestMethod);
 	void redirect(const std::string &returnPath);
@@ -52,6 +51,8 @@ class HTTP
 
 	void addHeaders(const std::string &header, const std::string &value);
 
+	std::string generateFileListHtml(const std::string &directory);
+
 	std::string loadErrorPage(int code);
 	std::string replacePlaceHolders(std::string source,
 									  const std::string &from,
@@ -61,7 +62,8 @@ class HTTP
 	void GET(std::string &fsPath);
 	void POST();
 	void DELETE();
-	void handleLogin();
+	bool handleLogin();
+	bool handleSession();
 
   public:
 	char *data;

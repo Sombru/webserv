@@ -14,6 +14,7 @@ struct LocationConfig
 	std::string index;						 // index a location
 	std::string returnPath;					 // redirection path
 	std::string uploadDir;					 // dir for POST request might be usefull
+	std::string fs_uploadDir;				 // filesystem path for upload dir
 	std::string fs_path;					 // filesystem path for that location retrived from root/alias
 	std::string fs_index;					 // filesystem path to location's index
 	bool autoindex;							 // directory listing

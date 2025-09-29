@@ -18,6 +18,7 @@ void HTTP::buildResponse(int code, std::string &fsTarget)
 	if (buffer == BADFILE)
 		return buildErrorRespose(404);
 	response.body = buffer;
+	response.body = replacePlaceHolders(buffer, "{{file_list}}", generateFileListHtml((request.best_location.fs_uploadDir)));
 	response.headers["Content-Type"] = getMimeType(fsTarget);
 	response.headers["Content-Length"] = intToString(response.body.size());
 }
@@ -28,24 +29,44 @@ void HTTP::buildResponse(int code)
 	response.status_text = getStatusText(code);
 }
 
-std::string HTTP::getMimeType(const std::string &path)
+
+std::string HTTP::generateFileListHtml(const std::string &directory)
 {
-	size_t dotPos = path.find_last_of('.');
-	if (dotPos == std::string::npos)
-		return "application/octet-stream";
+	std::string html;
+	DIR *dir = opendir(directory.c_str());
+	if (!dir)
+	{
+		DEBUG("Failed to open directory: " + directory +
+			  " - Error: " + strerror(errno));
+		return "<li>No files available</li>";
+	}
 
-	std::string extension = path.substr(dotPos + 1); // skip the '.'
+	struct dirent *entry;
+	while ((entry = readdir(dir)) != NULL)
+	{
+		std::string filename = entry->d_name;
+		// Skip hidden files and directories
+		if (filename[0] == '.' || filename == ".." || filename == ".")
+		{
+			continue;
+		}
 
-	if (extension.empty())
-		return "application/octet-stream";
-	// DEBUG(serverConfig.mimeTypes.at("text/html"));
+		// Create list items that match your existing HTML structure
+		html += "<li id=\"file-" + filename + "\">\n";
+		html += "  <a href=\"/upload/" + filename + "\" download>" + filename +
+				"</a>\n";
+		html += "  <button class=\"delete-btn\" onclick=\"deleteFile('" +
+				filename + "')\">Delete</button>\n";
+		html += "</li>\n";
+	}
 
-	std::map<std::string, std::string>::const_iterator it =
-		serverConfig.mimeTypes.find(extension);
-	if (it != serverConfig.mimeTypes.end())
-		return it->second;
+	if (html.empty())
+	{
+		html = "<li>No files uploaded yet</li>";
+	}
 
-	return "application/octet-stream";
+	closedir(dir);
+	return html;
 }
 
 void HTTP::redirect(const std::string &returnPath)

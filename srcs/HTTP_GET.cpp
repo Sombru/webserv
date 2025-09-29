@@ -1,55 +1,14 @@
 #include "HTTP.hpp"
 #include <dirent.h>
 
-std::string generateFileListHtml(const std::string &directory)
-{
-	std::string html;
-	DIR *dir = opendir(directory.c_str());
-	if (!dir)
-	{
-		DEBUG("Failed to open directory: " + directory +
-			  " - Error: " + strerror(errno));
-		return "<li>No files available</li>";
-	}
-
-	struct dirent *entry;
-	while ((entry = readdir(dir)) != NULL)
-	{
-		std::string filename = entry->d_name;
-		// Skip hidden files and directories
-		if (filename[0] == '.' || filename == ".." || filename == ".")
-		{
-			continue;
-		}
-
-		// Create list items that match your existing HTML structure
-		html += "<li id=\"file-" + filename + "\">\n";
-		html += "  <a href=\"/upload/" + filename + "\" download>" + filename +
-				"</a>\n";
-		html += "  <button class=\"delete-btn\" onclick=\"deleteFile('" +
-				filename + "')\">Delete</button>\n";
-		html += "</li>\n";
-	}
-
-	if (html.empty())
-	{
-		html = "<li>No files uploaded yet</li>";
-	}
-
-	closedir(dir);
-	return html;
-}
-
 void HTTP::GET(std::string &fsPath)
 {
-
-
 	if (is_directory(fsPath))
 	{
 		buildResponse(200, request.best_location.fs_index);
 		return ;
 	}
-
+	
 	return buildResponse(200, fsPath);
 
 

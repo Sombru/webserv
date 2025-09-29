@@ -2,9 +2,10 @@
 #include "Utils.hpp"
 
 // make serverLoc to always have location to access +
-// make /login location that will redirect you to logind page for cookies bonus part
+// make /login location that will redirect you to logind page for cookies bonus part +
 // add fsIndex to location have easy access of location's indexes +
-// fucking CGI and autoindex
+// fucking CGI and autoindex (AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa)
+// fix POST
 
 HTTP::HTTP(const std::string &rawRequest, const ServerConfig &serverConfig)
 	: rawRequest(rawRequest), serverConfig(serverConfig)
@@ -208,24 +209,12 @@ void HTTP::generateResponse()
 		return buildErrorRespose(405);
 	if (!request.best_location.returnPath.empty())
 		return redirect(request.best_location.returnPath);
-
+	if (!handleSession())
+		return redirect("/login");
 	std::string fsPath = resolveRequestPath();
+
 	// DEBUG(fsPath);
-	
-	if (hasLoginLocation(serverConfig.locations))
-	{
-		if (request.best_location.path == "/login")
-			handleLogin();
-		// Check if user is logged in via cookie
-		if (request.cookies.find("logged_in") == request.cookies.end() ||
-			request.cookies["logged_in"] != "true")
-		{
-			// Not logged in, redirect to login
-			return redirect("/login");
-		}
-
-	}
-
+	DEBUG(request.best_location.fs_uploadDir);
 	if (request.method == "GET")
 		GET(fsPath);
 	else if (request.method == "POST")
@@ -236,7 +225,16 @@ void HTTP::generateResponse()
 		buildErrorRespose(405);
 }
 
-
+bool HTTP::handleSession()
+{
+	if (!hasLoginLocation(serverConfig.locations))
+		return true; 
+	if ((request.cookies.find("logged_in") != request.cookies.end() || request.cookies["logged_in"] == "true"))
+		return true;
+	if (request.best_location.path == "/login")
+		return true;
+	return false;
+}
 
 // Helper method to load and prepare error pages
 std::string HTTP::loadErrorPage(int code)
@@ -264,8 +262,8 @@ std::string HTTP::loadErrorPage(int code)
 	}
 
 	// Replace placeholders in the error page
-	replacePlaceHolders(errorBody, "{{code}}", intToString(code));
-	replacePlaceHolders(errorBody, "{{status_text}}", getStatusText(code));
+	errorBody = replacePlaceHolders(errorBody, "{{code}}", intToString(code));
+	errorBody = replacePlaceHolders(errorBody, "{{status_text}}", getStatusText(code));
 	return errorBody;
 }
 

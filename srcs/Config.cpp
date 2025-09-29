@@ -513,16 +513,17 @@ int Config::validateConfig()
 			}
 			else
 			{
-				server.locations[i].fs_path =
-					server.locations[i].root + server.locations[i].path;
+				server.locations[i].fs_path = server.locations[i].root + server.locations[i].path;
 			}
 			if (server.locations[i].index == DEFAULT)
 			{
 				WARNING("No index for '" + server.locations[i].path +
 						"' defaults to 'index.html'");
 				server.locations[i].index = DEFAULT_INDEX;
-				server.locations[i].fs_index = server.locations[i].fs_path + "/" + server.locations[i].index;
 			}
+			server.locations[i].fs_index = server.locations[i].fs_path + "/" + server.locations[i].index;
+			if (!server.locations[i].uploadDir.empty())
+				server.locations[i].fs_uploadDir = server.locations[i].fs_path + server.locations[i].uploadDir;
 		}
 		LocationConfig serverLoc = LocationBase;
 		serverLoc.root = server.root;
@@ -530,8 +531,8 @@ int Config::validateConfig()
 		serverLoc.autoindex = false;
 		serverLoc.fs_path = server.root;
 		serverLoc.index = server.index;
-		serverLoc.fs_index = serverLoc.fs_path + "/" + serverLoc.index;
 		serverLoc.path = "/";
+		serverLoc.fs_index = serverLoc.fs_path + "/" + serverLoc.index;
 		server.locations.push_back(serverLoc);
 	}
 	return 0;

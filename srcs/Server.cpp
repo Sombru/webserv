@@ -191,7 +191,7 @@ bool Server::handleConnection(int fd)
 			{
 				response += it->first + ": " + it->second + "\r\n";
 			}
-			response += "\r\n";
+			response += "\r\n\r\n";
 			response += resp.body;
 			// DEBUG(response);
 			
@@ -202,7 +202,7 @@ bool Server::handleConnection(int fd)
 			}
 			else
 			{
-				DEBUG("Sent " + intToString(bytesSent) + " bytes to client " + intToString(fd));
+				// DEBUG("Sent " + response + " to client " + intToString(fd));
 			}
 			
 			// return false; // Close connection after sending response

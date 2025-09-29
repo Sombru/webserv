@@ -68,8 +68,7 @@ void HTTP::POST()
 	outFile.close();
 
 	// Load success.html template
-	std::string successTemplate =
-		readFile(serverConfig.root + "/success/success.html");
+	std::string successTemplate = readFile(serverConfig.root + "/success/success.html");
 	if (successTemplate == BADFILE)
 	{
 		// Fallback to simple message if template not found
@@ -100,7 +99,7 @@ void HTTP::POST()
 	response.headers["Location"] = "/upload/" + filename;
 }
 
-void HTTP::handleLogin()
+bool HTTP::handleLogin()
 {
 	// Parse form data
 	std::map<std::string, std::string> formData;
@@ -121,17 +120,14 @@ void HTTP::handleLogin()
 	// usernmae/password here
 	if (formData["username"] == "admin" && formData["password"] == "admin")
 	{
-		// sets cookie for 20 seconds (shortened for testing)
-		addHeaders("Set-Cookie", "logged_in=true; Path=/; Max-Age=20");
-
-		// Redirect to index
-		buildResponse(302);
-		addHeaders("Location", "/");
+		// sets cookie for 200 seconds (shortened for testing)
+		addHeaders("Set-Cookie", "logged_in=true; Path=/; Max-Age=200");
+		redirect("/");
 	}
 	else
 	{
-		buildResponse(302);
-		addHeaders("Location", "/?error=1");
+		redirect("/?error=1");
 	}
+	return 0;
 }
 

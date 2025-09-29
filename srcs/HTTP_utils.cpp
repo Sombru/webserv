@@ -49,14 +49,39 @@ std::string HTTP::replacePlaceHolders(std::string source,
 									const std::string &from,
 									const std::string &to)
 {
-	size_t pos;
-	while ((pos = source.find((from)) != std::string::npos))
-		source.replace(pos, from.size(), to);
-	return source;
+    if (from.empty()) 
+        return source; 
+
+    size_t pos = 0;
+    while ((pos = source.find(from, pos)) != std::string::npos) {
+        source.replace(pos, from.length(), to);
+        pos += to.length(); // move past the replaced content
+    }
+    return source;
 }
 
 // returns a fileSystem path of a request
 std::string HTTP::resolveRequestPath()
 {
 	return request.best_location.fs_path + "/" + request.path.substr(request.best_location.path.size());
+}
+
+std::string HTTP::getMimeType(const std::string &path)
+{
+	size_t dotPos = path.find_last_of('.');
+	if (dotPos == std::string::npos)
+		return "application/octet-stream";
+
+	std::string extension = path.substr(dotPos + 1); // skip the '.'
+
+	if (extension.empty())
+		return "application/octet-stream";
+	// DEBUG(serverConfig.mimeTypes.at("text/html"));
+
+	std::map<std::string, std::string>::const_iterator it =
+		serverConfig.mimeTypes.find(extension);
+	if (it != serverConfig.mimeTypes.end())
+		return it->second;
+
+	return "application/octet-stream";
 }
