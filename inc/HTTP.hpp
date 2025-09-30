@@ -61,7 +61,7 @@ class HTTP
 
 	void GET(std::string &fsPath);
 	void POST();
-	void DELETE();
+	void DELETE(const std::string &fsPath);
 	bool handleLogin();
 	bool handleSession();
 

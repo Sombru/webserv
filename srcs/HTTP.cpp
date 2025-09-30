@@ -5,7 +5,8 @@
 // make /login location that will redirect you to logind page for cookies bonus part +
 // add fsIndex to location have easy access of location's indexes +
 // fucking CGI and autoindex (AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa)
-// fix POST
+// fix POST +
+// fix DELETE not refreshing the page on delete
 
 HTTP::HTTP(const std::string &rawRequest, const ServerConfig &serverConfig)
 	: rawRequest(rawRequest), serverConfig(serverConfig)
@@ -214,13 +215,13 @@ void HTTP::generateResponse()
 	std::string fsPath = resolveRequestPath();
 
 	// DEBUG(fsPath);
-	DEBUG(request.best_location.fs_uploadDir);
+	// DEBUG(request.best_location.fs_uploadDir);
 	if (request.method == "GET")
 		GET(fsPath);
 	else if (request.method == "POST")
 		POST();
 	else if (request.method == "DELETE")
-		DELETE();
+		DELETE(fsPath);
 	else
 		buildErrorRespose(405);
 }

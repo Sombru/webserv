@@ -90,7 +90,7 @@
     <div class="main">
         <div class="left">
             <h2>POST raw body</h2>
-            <form method="POST" action="/upload/">
+            <form method="POST" action="/upload">
                 <textarea name="data" placeholder="Write something here..."></textarea><br>
                 <button type="submit">Send Text</button>
             </form>
@@ -98,7 +98,7 @@
 
         <div class="right">
             <h2>Upload a File</h2>
-            <form method="POST" action="/upload/" enctype="multipart/form-data">
+            <form method="POST" action="/upload" enctype="multipart/form-data">
                 <label for="fileUpload">
                     <button type="button" onclick="document.getElementById('fileUpload').click()">+ Select File</button>
                 </label>
@@ -117,7 +117,7 @@
 
     <script>
         function deleteFile(filename) {
-            fetch('/upload/' + encodeURIComponent(filename), {
+            fetch('/upload' + encodeURIComponent(filename), {
                 method: 'DELETE'
             }).then(response => {
                 if (response.ok) {

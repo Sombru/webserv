@@ -53,7 +53,8 @@ std::string HTTP::replacePlaceHolders(std::string source,
         return source; 
 
     size_t pos = 0;
-    while ((pos = source.find(from, pos)) != std::string::npos) {
+    while ((pos = source.find(from, pos)) != std::string::npos) 
+	{
         source.replace(pos, from.length(), to);
         pos += to.length(); // move past the replaced content
     }

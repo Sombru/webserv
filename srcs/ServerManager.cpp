@@ -124,7 +124,7 @@ void ServerManager::checkTimeouts()
 		
 		// Check if client has been inactive for more than timeout seconds
 		// config.timeout is in milliseconds, so convert to seconds		
-		if (currentTime - lastActivity > config.timeout / 1000) // to seconds
+		if (currentTime - lastActivity > (config.timeout / 2) / 1000) // to seconds
 		{
 			clientsToRemove.push_back(client_fd);
 		}

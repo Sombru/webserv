@@ -29,7 +29,6 @@ void HTTP::buildResponse(int code)
 	response.status_text = getStatusText(code);
 }
 
-
 std::string HTTP::generateFileListHtml(const std::string &directory)
 {
 	std::string html;
