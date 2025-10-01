@@ -10,7 +10,7 @@
 // fix POST +
 // fix DELETE not refreshing the page on delete +
 // fix permanent buffering
-// memory 
+// memory (signals!!!!!!!!!!)
 
 HTTP::HTTP(const std::string &rawRequest, const ServerConfig &serverConfig)
 	: rawRequest(rawRequest), serverConfig(serverConfig)
