@@ -109,30 +109,12 @@
             <div class="file-list">
                 <h3>Uploaded Files</h3>
                 <ul id="uploadedFiles">
-                    {{file_list}} <!-- Will be populated from server -->
+                    {{autoindex}} <!-- Will be populated from server -->
                 </ul>
             </div>
         </div>
     </div>
 
-    <script>
-        function deleteFile(filename) {
-            fetch('/upload' + encodeURIComponent(filename), {
-                method: 'DELETE'
-            }).then(response => {
-                if (response.ok) {
-                    // Remove the file from the DOM
-                    const el = document.getElementById('file-' + CSS.escape(filename));
-                    if (el) el.remove();
-                } else {
-                    alert('Failed to delete file: ' + filename);
-                }
-            }).catch(err => {
-                alert('Error deleting file: ' + filename);
-                console.error(err);
-            });
-        }
-    </script>
 </body>
 
 </html>

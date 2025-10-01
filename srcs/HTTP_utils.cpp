@@ -14,7 +14,10 @@ int HTTP::methodAllowed(std::string &requestMethod)
 
 void HTTP::addHeaders(const std::string &header, const std::string &value)
 {
-	response.headers[header] = value;
+	if (response.headers.find(header) == response.headers.end())
+		response.headers[header] = value;
+	else
+		response.headers[header] += "; " + value;
 }
 
 std::string HTTP::getStatusText(int code)

@@ -135,7 +135,7 @@ void Server::acceptConnection(int &epoll_fd, std::map<int, Client> &clientsMap)
 		char clinetIP[INET_ADDRSTRLEN];
 		inet_ntop(AF_INET, &client_addr.sin_addr, clinetIP, INET_ADDRSTRLEN);
 		INFO("New clinet " + intToString(client_fd) + " connected to " + serverConfig.name + " at " + getTimestamp());
-		INFO((std::string)"Client IP: " + clinetIP);
+		// INFO((std::string)"Client IP: " + clinetIP);
 	}
 }
 
@@ -202,7 +202,7 @@ bool Server::handleConnection(int fd)
 			}
 			else
 			{
-				// DEBUG("Sent " + response + " to client " + intToString(fd));
+				DEBUG("Sent " + response + " to client " + intToString(fd));
 			}
 			
 			// return false; // Close connection after sending response

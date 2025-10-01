@@ -52,6 +52,7 @@ class HTTP
 	void addHeaders(const std::string &header, const std::string &value);
 
 	std::string generateFileListHtml(const std::string &directory);
+	std::string buildAutoIndexHTML(std::string &fsTarget);
 
 	std::string loadErrorPage(int code);
 	std::string replacePlaceHolders(std::string source,

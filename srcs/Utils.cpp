@@ -65,3 +65,22 @@ bool hasLoginLocation(const std::vector<LocationConfig> &locations)
 	}
 	return false;
 }
+
+std::vector<std::string> getDirectoryContents(const std::string &path)
+{
+	std::vector<std::string> contents;
+
+	DIR *dir = opendir(path.c_str());
+	if (!dir)
+		return contents; // Could not open directory
+
+	struct dirent *entry;
+	while ((entry = readdir(dir)) != NULL)
+	{
+		std::string name = entry->d_name;
+		if (name != "." && name != "..")
+			contents.push_back(name);
+	}
+	closedir(dir);
+	return contents;
+}

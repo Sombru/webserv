@@ -4,9 +4,13 @@
 // make serverLoc to always have location to access +
 // make /login location that will redirect you to logind page for cookies bonus part +
 // add fsIndex to location have easy access of location's indexes +
-// fucking CGI and autoindex (AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa)
+// autoinedx +
+// autoindex allowes to delte files if DELETE method is present in location +
+// CGI
 // fix POST +
-// fix DELETE not refreshing the page on delete
+// fix DELETE not refreshing the page on delete +
+// fix permanent buffering
+// memory 
 
 HTTP::HTTP(const std::string &rawRequest, const ServerConfig &serverConfig)
 	: rawRequest(rawRequest), serverConfig(serverConfig)

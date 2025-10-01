@@ -15,8 +15,13 @@ void HTTP::POST()
 		buildErrorRespose(403);
 		return;
 	}
+	if (request.body.size() > serverConfig.clientMaxBodySize)
+	{
+		buildErrorRespose(413);
+		return;
+	}
 
-	std::string uploadDir = request.best_location.fs_uploadDir	;
+	std::string uploadDir = request.best_location.fs_uploadDir;
 
 	// DEBUG(uploadDir);
 	// create one if it doesn't exist
@@ -68,38 +73,13 @@ void HTTP::POST()
 	outFile.write(request.body.c_str(), request.body.size());
 	outFile.close();
 
-	redirect(request.best_location.path);	
-
-	// Load success.html template
-	// std::string successTemplate = readFile(serverConfig.root + "/success/success.html");
-	// if (successTemplate == BADFILE)
-	// {
-	// 	// Fallback to simple message if template not found
-	// 	response.status_code = 201;
-	// 	response.status_text = "Created";
-	// 	response.body =
-	// 		"<html><body><h1>File uploaded successfully</h1><p>Filename: " +
-	// 		filename + "</p></body></html>";
-	// }
-	// else
-	// {
-	// 	// Replace placeholder with actual file path
-	// 	size_t pos = 0;
-	// 	while ((pos = successTemplate.find("{{filepath}}", pos)) !=
-	// 		   std::string::npos)
-	// 	{
-	// 		successTemplate.replace(pos, 12, fullPath);
-	// 		pos += fullPath.length();
-	// 	}
-
-	// 	response.status_code = 201;
-	// 	response.status_text = "Created";
-	// 	response.body = successTemplate;
-	// }
-
-	// response.headers["Content-Type"] = "text/html";
-	// response.headers["Content-Length"] = intToString(response.body.size());
-	// response.headers["Location"] = "/upload/" + filename;
+	// redirect(request.best_location.path);
+	response.status_code = 201;
+	response.status_text = "Created";
+	response.body =	"<html><body><h1>File uploaded successfully</h1><p>Filename: " +
+	filename + "<div><a href=\"" + request.best_location.path + "\">Go back</a></div></p></body></html>";
+	response.headers["Content-Type"] = "text/html";
+	response.headers["Content-Length"] = intToString(response.body.size());
 }
 
 bool HTTP::handleLogin()
