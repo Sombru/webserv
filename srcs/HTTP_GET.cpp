@@ -15,7 +15,7 @@ void HTTP::GET(std::string &fsPath)
 		}
 		else
 			response.body = html;
-		addHeaders("Content-Lenght", intToString(response.body.length()));
+		addHeaders("Content-Length", intToString(response.body.length()));
 		return buildResponse(200);
 	}
 	if (is_directory(fsPath))
@@ -55,7 +55,7 @@ std::string HTTP::buildAutoIndexHTML(std::string &fsTarget)
 	addHeaders("Content-Type", "text/html; charset=UTF-8");
 
 	// HTML header
-	html += "<html>\n<head>\n";
+	html += "\n<head>\n";
 	html += "<style>\n";
 	html += "body { font-family: Arial, sans-serif; margin: 40px; }\n";
 	html += "h1 { color: #333; }\n";
@@ -119,6 +119,6 @@ std::string HTTP::buildAutoIndexHTML(std::string &fsTarget)
 		html += "</li>\n";
 	}
 
-	html += "</ul>\n</body>\n</html>";
+	html += "</ul>\n</body>";
 	return html;
 }

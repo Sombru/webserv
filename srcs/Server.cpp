@@ -171,13 +171,11 @@ bool Server::handleConnection(int fd)
 		if (rawRequest.find("\r\n\r\n") != std::string::npos || 
 			rawRequest.find("\n\n") != std::string::npos)
 		{
-			// We have a complete request, process it
 			HTTP httpHandler(rawRequest, serverConfig);
 			httpHandler.parseRequest();
 			
 			const HttpRequest& request = httpHandler.request;
 			
-			// Log the parsed request
 			INFO("HTTP Request - Method: " + request.method + 
 				 ", Path: " + request.path + 
 				 ", Version: " + request.version);
@@ -202,10 +200,9 @@ bool Server::handleConnection(int fd)
 			}
 			else
 			{
-				DEBUG("Sent " + response + " to client " + intToString(fd));
+				// DEBUG("Sent " + response + " to client " + intToString(fd));
 			}
 			
-			// return false; // Close connection after sending response
 		}
 	}
 	
