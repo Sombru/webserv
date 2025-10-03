@@ -17,15 +17,17 @@ private:
 	// std::map<int, time_t> clientActivity;
 	int epoll_fd;
 	time_t lastTimeoutCheck;
+	static volatile sig_atomic_t signalReceived;
 
 public:
-	bool runnig;
+	bool running;
 	ServerManager(FullConfig &configSrc);
 	int setup();
 	void run();
 	void checkTimeouts();
 	void updateClientActivity(int client_fd);
 	void removeClient(int client_fd);
+	static void signalHandler(int signal);
 
 	~ServerManager() {};
 };

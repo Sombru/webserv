@@ -19,7 +19,7 @@ void HTTP::buildResponse(int code, std::string &fsTarget)
 	response.body = buffer;
 
 	addHeaders("Content-Type", getMimeType(fsTarget));
-	addHeaders("Content-Lenght", intToString(response.body.length()));
+	addHeaders("Content-Length", intToString(response.body.length()));
 }
 
 void HTTP::buildResponse(int code)
@@ -33,4 +33,3 @@ void HTTP::redirect(const std::string &returnPath)
 	buildResponse(302);
 	addHeaders("Location", returnPath);
 }
-
