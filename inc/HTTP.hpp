@@ -1,9 +1,16 @@
 #pragma once
 #include "Logger.hpp"
-#include "Server.hpp"
 #include "Webserv.hpp"
 
 #define HTTP_VERSION "HTTP/1.1"
+
+// some headers we use
+#define CONTENT_TYPE "Content-Type"
+#define CONTENT_LENGHT "Content-Lenght"
+#define LOCATION "Location"
+#define CONNECTION "Connection"
+#define SET_COOKIE "Set-Cookie"
+#define CONTENT_DISPOSITION "Content-Disposition"
 
 struct HttpRequest
 {
@@ -11,7 +18,7 @@ struct HttpRequest
 	std::string path;								 // e.g. /about.html
 	std::string target_file;						 // e.g. about.html
 	std::string query_string;						 // e.g ?alice=18
-	std::string version;							 //  e.g. "HTTP/1.1"
+	std::string version;							 // e.g. "HTTP/1.1"
 	std::map<std::string, std::string> query_params; // e.g. query_params["alice"] == 18
 	std::map<std::string, std::string> headers;		 // e.g. headers["Authorization"] == <browser>
 	std::string body;
@@ -31,11 +38,12 @@ struct HttpResponse
 
 class HTTP
 {
-  private:
+private:
+
+	std::string chunkBuffer;
+
 	std::string resolveRequestPath();
 	std::string getMimeType(const std::string &path);
-	const std::string &rawRequest;
-	const ServerConfig &serverConfig;
 
 	std::map<std::string, std::string> parseQuery(const std::string &query_string);
 
@@ -51,28 +59,41 @@ class HTTP
 
 	void addHeaders(const std::string &header, const std::string &value);
 
-	std::string generateFileListHtml(const std::string &directory);
+	// Chunked transfer encoding methods
+	void generateChunkAcceptedResponse(); // 202 Accepted response
+	bool isChunkComplete(const std::string& data);
+	std::string extractChunkSize(const std::string& data);
+	std::string extractChunkData(const std::string& data, size_t chunkSize);
+
 	std::string buildAutoIndexHTML(std::string &fsTarget);
 
 	std::string loadErrorPage(int code);
 	std::string replacePlaceHolders(std::string source,
-									  const std::string &from,
-									  const std::string &to);
+									const std::string &from,
+									const std::string &to);
 	std::string getStatusText(int code);
 
 	void GET(std::string &fsPath);
 	void POST();
+
+	// CGI execution helper
+	// Returns true if CGI was executed and response is filled
+	bool executeCgi(const std::string &scriptPath, const std::string &interpreter, const std::string &requestBody);
 	void DELETE(const std::string &fsPath);
 	bool handleLogin();
 	bool handleSession();
 
-  public:
+public:
 	char *data;
+	ServerConfig &serverConfig;
 	HttpRequest request;
 	HttpResponse response;
 
-	HTTP(const std::string &rawRequest, const ServerConfig &serverConfig);
-	void parseRequest();
+	bool processChunkData(const std::string& chunkData);
+	HTTP(ServerConfig &config);
+	HTTP(const HTTP &other);
+	HTTP &operator=(const HTTP &other);
+	void parseRequest(const std::string &rawRequest);
 	void generateResponse();
 
 	~HTTP();

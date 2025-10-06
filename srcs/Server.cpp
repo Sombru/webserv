@@ -4,30 +4,35 @@
 #include "HTTP.hpp"
 #include "Logger.hpp"
 
-Server::Server()
-: port(0), server_fd(-1)
-{
-}
+// Server::Server()
+// {
+
+// }
 
 Server::Server(ServerConfig &serverSrc)
-: serverConfig(serverSrc), server_fd(-1)
+	: serverConfig(serverSrc), http(serverConfig), server_fd(-1)
 {
 	addresStr = (serverConfig.host.substr(0, serverConfig.host.find(':')));
 	port = atoi(serverConfig.host.substr(serverConfig.host.find(':') + 1).c_str());
 }
 
-Server::Server(const Server& other)
-: port(other.port), addresStr(other.addresStr), serverConfig(other.serverConfig), server_fd(other.server_fd)
+Server::Server(const Server &other)
+	: port(other.port),
+	  addresStr(other.addresStr),
+	  serverConfig(other.serverConfig),
+	  http(other.http),
+	  server_fd(other.server_fd)
 {
 }
 
-Server& Server::operator=(const Server& other)
+Server &Server::operator=(const Server &other)
 {
 	if (this != &other)
 	{
 		port = other.port;
 		addresStr = other.addresStr;
 		serverConfig = other.serverConfig;
+		http = other.http;
 		server_fd = other.server_fd;
 	}
 	return *this;
@@ -99,7 +104,7 @@ int Server::setup()
 	return EXIT_SUCCESS;
 }
 
-void Server::acceptConnection(int &epoll_fd, std::map<int, Client> &clientsMap) 
+void Server::acceptConnection(int &epoll_fd, std::map<int, Client> &clientsMap)
 {
 	while (true)
 	{
@@ -118,12 +123,12 @@ void Server::acceptConnection(int &epoll_fd, std::map<int, Client> &clientsMap)
 		}
 
 		if (!setNonBlocking(client_fd))
-			return ;
+			return;
 
 		struct epoll_event event;
 		event.events = EPOLLIN | EPOLLET;
 		event.data.fd = client_fd;
-		
+
 		if ((epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) < 0))
 		{
 			ERROR("Failed to add clinet to epoll: " + errstr);
@@ -154,7 +159,7 @@ bool Server::handleConnection(int fd)
 				break; // No more data available right now
 			}
 			ERROR("Error reading from client " + intToString(fd) + ": " + errstr);
-			return false; // Signal to remove client	
+			return false; // Signal to remove client
 		}
 
 		if (bytesRead == 0)
@@ -166,45 +171,48 @@ bool Server::handleConnection(int fd)
 		// Null-terminate the buffer for safety
 		buffer[bytesRead] = '\0';
 		rawRequest += buffer;
-		
+
 		// Check if we have a complete HTTP request (ends with \r\n\r\n)
-		if (rawRequest.find("\r\n\r\n") != std::string::npos || 
+		if (rawRequest.find("\r\n\r\n") != std::string::npos ||
 			rawRequest.find("\n\n") != std::string::npos)
 		{
-			HTTP httpHandler(rawRequest, serverConfig);
-			httpHandler.parseRequest();
-			
-			const HttpRequest& request = httpHandler.request;
-			
-			INFO("HTTP Request - Method: " + request.method + 
-				 ", Path: " + request.path + 
-				 ", Version: " + request.version);
-			// Generate configured response (serves index/error/success per config)
-			httpHandler.generateResponse();
-			const HttpResponse& resp = httpHandler.response;
-			
+			// DEBUG(rawRequest);
+			http.parseRequest(rawRequest);
+
+			INFO("HTTP Request - Method: " + http.request.method +
+				 ", Path: " + http.request.path +
+				 ", Version: " + http.request.version);
+			http.generateResponse();
+			const HttpResponse &resp = http.response;
+
 			// Build raw HTTP response
 			std::string response = resp.version + " " + intToString(resp.status_code) + " " + resp.status_text + "\r\n";
-			for (std::map<std::string, std::string>::const_iterator it = httpHandler.response.headers.begin(); it != httpHandler.response.headers.end(); ++it)
+			for (std::map<std::string, std::string>::const_iterator it = http.response.headers.begin(); it != http.response.headers.end(); ++it)
 			{
 				response += it->first + ": " + it->second + "\r\n";
 			}
-			response += "\r\n\r\n";
+			response += "\r\n\r\n\r\n";
 			response += resp.body;
 			// DEBUG(response);
-			
-			ssize_t bytesSent = send(fd, response.c_str(), response.size(), 0);
-			if (bytesSent < 0)
-			{
-				ERROR("Failed to send response to client " + intToString(fd) + ": " + errstr);
-			}
-			else
-			{
-				// DEBUG("Sent " + response + " to client " + intToString(fd));
-			}
-			
+			return sendResponse(fd, response);
 		}
+
 	}
-	
+
 	return true; // Keep connection alive, waiting for more data
+}
+
+
+bool Server::sendResponse(int fd, const std::string &response)
+{
+	if (send(fd, response.c_str(), response.size(), MSG_NOSIGNAL) < 0)
+	{
+		ERROR("Failed to send response to client " + intToString(fd) + ": " + errstr);
+		return false;
+	}
+	else
+	{
+		DEBUG("Sent " + response + " to client " + intToString(fd));
+	}
+	return true;
 }

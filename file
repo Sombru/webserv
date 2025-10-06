@@ -1,0 +1,151 @@
+[90msrcs/Config.cpp:520 (validateConfig) [0m[[33mWARNING[0m] No index for '/images' defaults to 'index.html'
+[90msrcs/Config.cpp:520 (validateConfig) [0m[[33mWARNING[0m] No index for '/cgi-bin' defaults to 'index.html'
+[90msrcs/Config.cpp:520 (validateConfig) [0m[[33mWARNING[0m] No index for '/autoindex' defaults to 'index.html'
+[90msrcs/Config.cpp:505 (validateConfig) [0m[[33mWARNING[0m] No root or alias for location '/old' defaults to server root
+[90msrcs/Config.cpp:520 (validateConfig) [0m[[33mWARNING[0m] No index for '/old' defaults to 'index.html'
+[90msrcs/ServerManager.cpp:59 (run) [0m[[36mINFO[0m] Running server 'www/fusion_web.com' on host: 127.0.0.3:8080
+[90msrcs/Server.cpp:142 (acceptConnection) [0m[[36mINFO[0m] New clinet 5 connected to www/fusion_web.com at 2025-10-06 18:10:02
+[90msrcs/Server.cpp:179 (handleConnection) [0m[[32mDEBUG[0m] POST /upload HTTP/1.1
+Host: 127.0.0.3:8080
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br, zstd
+Referer: http://127.0.0.3:8080/
+Content-Type: multipart/form-data; boundary=----geckoformboundary7d7737f41e65e5f98b86e89312a1d9cc
+Content-Length: 176270
+Origin: http://127.0.0.3:8080
+Sec-GPC: 1
+Connection: keep-alive
+Cookie: logged_in=true
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+DNT: 1
+Priority: u=0, i
+
+------geckoformboundary7d7737f41e65e5f98b86e89312a1d9cc
+Content-Disposition: form-data; name="file"; filename="cute_taiwan.jpg"
+Content-Type: image/jpeg
+
+ÿØÿá
+[90msrcs/Server.cpp:182 (handleConnection) [0m[[36mINFO[0m] HTTP Request - Method: POST, Path: /upload, Version: HTTP/1.1
+[90msrcs/HTTP.cpp:194 (handleConnectionHeader) [0m[[32mDEBUG[0m] Setting Connection: keep-alive
+[90msrcs/Server.cpp:179 (handleConnection) [0m[[32mDEBUG[0m] POST /upload HTTP/1.1
+Host: 127.0.0.3:8080
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br, zstd
+Referer: http://127.0.0.3:8080/
+Content-Type: multipart/form-data; boundary=----geckoformboundary7d7737f41e65e5f98b86e89312a1d9cc
+Content-Length: 176270
+Origin: http://127.0.0.3:8080
+Sec-GPC: 1
+Connection: keep-alive
+Cookie: logged_in=true
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+DNT: 1
+Priority: u=0, i
+
+------geckoformboundary7d7737f41e65e5f98b86e89312a1d9cc
+Content-Disposition: form-data; name="file"; filename="cute_taiwan.jpg"
+Content-Type: image/jpeg
+
+ÿØÿá¶÷‘‚þ§~µZöð*ÚC–†Í¬cÏTr#f´ÙÕÙÞ#$Ã´aS‹#‡ô'ÃëÏ¸ütº»œïAÛ–ÿ
+[90msrcs/Server.cpp:182 (handleConnection) [0m[[36mINFO[0m] HTTP Request - Method: POST, Path: /upload, Version: HTTP/1.1
+[90msrcs/HTTP.cpp:194 (handleConnectionHeader) [0m[[32mDEBUG[0m] Setting Connection: keep-alive
+[90msrcs/Server.cpp:179 (handleConnection) [0m[[32mDEBUG[0m] POST /upload HTTP/1.1
+Host: 127.0.0.3:8080
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br, zstd
+Referer: http://127.0.0.3:8080/
+Content-Type: multipart/form-data; boundary=----geckoformboundary7d7737f41e65e5f98b86e89312a1d9cc
+Content-Length: 176270
+Origin: http://127.0.0.3:8080
+Sec-GPC: 1
+Connection: keep-alive
+Cookie: logged_in=true
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+DNT: 1
+Priority: u=0, i
+
+------geckoformboundary7d7737f41e65e5f98b86e89312a1d9cc
+Content-Disposition: form-data; name="file"; filename="cute_taiwan.jpg"
+Content-Type: image/jpeg
+
+ÿØÿá¶÷‘‚þ§~µZöð*ÚC–†Í¬cÏTr#f´ÙÕÙÞ#$Ã´aS‹#‡ô'ÃëÏ¸ütº»œïAÛ–ÿÉÜÈ•…ies7k2oádÇOÌô|ãT‡;ŠnO¡äô™o1´æ¶¦mµ¬žU£n³ž¨mä­{^ÎË´óþÃŸ£¯Î¹¡Ç¦FbÎœ3t\äú:Ö8‰Þ}¦'>NÞ…—O~mÌlÛ™¯Šl±Umò“Ì70ŒšÇ”'až—goOì&â&¦JÁº±.¾§0nÓK?H<®¶æT×6[µwO[ñÿ
+[90msrcs/Server.cpp:182 (handleConnection) [0m[[36mINFO[0m] HTTP Request - Method: POST, Path: /upload, Version: HTTP/1.1
+[90msrcs/HTTP.cpp:194 (handleConnectionHeader) [0m[[32mDEBUG[0m] Setting Connection: keep-alive
+[90msrcs/Server.cpp:179 (handleConnection) [0m[[32mDEBUG[0m] POST /upload HTTP/1.1
+Host: 127.0.0.3:8080
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br, zstd
+Referer: http://127.0.0.3:8080/
+Content-Type: multipart/form-data; boundary=----geckoformboundary7d7737f41e65e5f98b86e89312a1d9cc
+Content-Length: 176270
+Origin: http://127.0.0.3:8080
+Sec-GPC: 1
+Connection: keep-alive
+Cookie: logged_in=true
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+DNT: 1
+Priority: u=0, i
+
+------geckoformboundary7d7737f41e65e5f98b86e89312a1d9cc
+Content-Disposition: form-data; name="file"; filename="cute_taiwan.jpg"
+Content-Type: image/jpeg
+
+ÿØÿá¶÷‘‚þ§~µZöð*ÚC–†Í¬cÏTr#f´ÙÕÙÞ#$Ã´aS‹#‡ô'ÃëÏ¸ütº»œïAÛ–ÿÉÜÈ•…ies7k2oádÇOÌô|ãT‡;ŠnO¡äô™o1´æ¶¦mµ¬žU£n³ž¨mä­{^ÎË´óþÃŸ£¯Î¹¡Ç¦FbÎœ3t\äú:Ö8‰Þ}¦'>NÞ…—O~mÌlÛ™¯Šl±Umò“Ì70ŒšÇ”'až—goOì&â&¦JÁº±.¾§0nÓK?H<®¶æT×6[µwO[ñÿ¨ÙÕ‡85Îò]5çýM\½¬¬ï+Z…Íyò3õ×å`Ü­sÕñ¡§“s`qb§ÖÎ–ï;³æúöËÍõ«+ kWcÁD¦Ñ›(Ø­¡a-:úqk4Ö›)[†q.œ¬…½yôq;ú¿Îð­³;˜!š)jé\â½ëŠ"f˜6¡5Tæ†•,‰3^`Ÿ»”å	T¦9$žl¨Rç3sc£Ï«ç–Ì¾ñÑÂ×›ÔZIÊ'§VÜŠ™ó`9ð¡« ƒ,òw[Ùè¹ÎòþÛÍþŸ…Gêx«d[-=k5³¯E½Ïoü¿u’œúIÒIÎ$í(wiÒ“Ï6%³s
+§3fÁ¦Ëw¦ga†ANœþN7ê2 YNØ
+[90msrcs/Server.cpp:182 (handleConnection) [0m[[36mINFO[0m] HTTP Request - Method: POST, Path: /upload, Version: HTTP/1.1
+[90msrcs/HTTP.cpp:194 (handleConnectionHeader) [0m[[32mDEBUG[0m] Setting Connection: keep-alive
+[90msrcs/Server.cpp:209 (sendResponse) [0m[[31mERROR[0m] Failed to send response to client 5: Connection reset by peer
+[90msrcs/Server.cpp:179 (handleConnection) [0m[[32mDEBUG[0m] POST /upload HTTP/1.1
+Host: 127.0.0.3:8080
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br, zstd
+Referer: http://127.0.0.3:8080/
+Content-Type: multipart/form-data; boundary=----geckoformboundary7d7737f41e65e5f98b86e89312a1d9cc
+Content-Length: 176270
+Origin: http://127.0.0.3:8080
+Sec-GPC: 1
+Connection: keep-alive
+Cookie: logged_in=true
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+DNT: 1
+Priority: u=0, i
+
+------geckoformboundary7d7737f41e65e5f98b86e89312a1d9cc
+Content-Disposition: form-data; name="file"; filename="cute_taiwan.jpg"
+Content-Type: image/jpeg
+
+ÿØÿá¶÷‘‚þ§~µZöð*ÚC–†Í¬cÏTr#f´ÙÕÙÞ#$Ã´aS‹#‡ô'ÃëÏ¸ütº»œïAÛ–ÿÉÜÈ•…ies7k2oádÇOÌô|ãT‡;ŠnO¡äô™o1´æ¶¦mµ¬žU£n³ž¨mä­{^ÎË´óþÃŸ£¯Î¹¡Ç¦FbÎœ3t\äú:Ö8‰Þ}¦'>NÞ…—O~mÌlÛ™¯Šl±Umò“Ì70ŒšÇ”'až—goOì&â&¦JÁº±.¾§0nÓK?H<®¶æT×6[µwO[ñÿ¨ÙÕ‡85Îò]5çýM\½¬¬ï+Z…Íyò3õ×å`Ü­sÕñ¡§“s`qb§ÖÎ–ï;³æúöËÍõ«+ kWcÁD¦Ñ›(Ø­¡a-:úqk4Ö›)[†q.œ¬…½yôq;ú¿Îð­³;˜!š)jé\â½ëŠ"f˜6¡5Tæ†•,‰3^`Ÿ»”å	T¦9$žl¨Rç3sc£Ï«ç–Ì¾ñÑÂ×›ÔZIÊ'§VÜŠ™ó`9ð¡« ƒ,òw[Ùè¹ÎòþÛÍþŸ…Gêx«d[-=k5³¯E½Ïoü¿u’œúIÒIÎ$í(wiÒ“Ï6%³s
+§3fÁ¦Ëw¦ga†ANœþN7ê2 YNØ/=ºsDSôyæÑ•Ì'&ªÌiD3!dCYËde Êb“®òˆFË.Ž9R;tŒ$»þÒ¼Þ‹“Œ¼þ‰FQˆ
+C D…AFÍàpvÔ€çG™”%ÛŒÈÑ’4Ùå„Ã×9Iguó¶‡æõsä×%R¾K|»+¦·Ï`=£Ìb¥yì<uâ@Ä°[d­b'	1t*öE©N¦•m³ƒf½‚vh%cV–®vž9™ú¸ÅK•Êšõì[ÎúY½.Æ¹¶jØ¯9;4M£œG, ¢*»G2®±`DoGLpß2¢XY¡}FA«Ôl‰Ç"B‰P€•J Û D”YÙMe$¨Þ™æþ“åôƒŸŸÐñP")`¡Ö-@[§&M·ÄiIì‰H9'!‘"ÔE‰ŽU!b¥äõÈŒ|v{àÞÅ‘]óTã5‘!4wJÈÂQABc¡Æj„ILã‘Ê	–½€jS§z¥UŒÇ©
+[90msrcs/Server.cpp:182 (handleConnection) [0m[[36mINFO[0m] HTTP Request - Method: POST, Path: /upload, Version: HTTP/1.1
+[90msrcs/HTTP.cpp:194 (handleConnectionHeader) [0m[[32mDEBUG[0m] Setting Connection: keep-alive

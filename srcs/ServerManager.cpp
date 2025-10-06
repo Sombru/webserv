@@ -18,6 +18,7 @@ ServerManager::ServerManager(FullConfig &configSrc)
 {
 	signal(SIGINT, signalHandler);
 	signal(SIGTERM, signalHandler);
+	// signal(SIGPIPE, SIG_IGN);
 
 	servers.reserve(config.servers.size());
 	for (size_t i = 0; i < config.servers.size(); ++i)
@@ -38,7 +39,7 @@ int ServerManager::setup()
 		if (servers[i].setup() < 0)
 			return -1;
 
-		serversMap[servers[i].server_fd] = servers[i];
+		serversMap.insert(std::make_pair(servers[i].server_fd, servers[i]));
 
 		epoll_event sock_event;
 		sock_event.events = EPOLLIN;
@@ -82,7 +83,7 @@ void ServerManager::run()
 			int event_fd = events[i].data.fd;
 			// Check if this is a server socket (new connection)
 			if (serversMap.find(event_fd) != serversMap.end())
-				serversMap[event_fd].acceptConnection(epoll_fd, clientsMap);
+				serversMap.at(event_fd).acceptConnection(epoll_fd, clientsMap);
 			// Otherwise, it's a client socket (existing connection)
 			else if (clientsMap.find(event_fd) != clientsMap.end())
 			{

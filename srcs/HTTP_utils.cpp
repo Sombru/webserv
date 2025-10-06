@@ -89,3 +89,35 @@ std::string HTTP::getMimeType(const std::string &path)
 
 	return "application/octet-stream";
 }
+
+// Helper method to load and prepare error pages
+std::string HTTP::loadErrorPage(int code)
+{
+	// Resolve error page path relative to server root if needed
+	std::string errorPath = serverConfig.errorPage;
+	if (!errorPath.empty() && errorPath[0] != '/')
+	{
+		std::string base = serverConfig.root;
+		if (!base.empty() && base[base.size() - 1] == '/' &&
+			!errorPath.empty() && errorPath[0] == '/')
+			base.resize(base.size() - 1);
+		else if (!base.empty() && base[base.size() - 1] != '/' &&
+				 !errorPath.empty() && errorPath[0] != '/')
+			base += "/";
+		errorPath = base + errorPath;
+	}
+	// Try to load the server's error page
+	std::string errorBody = readFile(errorPath);
+	// If error page doesn't exist, use a simple fallback
+	if (errorBody == BADFILE)
+	{
+		return "<html><body><h1>" + intToString(code) + " " + getStatusText(code) +
+			   "</h1></body></html>";
+	}
+
+	// Replace placeholders in the error page
+	errorBody = replacePlaceHolders(errorBody, "{{code}}", intToString(code));
+	errorBody = replacePlaceHolders(errorBody, "{{status_text}}", getStatusText(code));
+	return errorBody;
+}
+
