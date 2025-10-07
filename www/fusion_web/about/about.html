@@ -2,11 +2,427 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>About - Fusion Web</title>
+	<style>
+		:root {
+			color-scheme: light dark;
+			--bg: #050b18;
+			--bg-alt: #101a32;
+			--fg: #f3f7ff;
+			--accent: #4f85ff;
+			--accent-2: #22d3ee;
+			--muted: rgba(243, 247, 255, 0.75);
+			--card-bg: rgba(7, 17, 35, 0.78);
+			--border: rgba(255, 255, 255, 0.12);
+			--shadow: 0 20px 55px rgba(15, 23, 42, 0.55);
+		}
+		body {
+			margin: 0;
+			font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+			background: radial-gradient(120% 120% at 50% 0%, #1a3763 0%, var(--bg) 60%);
+			color: var(--fg);
+			min-height: 100vh;
+		}
+		main {
+			max-width: 1100px;
+			margin: 0 auto;
+			padding: 48px 24px 120px;
+			display: grid;
+			gap: 64px;
+		}
+		header {
+			display: grid;
+			gap: 28px;
+			text-align: center;
+			padding: 56px 32px;
+			background: linear-gradient(140deg, rgba(79, 133, 255, 0.22), rgba(34, 211, 238, 0.28));
+			border-radius: 28px;
+			box-shadow: var(--shadow);
+			position: relative;
+			overflow: hidden;
+		}
+		header::after,
+		header::before {
+			content: "";
+			position: absolute;
+			border-radius: 999px;
+			filter: blur(80px);
+			opacity: 0.75;
+		}
+		header::before {
+			width: 260px;
+			height: 260px;
+			top: -80px;
+			left: -120px;
+			background: rgba(79, 133, 255, 0.7);
+		}
+		header::after {
+			width: 320px;
+			height: 320px;
+			right: -160px;
+			bottom: -140px;
+			background: rgba(34, 211, 238, 0.7);
+		}
+		header h1 {
+			margin: 0;
+			font-size: clamp(2.8rem, 5vw, 3.6rem);
+			letter-spacing: 0.04em;
+		}
+		header p {
+			margin: 0 auto;
+			line-height: 1.65;
+			max-width: 700px;
+			font-size: 1.1rem;
+			color: var(--muted);
+		}
+		.cta-group {
+			display: flex;
+			justify-content: center;
+			gap: 16px;
+			flex-wrap: wrap;
+			z-index: 1;
+		}
+		.button {
+			background: var(--accent);
+			color: white;
+			border: none;
+			border-radius: 999px;
+			padding: 12px 28px;
+			font-size: 1rem;
+			font-weight: 600;
+			text-decoration: none;
+			display: inline-flex;
+			align-items: center;
+			gap: 10px;
+			box-shadow: 0 12px 26px rgba(79, 133, 255, 0.35);
+			transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+			cursor: pointer;
+		}
+		.button.secondary {
+			background: var(--bg-alt);
+			border: 1px solid var(--border);
+			box-shadow: 0 10px 24px rgba(15, 23, 42, 0.4);
+		}
+		.button:hover,
+		.button:focus-visible {
+			transform: translateY(-2px);
+			box-shadow: 0 18px 40px rgba(79, 133, 255, 0.45);
+		}
+		.button.secondary:hover,
+		.button.secondary:focus-visible {
+			box-shadow: 0 18px 40px rgba(15, 23, 42, 0.6);
+			border-color: rgba(255, 255, 255, 0.32);
+		}
+		.stats {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+			gap: 20px;
+		}
+		.stat-card {
+			background: var(--card-bg);
+			border: 1px solid var(--border);
+			padding: 24px;
+			border-radius: 18px;
+			box-shadow: var(--shadow);
+			display: grid;
+			gap: 8px;
+		}
+		.stat-value {
+			font-size: 2rem;
+			font-weight: 700;
+			color: var(--accent-2);
+		}
+		.stat-label {
+			color: var(--muted);
+			font-size: 0.95rem;
+			letter-spacing: 0.04em;
+		}
+		.section-title {
+			margin: 0 0 24px;
+			font-size: 1.9rem;
+		}
+		.features {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+			gap: 24px;
+		}
+		.feature-card {
+			background: var(--card-bg);
+			border: 1px solid var(--border);
+			border-radius: 22px;
+			padding: 28px;
+			display: grid;
+			gap: 16px;
+			box-shadow: var(--shadow);
+			position: relative;
+		}
+		.feature-card::after {
+			content: "";
+			position: absolute;
+			inset: 0;
+			border-radius: inherit;
+			background: linear-gradient(140deg, rgba(79, 133, 255, 0.28), rgba(34, 211, 238, 0.22));
+			opacity: 0;
+			transition: opacity 0.25s ease;
+			z-index: -1;
+		}
+		.feature-card:hover::after {
+			opacity: 1;
+		}
+		.feature-icon {
+			width: 52px;
+			height: 52px;
+			border-radius: 16px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			background: rgba(79, 133, 255, 0.2);
+			color: var(--accent);
+			font-weight: 700;
+			font-size: 1.1rem;
+			border: 1px solid rgba(79, 133, 255, 0.4);
+		}
+		.feature-card p {
+			margin: 0;
+			line-height: 1.6;
+			color: var(--muted);
+		}
+		.timeline {
+			display: grid;
+			gap: 24px;
+			background: var(--card-bg);
+			border-radius: 22px;
+			padding: 32px;
+			border: 1px solid var(--border);
+			box-shadow: var(--shadow);
+			position: relative;
+		}
+		.timeline::before {
+			content: "";
+			position: absolute;
+			top: 32px;
+			bottom: 32px;
+			left: 32px;
+			width: 3px;
+			background: linear-gradient(180deg, rgba(79, 133, 255, 0.6), rgba(34, 211, 238, 0.2));
+		}
+		.timeline-item {
+			padding-left: 64px;
+			position: relative;
+		}
+		.timeline-item::before {
+			content: attr(data-step);
+			position: absolute;
+			left: 18px;
+			top: 0;
+			width: 28px;
+			height: 28px;
+			border-radius: 50%;
+			display: grid;
+			place-items: center;
+			background: var(--accent);
+			color: white;
+			font-size: 0.85rem;
+			font-weight: 600;
+			box-shadow: 0 10px 24px rgba(79, 133, 255, 0.4);
+		}
+		.timeline-item h3 {
+			margin: 0 0 8px;
+			font-size: 1.2rem;
+		}
+		.timeline-item p {
+			margin: 0;
+			color: var(--muted);
+			line-height: 1.6;
+		}
+		.interactive {
+			background: var(--card-bg);
+			border-radius: 22px;
+			padding: 32px;
+			border: 1px solid var(--border);
+			box-shadow: var(--shadow);
+			display: grid;
+			gap: 20px;
+		}
+		.toggle-bar {
+			display: flex;
+			gap: 12px;
+			flex-wrap: wrap;
+		}
+		.toggle-btn {
+			background: rgba(34, 211, 238, 0.14);
+			color: var(--accent-2);
+			border: 1px solid rgba(34, 211, 238, 0.5);
+			border-radius: 999px;
+			padding: 10px 20px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: background 0.2s ease, transform 0.2s ease;
+		}
+		.toggle-btn.active {
+			background: var(--accent-2);
+			color: var(--bg);
+			transform: translateY(-2px);
+			box-shadow: 0 10px 22px rgba(34, 211, 238, 0.4);
+		}
+		.panel {
+			display: none;
+			line-height: 1.65;
+			color: var(--muted);
+		}
+		.panel.active {
+			display: block;
+		}
+		footer {
+			text-align: center;
+			font-size: 0.95rem;
+			color: rgba(243, 247, 255, 0.5);
+		}
+		footer a {
+			color: var(--accent-2);
+			font-weight: 600;
+		}
+		@media (max-width: 720px) {
+			header {
+				padding: 40px 24px;
+			}
+			.timeline::before {
+				left: 22px;
+			}
+			.timeline-item {
+				padding-left: 52px;
+			}
+			.timeline-item::before {
+				left: 8px;
+			}
+		}
+	</style>
 </head>
 <body>
-	<h1>About Fusion Web</h1>
-	<p>This simple website is used to test the webserv project implementation.</p>
-	<a href="/">Back to Home</a>
+	<main>
+		<header>
+			<h1>Fusion Web Playground</h1>
+			<p>
+				Fusion Web is a curated playground built to validate servers that power CGI driven
+				applications. Each page is designed to stretch routing, HTTP, and dynamic response features
+				while keeping things fun to explore.
+			</p>
+			<div class="cta-group">
+				<a class="button" href="/cgi_demo.html">Explore CGI Demo</a>
+				<a class="button secondary" href="/">Back to Home</a>
+			</div>
+		</header>
+
+		<section aria-labelledby="stats-title">
+			<h2 id="stats-title" class="section-title">What this project exercises</h2>
+			<div class="stats">
+				<div class="stat-card">
+					<span class="stat-value">6</span>
+					<span class="stat-label">HTTP methods in action</span>
+					<p>We cover GET, POST, DELETE, and custom scenarios to make sure your server handles the common verbs with ease.</p>
+				</div>
+				<div class="stat-card">
+					<span class="stat-value">3</span>
+					<span class="stat-label">CGI runtimes</span>
+					<p>Python, Bash, and executable binaries all live under <code>/cgi-bin/</code> and echo back headers, bodies, and env vars.</p>
+				</div>
+				<div class="stat-card">
+					<span class="stat-value">40+</span>
+					<span class="stat-label">Edge cases covered</span>
+					<p>From redirects to uploads and directory listings, every route gives your implementation another chance to shine.</p>
+				</div>
+			</div>
+		</section>
+
+		<section aria-labelledby="features-title">
+			<h2 id="features-title" class="section-title">Highlights</h2>
+			<div class="features">
+				<article class="feature-card">
+					<div class="feature-icon">CGI</div>
+					<h3>Dynamic Responses</h3>
+					<p>Trigger scripts that echo request data so you can inspect your headers, body parsing, and environment propagation instantly.</p>
+				</article>
+				<article class="feature-card">
+					<div class="feature-icon">3D</div>
+					<h3>Visual Benchmarks</h3>
+					<p>Three.js powered pages stress static file serving, caching hints, and asset hosting in style.</p>
+				</article>
+				<article class="feature-card">
+					<div class="feature-icon">IO</div>
+					<h3>Upload Lab</h3>
+					<p>Forms and multi-part uploads make sure your server respects boundaries and writes files to disk safely.</p>
+				</article>
+				<article class="feature-card">
+					<div class="feature-icon">CFG</div>
+					<h3>Config Playground</h3>
+					<p>Try out different configs via <code>default.conf</code> and see how index, root, and error handling are wired up.</p>
+				</article>
+			</div>
+		</section>
+
+		<section aria-labelledby="journey-title">
+			<h2 id="journey-title" class="section-title">Build journey</h2>
+			<div class="timeline">
+				<div class="timeline-item" data-step="1">
+					<h3>Bootstrap the routes</h3>
+					<p>Define server and location blocks, wire up static directories, and turn on autoindex where needed.</p>
+				</div>
+				<div class="timeline-item" data-step="2">
+					<h3>Enable CGI interpreters</h3>
+					<p>Point to Python and Bash binaries, pass the request through, and stream back the script output seamlessly.</p>
+				</div>
+				<div class="timeline-item" data-step="3">
+					<h3>Polish the experience</h3>
+					<p>Add visual demos, upload experiences, and custom error pages that show off how your implementation responds.</p>
+				</div>
+			</div>
+		</section>
+
+		<section aria-labelledby="interactive-title" class="interactive">
+			<h2 id="interactive-title" class="section-title">Pick a focus</h2>
+			<p>Select a tab to discover more about how Fusion Web helps you validate specific pieces of the puzzle.</p>
+			<div class="toggle-bar" role="tablist">
+				<button class="toggle-btn active" data-target="panel-runtime" role="tab" aria-selected="true" aria-controls="panel-runtime">Runtime checks</button>
+				<button class="toggle-btn" data-target="panel-routing" role="tab" aria-selected="false" aria-controls="panel-routing">Routing tests</button>
+				<button class="toggle-btn" data-target="panel-toolbox" role="tab" aria-selected="false" aria-controls="panel-toolbox">Toolbox</button>
+			</div>
+			<div id="panel-runtime" class="panel active" role="tabpanel">
+				<strong>Runtime checks:</strong> Inspect how your server forwards headers, handles payload sizes, and streams output from Python and Bash scripts. Try editing the request body in the CGI demo to validate chunked transfers or encoding decisions.
+			</div>
+			<div id="panel-routing" class="panel" role="tabpanel">
+				<strong>Routing tests:</strong> Navigate from <code>/</code> to <code>/old</code> and back, ensuring redirects and default indexes are being respected. Toggle autoindex on <code>/images</code> to verify directory listings and file manipulation.
+			</div>
+			<div id="panel-toolbox" class="panel" role="tabpanel">
+				<strong>Toolbox:</strong> Use the upload form, 3D animations, and error templates to validate MIME detection, caching headers, and graceful error recovery. These scenarios mimic a production-ready pipeline.
+			</div>
+		</section>
+
+		<footer>
+			Made for the 42 webserv project. View the full experience from the <a href="/">homepage</a>.
+		</footer>
+	</main>
+
+	<script>
+		const tabs = document.querySelectorAll(".toggle-btn");
+		const panels = document.querySelectorAll(".panel");
+
+		function activateTab(targetId) {
+			tabs.forEach((tab) => {
+				const active = tab.dataset.target === targetId;
+				tab.classList.toggle("active", active);
+				tab.setAttribute("aria-selected", String(active));
+			});
+			panels.forEach((panel) => {
+				const active = panel.id === targetId;
+				panel.classList.toggle("active", active);
+				panel.hidden = !active;
+			});
+		}
+
+		tabs.forEach((tab) => {
+			tab.addEventListener("click", () => activateTab(tab.dataset.target));
+		});
+	</script>
 </body>
 </html>
