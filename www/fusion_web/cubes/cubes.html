@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Falling Boxes — 3D Loop</title>
+  <style>
+    html, body { height: 100%; margin: 0; background: #0b0b0b; color: #fff; }
+    #cube-app { position: fixed; inset: 0; outline: none; }
+    .hint {
+      position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
+      font: 12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      opacity: .7; user-select: none; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="cube-app" aria-label="3D scene: falling boxes"></div>
+  <div class="hint">Endless falling boxes — no zoom or rotation</div>
+
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.159.0/build/three.module.js';
+
+    const app = document.getElementById('cube-app');
+
+    // Scene & camera
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x0b0b0b, 0.08);
+
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+    camera.position.set(0, 2, 12);
+    camera.lookAt(0, 0, 0);
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    app.appendChild(renderer.domElement);
+
+    // Lights
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    const key = new THREE.DirectionalLight(0xffffff, 0.9);
+    key.position.set(6, 10, 6);
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0x88ff88, 0.25);
+    rim.position.set(-6, 4, -8);
+    scene.add(rim);
+
+    // Falling boxes (instanced for performance)
+    const COUNT = 120;
+    const baseGeo = new THREE.BoxGeometry(1, 1, 1);
+    const mat = new THREE.MeshStandardMaterial({ color: 0x0b8d0b, roughness: 0.65, metalness: 0.05 });
+    const mesh = new THREE.InstancedMesh(baseGeo, mat, COUNT);
+    scene.add(mesh);
+
+    // Per-instance state
+    const tmpObj = new THREE.Object3D();
+    const state = new Array(COUNT);
+
+    const X_RANGE = 10;   // horizontal spread
+    const Z_RANGE = 12;   // depth spread
+    const TOP = 14;       // spawn y
+    const BOTTOM = -12;   // reset y
+
+    function rand(min, max){ return Math.random() * (max - min) + min; }
+
+    function resetBox(i, fromTop = true) {
+      // Random uniform scale: visible size variety
+      const s = rand(0.25, 2.0);
+      const x = rand(-X_RANGE, X_RANGE);
+      const z = rand(-Z_RANGE, Z_RANGE);
+
+      // Speed varies a bit with size to add depth feel
+      const speed = rand(1.0, 3.2) * (0.6 + s * 0.2);
+
+      state[i] = { x, y: fromTop ? rand(0, 10) + TOP : rand(BOTTOM, TOP), z, s, speed };
+    }
+
+    for (let i = 0; i < COUNT; i++) resetBox(i, true);
+
+    function updateInstanceMatrices() {
+      for (let i = 0; i < COUNT; i++) {
+        const b = state[i];
+        tmpObj.position.set(b.x, b.y, b.z);
+        tmpObj.rotation.set(0, 0, 0);  // no spin
+        tmpObj.scale.set(b.s, b.s, b.s);
+        tmpObj.updateMatrix();
+        mesh.setMatrixAt(i, tmpObj.matrix);
+      }
+      mesh.instanceMatrix.needsUpdate = true;
+    }
+
+    // --- Full-viewport sizing ---
+    function sizeToContainer() {
+      const rect = app.getBoundingClientRect();
+      const w = Math.max(1, Math.floor(rect.width));
+      const h = Math.max(1, Math.floor(rect.height));
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    sizeToContainer();
+    window.addEventListener('resize', sizeToContainer);
+
+    // Animation loop — never-ending fall
+    let last = performance.now();
+    function animate() {
+      requestAnimationFrame(animate);
+      const now = performance.now();
+      const dt = Math.min(0.033, (now - last) / 1000); // clamp delta
+      last = now;
+
+      for (let i = 0; i < COUNT; i++) {
+        const b = state[i];
+        b.y -= b.speed * dt;
+        if (b.y < BOTTOM - 2) {
+          // Respawn at top with fresh params
+          resetBox(i, true);
+        }
+      }
+
+      updateInstanceMatrices();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Remove interactions: no pointer or wheel listeners -> no zoom or rotation
+  </script>
+</body>
+</html>
