@@ -6,11 +6,16 @@
 #include <sstream>
 
 #define PATH "configs/default.conf"
-// #define PATH "configs/cookies_test.conf"
 
-int main()
+int main(int argc, char* argv[])
 {
-	Config config(const_cast<char*>(PATH));
+	if (argc < 2)
+	{
+		std::cerr << "Usage: " << argv[0] << " <config_file_path>" << std::endl;
+		return 1;
+	}
+
+	Config config(argv[1]);
 	
 	if (config.parseConfig() == -1)
 	{
@@ -23,12 +28,10 @@ int main()
 		ERROR("Configuration validation failed");
 		return 1;
 	}	
-	// DEBUG(config);
+	
 	ServerManager webserv(config.config);
 	if (webserv.setup() < 0)
 		return 1;
 	webserv.run();
-	// DEBUG(address);
-	// DEBUG(port);
 	return 0;
 }

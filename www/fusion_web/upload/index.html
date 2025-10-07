@@ -1,120 +1,537 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <title>webserv Upload</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background: linear-gradient(to bottom, #f0f4f8, #dfe8f0);
-        }
-
-        .left {
-            background: #cce3f3;
-            border-right: 1px solid #bbb;
-        }
-
-        .right {
-            background: #e3f2fd;
-        }
-
-        textarea {
-            background: #ffffff;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 12px;
-            font-size: 16px;
-            color: #333;
-        }
-
-        button {
-            background: #37bdc7;
-            color: #fff;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        button:hover {
-            background: #019875;
-        }
-
-        .delete-btn {
-            background-color: #019875;
-            color: #fff;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s ease;
-        }
-
-        .delete-btn:hover {
-            background-color: #c5e6e7;
-        }
-
-        .file-list li {
-            background-color: #e3f2fd;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 10px 14px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .file-list a {
-            color: #0984e3;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-    </style>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Fusion Web Upload Lab</title>
+	<style>
+		:root {
+			color-scheme: light dark;
+			--bg: #040b19;
+			--fg: #f3f7ff;
+			--muted: rgba(243, 247, 255, 0.72);
+			--accent: #4f85ff;
+			--accent-soft: rgba(79, 133, 255, 0.2);
+			--teal: #22d3ee;
+			--warning: #f97373;
+			--card-bg: rgba(6, 14, 27, 0.78);
+			--border: rgba(255, 255, 255, 0.12);
+			--shadow: 0 24px 70px rgba(10, 20, 42, 0.6);
+		}
+		* {
+			box-sizing: border-box;
+		}
+		body {
+			margin: 0;
+			min-height: 100vh;
+			font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+			background: radial-gradient(130% 130% at 50% 0%, #18386b 0%, var(--bg) 60%);
+			color: var(--fg);
+			display: flex;
+			justify-content: center;
+		}
+		main {
+			width: 100%;
+			max-width: 1180px;
+			padding: 40px 20px 120px;
+			display: grid;
+			gap: 48px;
+		}
+		header.hero {
+			background: linear-gradient(135deg, var(--accent-soft), rgba(34, 211, 238, 0.22));
+			border-radius: 32px;
+			box-shadow: var(--shadow);
+			padding: 48px 42px 56px;
+			display: grid;
+			gap: 30px;
+			position: relative;
+			overflow: hidden;
+		}
+		header.hero::before,
+		header.hero::after {
+			content: "";
+			position: absolute;
+			border-radius: 999px;
+			filter: blur(100px);
+			opacity: 0.75;
+		}
+		header.hero::before {
+			width: 260px;
+			height: 260px;
+			top: -90px;
+			left: -130px;
+			background: rgba(79, 133, 255, 0.65);
+		}
+		header.hero::after {
+			width: 300px;
+			height: 300px;
+			right: -150px;
+			bottom: -160px;
+			background: rgba(34, 211, 238, 0.5);
+		}
+		.top-nav {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 16px;
+			z-index: 1;
+		}
+		.logo {
+			font-weight: 700;
+			padding: 10px 20px;
+			border-radius: 999px;
+			background: rgba(6, 14, 27, 0.65);
+			border: 1px solid rgba(255, 255, 255, 0.18);
+			box-shadow: 0 12px 25px rgba(13, 23, 44, 0.4);
+		}
+		.quick-link {
+			text-decoration: none;
+			color: var(--fg);
+			padding: 10px 16px;
+			border-radius: 999px;
+			background: rgba(6, 14, 27, 0.4);
+			border: 1px solid var(--border);
+			transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+			font-size: 0.95rem;
+		}
+		.quick-link:hover,
+		.quick-link:focus-visible {
+			transform: translateY(-2px);
+			border-color: rgba(255, 255, 255, 0.28);
+			box-shadow: 0 14px 32px rgba(15, 23, 42, 0.45);
+		}
+		.hero-content {
+			z-index: 1;
+			display: grid;
+			gap: 20px;
+			max-width: 680px;
+		}
+		.hero-content h1 {
+			margin: 0;
+			font-size: clamp(2.4rem, 5vw, 3.4rem);
+			letter-spacing: 0.04em;
+		}
+		.hero-content p {
+			margin: 0;
+			line-height: 1.7;
+			color: var(--muted);
+		}
+		.grid {
+			display: grid;
+			gap: 24px;
+		}
+		.grid.two {
+			grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+		}
+		.card {
+			background: var(--card-bg);
+			border-radius: 24px;
+			padding: 28px;
+			border: 1px solid var(--border);
+			box-shadow: var(--shadow);
+			display: grid;
+			gap: 22px;
+			position: relative;
+			overflow: hidden;
+		}
+		.card::after {
+			content: "";
+			position: absolute;
+			inset: 0;
+			border-radius: inherit;
+			background: linear-gradient(135deg, rgba(79, 133, 255, 0.28), rgba(34, 211, 238, 0.18));
+			opacity: 0;
+			transition: opacity 0.2s ease;
+			z-index: -1;
+		}
+		.card:hover::after {
+			opacity: 1;
+		}
+		.card h2 {
+			margin: 0;
+			font-size: 1.5rem;
+		}
+		.card p {
+			margin: 0;
+			color: var(--muted);
+			line-height: 1.65;
+		}
+		form {
+			display: grid;
+			gap: 18px;
+		}
+		label span {
+			display: inline-block;
+			font-weight: 600;
+			margin-bottom: 8px;
+		}
+		textarea {
+			min-height: 160px;
+			padding: 16px;
+			border-radius: 16px;
+			border: 1px solid rgba(255, 255, 255, 0.16);
+			background: rgba(11, 20, 40, 0.8);
+			color: var(--fg);
+			font-size: 1rem;
+			resize: vertical;
+			line-height: 1.6;
+		}
+		input[type="text"] {
+			padding: 12px;
+			border-radius: 14px;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			background: rgba(11, 20, 40, 0.8);
+			color: var(--fg);
+			font-size: 1rem;
+		}
+		.toggle {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			background: rgba(34, 211, 238, 0.16);
+			border-radius: 999px;
+			padding: 10px 16px;
+			border: 1px solid rgba(34, 211, 238, 0.42);
+			color: var(--teal);
+			font-weight: 600;
+		}
+		.toggle input {
+			accent-color: var(--teal);
+		}
+		.actions {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px;
+		}
+		.button {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			padding: 12px 24px;
+			border-radius: 999px;
+			font-weight: 600;
+			font-size: 1rem;
+			text-decoration: none;
+			transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+			border: none;
+			cursor: pointer;
+		}
+		.button.primary {
+			background: linear-gradient(120deg, var(--accent), #5ea0ff);
+			color: #ffffff;
+			box-shadow: 0 16px 38px rgba(79, 133, 255, 0.45);
+		}
+		.button.secondary {
+			background: rgba(7, 16, 33, 0.72);
+			color: var(--fg);
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			box-shadow: 0 14px 30px rgba(15, 23, 42, 0.45);
+		}
+		.button.ghost {
+			background: transparent;
+			color: var(--muted);
+			border: 1px dashed rgba(255, 255, 255, 0.25);
+		}
+		.button:hover,
+		.button:focus-visible {
+			transform: translateY(-2px);
+		}
+		.status {
+			font-size: 0.95rem;
+			font-weight: 600;
+		}
+		.status.ok {
+			color: var(--teal);
+		}
+		.status.warn {
+			color: var(--warning);
+		}
+		pre {
+			margin: 0;
+			background: rgba(7, 16, 33, 0.78);
+			border-radius: 18px;
+			padding: 16px;
+			color: var(--muted);
+			font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+			font-size: 0.95rem;
+			line-height: 1.6;
+			max-height: 260px;
+			overflow: auto;
+		}
+		.drop-zone {
+			border: 1px dashed rgba(79, 133, 255, 0.45);
+			border-radius: 20px;
+			padding: 28px;
+			text-align: center;
+			background: rgba(6, 14, 27, 0.6);
+			display: grid;
+			gap: 10px;
+			color: var(--muted);
+			transition: border-color 0.18s ease, background 0.18s ease;
+		}
+		.drop-zone.dragover {
+			border-color: var(--accent);
+			background: rgba(79, 133, 255, 0.16);
+		}
+		.file-list {
+			background: rgba(7, 16, 33, 0.8);
+			border-radius: 20px;
+			border: 1px solid var(--border);
+			padding: 24px;
+			display: grid;
+			gap: 16px;
+		}
+		.file-list h3 {
+			margin: 0;
+			font-size: 1.2rem;
+		}
+		.file-list ul {
+			list-style: none;
+			margin: 0;
+			padding: 0;
+			display: grid;
+			gap: 10px;
+		}
+		.file-list li {
+			background: rgba(9, 19, 38, 0.9);
+			border-radius: 12px;
+			border: 1px solid rgba(255, 255, 255, 0.16);
+			padding: 10px 14px;
+			transition: transform 0.18s ease, border-color 0.18s ease;
+		}
+		.file-list li:hover {
+			transform: translateY(-2px);
+			border-color: rgba(34, 211, 238, 0.4);
+		}
+		.file-list a {
+			color: var(--fg);
+			text-decoration: none;
+		}
+		.tips {
+			display: grid;
+			gap: 14px;
+			color: var(--muted);
+			font-size: 0.95rem;
+		}
+		footer {
+			text-align: center;
+			color: rgba(243, 247, 255, 0.55);
+			font-size: 0.95rem;
+		}
+		footer a {
+			color: var(--teal);
+			font-weight: 600;
+		}
+		@media (max-width: 700px) {
+			header.hero {
+				padding: 38px 24px 48px;
+			}
+			.actions {
+				justify-content: center;
+			}
+		}
+	</style>
 </head>
 
 <body>
-    <div class="main">
-        <div class="left">
-            <h2>POST raw body</h2>
-            <form method="POST" action="/upload">
-                <textarea name="data" placeholder="Write something here..."></textarea><br>
-                <button type="submit">Send Text</button>
-            </form>
-        </div>
+	<main>
+		<header class="hero">
+			<nav class="top-nav" aria-label="Primary navigation">
+				<div class="logo">Fusion Upload Lab</div>
+				<a class="quick-link" href="/">Home</a>
+				<a class="quick-link" href="/about">About</a>
+				<a class="quick-link" href="/cgi_demo.html">CGI Demo</a>
+				<a class="quick-link" href="/images">Images directory</a>
+			</nav>
+			<div class="hero-content">
+				<h1>Upload files or craft requests by hand.</h1>
+				<p>
+					This workstation lets you drop files, send raw POST bodies, and now create files directly from the
+					text area. Mix and match techniques to validate your server's upload handling.
+				</p>
+			</div>
+		</header>
 
-        <div class="right">
-            <h2>Upload a File</h2>
-            <form method="POST" action="/upload" enctype="multipart/form-data">
-                <label for="fileUpload">
-                    <button type="button" onclick="document.getElementById('fileUpload').click()">+ Select File</button>
-                </label>
-                <input type="file" name="file" id="fileUpload" onchange="this.form.submit()">
-            </form>
+		<div class="grid two">
+			<section class="card" aria-labelledby="body-card-title">
+				<h2 id="body-card-title">Direct body uploads</h2>
+				<p>Type payloads manually, then choose whether to send them as plain text or instruct the server to save them using a custom filename.</p>
+				<form id="body-form" method="POST" action="/upload">
+					<label for="body-text">
+						<span>Request body</span>
+						<textarea id="body-text" name="data" placeholder="Paste or type the content you want to submit via POST."></textarea>
+					</label>
+					<div class="toggle">
+						<input type="checkbox" id="create-file-toggle" aria-describedby="create-file-help">
+						<label for="create-file-toggle">Create a file from this body</label>
+					</div>
+					<div id="create-file-help" class="tips" aria-live="polite">
+						<label for="file-name">
+							<span>Filename (used when the toggle is on)</span>
+							<input type="text" id="file-name" value="body_upload.txt">
+						</label>
+						<p>When enabled, the request sends a <code>Content-Disposition</code> header so the upload handler stores the body using the filename above.</p>
+					</div>
+					<div class="actions">
+						<button class="button primary" type="submit" id="body-send">Send request</button>
+						<button class="button ghost" type="reset" id="body-reset">Clear</button>
+					</div>
+					<div class="status" id="body-status" role="status" aria-live="polite"></div>
+					<pre id="body-response">Response will appear here.</pre>
+				</form>
+			</section>
 
-            <!-- File list section embedded here -->
-            <div class="file-list">
-                <h3>Uploaded Files</h3>
-                <ul id="uploadedFiles">
-                    {{autoindex}} <!-- Will be populated from server -->
-                </ul>
-            </div>
-        </div>
-    </div>
+			<section class="card" aria-labelledby="upload-card-title">
+				<h2 id="upload-card-title">Upload a file</h2>
+				<p>Use the classic multi-part form or drag and drop any file. The server writes uploads to the configured directory and shows the listing below.</p>
+				<div class="drop-zone" id="drop-zone">
+					<strong>Drop files here</strong>
+					<span>or</span>
+					<button class="button secondary" type="button" id="file-select">Select a file</button>
+					<input type="file" name="file" id="file-input" hidden>
+				</div>
+				<form id="file-form" method="POST" action="/upload" enctype="multipart/form-data">
+					<div class="actions">
+						<button class="button primary" type="submit">Submit selected file</button>
+						<button class="button ghost" type="button" id="file-clear">Clear selection</button>
+					</div>
+					<div class="status" id="file-status" role="status" aria-live="polite"></div>
+				</form>
+				<div class="tips">
+					<span>Allowed methods: <strong>POST</strong> and <strong>DELETE</strong> (for manual testing).</span>
+					<span>Uploaded files live under <code>/images/uploaded_images</code>.</span>
+				</div>
+			</section>
+		</div>
 
+		<section class="file-list" aria-labelledby="file-list-title">
+			<h3 id="file-list-title">Uploaded files</h3>
+			<ul id="uploaded-files">
+				{{autoindex}}
+			</ul>
+		</section>
+
+		<footer>
+			Continue exploring via the <a href="/cubes">3D demos</a> or inspect logs with the <a href="/cgi_demo.html">CGI showcase</a>.
+		</footer>
+	</main>
+
+	<script>
+		const bodyForm = document.getElementById("body-form");
+		const bodyText = document.getElementById("body-text");
+		const createToggle = document.getElementById("create-file-toggle");
+		const fileNameInput = document.getElementById("file-name");
+		const bodyStatus = document.getElementById("body-status");
+		const bodyResponse = document.getElementById("body-response");
+		const bodyReset = document.getElementById("body-reset");
+
+		function setBodyStatus(message, ok) {
+			bodyStatus.textContent = message;
+			bodyStatus.className = "status " + (ok ? "ok" : "warn");
+		}
+
+		async function sendBodyRequest(event) {
+			if (event) event.preventDefault();
+			const content = bodyText.value;
+			if (!content.trim()) {
+				setBodyStatus("Body is empty. Add some text before sending.", false);
+				return;
+			}
+
+			const createFile = createToggle.checked;
+			let filename = fileNameInput.value.trim();
+			if (!filename) filename = "body_upload.txt";
+
+			setBodyStatus(createFile ? "Creating file on server..." : "Sending raw body...", true);
+
+			try {
+				const headers = { "Content-Type": "text/plain; charset=utf-8" };
+				if (createFile) headers["Content-Disposition"] = `attachment; filename="${filename}"`;
+
+				const response = await fetch("/upload", {
+					method: "POST",
+					headers,
+					body: content
+				});
+
+				const text = await response.text();
+				bodyResponse.textContent = text.trim() ? text : "[empty response]";
+				setBodyStatus(`Status ${response.status} ${response.statusText || ""}`.trim(), response.ok);
+			} catch (error) {
+				bodyResponse.textContent = String(error);
+				setBodyStatus("Request failed. Check console or server logs.", false);
+			}
+		}
+
+		bodyForm.addEventListener("submit", sendBodyRequest);
+		bodyReset.addEventListener("click", () => {
+			bodyResponse.textContent = "Response will appear here.";
+			setBodyStatus("", true);
+		});
+
+		// File upload interactions
+		const dropZone = document.getElementById("drop-zone");
+		const fileInput = document.getElementById("file-input");
+		const fileSelect = document.getElementById("file-select");
+		const fileForm = document.getElementById("file-form");
+		const fileStatus = document.getElementById("file-status");
+		const fileClear = document.getElementById("file-clear");
+
+		function setFileStatus(message, ok) {
+			fileStatus.textContent = message;
+			fileStatus.className = "status " + (ok ? "ok" : "warn");
+		}
+
+		function handleFiles(files) {
+			if (!files || !files.length) {
+				setFileStatus("No file selected.", false);
+				return;
+			}
+			fileInput.files = files;
+			setFileStatus(`Ready to upload ${files[0].name}`, true);
+		}
+
+		fileSelect.addEventListener("click", () => fileInput.click());
+		fileInput.addEventListener("change", () => handleFiles(fileInput.files));
+
+		["dragenter", "dragover"].forEach((eventName) => {
+			dropZone.addEventListener(eventName, (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				dropZone.classList.add("dragover");
+			});
+		});
+
+		["dragleave", "drop"].forEach((eventName) => {
+			dropZone.addEventListener(eventName, (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				dropZone.classList.remove("dragover");
+			});
+		});
+
+		dropZone.addEventListener("drop", (event) => {
+			if (event.dataTransfer?.files?.length) {
+				handleFiles(event.dataTransfer.files);
+			}
+		});
+
+		fileForm.addEventListener("submit", (event) => {
+			if (!fileInput.files.length) {
+				event.preventDefault();
+				setFileStatus("Select or drop a file before submitting.", false);
+			} else {
+				setFileStatus("Uploading file...", true);
+			}
+		});
+
+		fileClear.addEventListener("click", () => {
+			fileInput.value = "";
+			setFileStatus("Selection cleared.", true);
+		});
+	</script>
 </body>
 
 </html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>my calculator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f4ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #0074d9;
+            margin-bottom: 20px;
+        }
+
+        .calc-box {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px 40px;
+            text-align: center;
+        }
+
+        input {
+            width: 80px;
+            padding: 8px;
+            font-size: 16px;
+            margin: 5px;
+            text-align: center;
+        }
+
+        button {
+            background: #0074d9;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .result {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .glitch-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            mix-blend-mode: screen;
+        }
+    </style>
+</head>
+<body>
+    <div class="calc-box">
+        <h1>my calc</h1>
+        <input type="number" id="num1" placeholder="0">
+        +
+        <input type="number" id="num2" placeholder="0">
+        <br><br>
+        <button onclick="calculate()">Calculate</button>
+        <div class="result" id="result">Result: —</div>
+    </div>
+
+    <script>
+        function calculate() {
+            const body = document.body;
+            const box = document.querySelector('.calc-box');
+            const title = document.querySelector('h1');
+            const result = document.getElementById('result');
+
+            const n1 = parseFloat(document.getElementById('num1').value) || 0;
+            const n2 = parseFloat(document.getElementById('num2').value) || 0;
+
+            result.textContent = "Calculating...";
+
+            // Create glitch layers
+            const layers = [];
+            for (let i = 0; i < 5; i++) {
+                const layer = document.createElement('div');
+                layer.className = 'glitch-layer';
+                body.appendChild(layer);
+                layers.push(layer);
+            }
+
+            const glitchInterval = setInterval(() => {
+                // Flash background with random colors
+                body.style.background = `linear-gradient(${Math.random()*360}deg, rgb(${rand(255)},${rand(255)},${rand(255)}), rgb(${rand(255)},${rand(255)},${rand(255)}))`;
+
+                // Move & rotate box randomly
+                box.style.transform = `translate(${rand(50)-25}px, ${rand(50)-25}px) rotate(${rand(40)-20}deg) scale(${1 + Math.random()*0.5})`;
+
+                // Shake title
+                title.style.transform = `translate(${rand(20)-10}px, ${rand(20)-10}px) rotate(${rand(30)-15}deg)`;
+
+                // Shake result
+                result.style.transform = `translate(${rand(30)-15}px, ${rand(30)-15}px) rotate(${rand(30)-15}deg)`;
+
+                // Add multiple glitch layers with random colors and positions
+                layers.forEach(layer => {
+                    layer.style.background = `rgba(${rand(255)},${rand(255)},${rand(255)},${Math.random()})`;
+                    layer.style.left = `${rand(window.innerWidth)}px`;
+                    layer.style.top = `${rand(window.innerHeight)}px`;
+                    layer.style.width = `${rand(200)}px`;
+                    layer.style.height = `${rand(200)}px`;
+                });
+            }, 50); // super fast, chaotic updates
+
+            // After 10 seconds, stop glitch
+            setTimeout(() => {
+                clearInterval(glitchInterval);
+
+                // Reset everything
+                body.style.background = '#f0f4ff';
+                box.style.transform = 'none';
+                title.style.transform = 'none';
+                result.style.transform = 'none';
+                layers.forEach(layer => body.removeChild(layer));
+
+                // Display wildly wrong result
+                const wrongResult = n1 + n2 + Math.floor(Math.random() * 200 - 50);
+                result.textContent = 'Result: ' + wrongResult;
+            }, 3000);
+        }
+
+        function rand(max) {
+            return Math.floor(Math.random() * max);
+        }
+    </script>
+</body>
+</html>
