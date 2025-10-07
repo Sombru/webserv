@@ -32,5 +32,7 @@ void HTTP::buildResponse(int code)
 void HTTP::redirect(const std::string &returnPath)
 {
 	buildResponse(302);
+	response.body.clear();
 	addHeaders("Location", returnPath);
+	addHeaders("Content-Length", "0");
 }
