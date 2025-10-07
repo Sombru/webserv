@@ -5,6 +5,8 @@
 #include "ServerManager.hpp"
 #include <sstream>
 
+#define PATH "configs/default.conf"
+
 int main(int argc, char* argv[])
 {
 	if (argc < 2)

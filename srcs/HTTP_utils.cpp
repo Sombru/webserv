@@ -123,3 +123,20 @@ std::string HTTP::loadErrorPage(int code)
 	return errorBody;
 }
 
+std::string HTTP::readFileSmart(const std::string &fsPath)
+{
+	std::ifstream file;
+
+	std::string contentType = getMimeType(fsPath);
+	// Open in binary mode only for non-text content
+	if (contentType.rfind("text/", 0) != 0 && contentType != "application/javascript")
+		file.open(fsPath.c_str(), std::ios::binary);
+	else
+		file.open(fsPath.c_str()); // text mode
+
+	std::ostringstream ss;
+	ss << file.rdbuf();
+	if (ss.str().empty())
+		return BADFILE;
+	return ss.str();
+}

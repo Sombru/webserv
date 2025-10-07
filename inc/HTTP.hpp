@@ -33,7 +33,6 @@ struct HttpResponse
 	std::string version;						// e.g. "HTTP/1.1"
 	std::map<std::string, std::string> headers; // e.g. headers["Content-Length"] == body.size()
 	std::string body;							// e.g. Hello, world!
-	bool is_download_file;						// tracking if recognize downloadable file or web page
 };
 
 class HTTP
@@ -72,6 +71,7 @@ private:
 									const std::string &from,
 									const std::string &to);
 	std::string getStatusText(int code);
+	std::string readFileSmart(const std::string &fsPath);	
 
 	void GET(std::string &fsPath);
 	void POST();

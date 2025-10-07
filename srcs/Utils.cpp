@@ -2,18 +2,6 @@
 #include "Logger.hpp"
 #include "Webserv.hpp"
 
-// Read file in binary mode for images and other binary content
-std::string readFileBinary(const std::string &path)
-{
-	std::ifstream file(path.c_str(), std::ios::binary);
-	if (!file.is_open())
-		return BADFILE;
-
-	std::ostringstream buffer;
-	buffer << file.rdbuf();
-	return buffer.str();
-}
-
 // takes a path to a file and returns it contents
 /// returns file contens, BADFILE if cant open/read/empty
 std::string readFile(const std::string &path)
