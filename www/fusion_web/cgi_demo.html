@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>CGI Demo</title>
+	<style>
+		:root {
+			color-scheme: light dark;
+		}
+		body {
+			font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+			margin: 0;
+			padding: 32px 16px 48px;
+			background: #f5f7fb;
+			color: #1c1f24;
+			display: flex;
+			justify-content: center;
+		}
+		main {
+			max-width: 880px;
+			width: 100%;
+			background: #ffffff;
+			padding: 32px;
+			border-radius: 18px;
+			box-shadow: 0 22px 45px rgba(33, 35, 67, 0.12);
+		}
+		h1 {
+			margin-top: 0;
+			font-size: clamp(2rem, 4vw, 2.6rem);
+		}
+		p {
+			margin-bottom: 1.2rem;
+		}
+		section {
+			margin-top: 32px;
+			padding-top: 24px;
+			border-top: 1px solid rgba(28, 31, 36, 0.12);
+		}
+		section:first-of-type {
+			margin-top: 24px;
+			border-top: none;
+			padding-top: 0;
+		}
+		code, pre {
+			font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+		}
+		pre {
+			background: #0b1220;
+			color: #f4f7ff;
+			padding: 16px;
+			border-radius: 12px;
+			overflow-x: auto;
+			white-space: pre-wrap;
+			word-break: break-word;
+			min-height: 120px;
+		}
+		form {
+			display: grid;
+			gap: 16px;
+			margin-top: 16px;
+		}
+		label span {
+			display: inline-block;
+			margin-bottom: 8px;
+			font-weight: 600;
+		}
+		textarea {
+			min-height: 110px;
+			padding: 12px;
+			border-radius: 10px;
+			border: 1px solid rgba(28, 31, 36, 0.18);
+			resize: vertical;
+			font-size: 1rem;
+		}
+		button {
+			justify-self: start;
+			background: linear-gradient(120deg, #2563eb, #14b8a6);
+			color: #ffffff;
+			border: none;
+			border-radius: 999px;
+			padding: 12px 28px;
+			font-size: 1rem;
+			font-weight: 600;
+			cursor: pointer;
+			box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
+			transition: transform 0.18s ease, box-shadow 0.18s ease;
+		}
+		button:hover,
+		button:focus-visible {
+			transform: translateY(-1px);
+			box-shadow: 0 14px 32px rgba(20, 184, 166, 0.38);
+		}
+		button:disabled {
+			opacity: 0.6;
+			cursor: wait;
+			transform: none;
+			box-shadow: none;
+		}
+		.status {
+			font-size: 0.95rem;
+			font-weight: 600;
+			margin-bottom: 12px;
+		}
+		.status.ok {
+			color: #0f9d58;
+		}
+		.status.fail {
+			color: #d93025;
+		}
+		.actions {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			flex-wrap: wrap;
+		}
+		@media (max-width: 680px) {
+			body {
+				padding: 16px 12px 32px;
+			}
+			main {
+				padding: 24px 16px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main>
+		<h1>CGI Integration Demo</h1>
+		<p>
+			This page calls the scripts placed under <code>/cgi-bin/</code> to prove the server is executing
+			Common Gateway Interface programs correctly. Click the buttons below or send your own payload to watch
+			the dynamic output produced by the webserver.
+		</p>
+
+		<section aria-labelledby="get-demo-title">
+			<h2 id="get-demo-title">GET request to <code>test.py</code></h2>
+			<p>
+				When the page loads we request <code>/cgi-bin/test.py?demo=1&amp;msg=Hello+CGI</code>.
+				The response below comes directly from the Python CGI script.
+			</p>
+			<div class="actions">
+				<button type="button" id="refresh-get">Replay request</button>
+				<span class="status" id="get-status" role="status" aria-live="polite"></span>
+			</div>
+			<pre id="get-output">Waiting for CGI response...</pre>
+		</section>
+
+		<section aria-labelledby="post-demo-title">
+			<h2 id="post-demo-title">POST payload to <code>test.py</code></h2>
+			<p>
+				Send any text payload and the CGI script will echo the request method, headers, and body.
+				This exercise verifies POST handling through CGI.
+			</p>
+			<form id="post-form">
+				<label for="post-body">
+					<span>Message body</span>
+					<textarea id="post-body" name="body" placeholder="Type something to send via POST">Testing POST via CGI - ready for launch!</textarea>
+				</label>
+				<div class="actions">
+					<button type="submit" id="post-submit">Send &amp; run CGI</button>
+					<span class="status" id="post-status" role="status" aria-live="polite"></span>
+				</div>
+			</form>
+			<pre id="post-output">No POST request sent yet.</pre>
+		</section>
+
+		<section aria-labelledby="extra-scripts-title">
+			<h2 id="extra-scripts-title">Other CGI scripts</h2>
+			<p>
+				The server also exposes <code><a href="/cgi-bin/test.sh">/cgi-bin/test.sh</a></code> and
+				<code><a href="/cgi-bin/test_noext">/cgi-bin/test_noext</a></code>. Open them in a new tab to confirm
+				Bash and extension-less executables are executed correctly.
+			</p>
+			<p>
+				Return to the <a href="/">homepage</a>.
+			</p>
+		</section>
+	</main>
+
+	<script>
+		const getOutput = document.getElementById("get-output");
+		const getStatus = document.getElementById("get-status");
+		const getButton = document.getElementById("refresh-get");
+		const postForm = document.getElementById("post-form");
+		const postOutput = document.getElementById("post-output");
+		const postStatus = document.getElementById("post-status");
+		const postSubmit = document.getElementById("post-submit");
+
+		// Helper to update the status message.
+		function setStatus(target, message, ok) {
+			target.textContent = message;
+			target.className = "status " + (ok ? "ok" : "fail");
+		}
+
+		async function runGetRequest() {
+			setStatus(getStatus, "Contacting CGI...", true);
+			getButton.disabled = true;
+			try {
+				const response = await fetch("/cgi-bin/test.py?demo=1&msg=Hello+CGI", {
+					headers: { "X-Demo": "webserv" }
+				});
+				const text = await response.text();
+				getOutput.textContent = text.trim() ? text : "[empty response]";
+				setStatus(getStatus, `Status ${response.status}`, response.ok);
+			} catch (error) {
+				getOutput.textContent = String(error);
+				setStatus(getStatus, "Failed to reach CGI", false);
+			} finally {
+				getButton.disabled = false;
+			}
+		}
+
+		async function runPostRequest(event) {
+			event.preventDefault();
+			const body = document.getElementById("post-body").value;
+			setStatus(postStatus, "Sending payload...", true);
+			postSubmit.disabled = true;
+			try {
+				const response = await fetch("/cgi-bin/test.py", {
+					method: "POST",
+					headers: {
+						"Content-Type": "text/plain; charset=utf-8",
+						"X-Demo": "webserv"
+					},
+					body
+				});
+				const text = await response.text();
+				postOutput.textContent = text.trim() ? text : "[empty response]";
+				setStatus(postStatus, `Status ${response.status}`, response.ok);
+			} catch (error) {
+				postOutput.textContent = String(error);
+				setStatus(postStatus, "POST request failed", false);
+			} finally {
+				postSubmit.disabled = false;
+			}
+		}
+
+		getButton.addEventListener("click", runGetRequest);
+		postForm.addEventListener("submit", runPostRequest);
+
+		// Automatically trigger the GET demonstration once the page is ready.
+		runGetRequest();
+	</script>
+</body>
+</html>
