@@ -1,83 +1,401 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Cookie Gallery</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #fff8f0;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-            color: #d2691e;
-            text-shadow: 1px 1px #fff;
-        }
-        .gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-        .card {
-            background: #fff;
-            border: 2px solid #e5c49b;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            overflow: hidden;
-            text-align: center;
-            transition: transform 0.15s ease-in-out;
-        }
-        .card:hover {
-            transform: scale(1.05);
-        }
-        .card img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-        }
-        .card p {
-            padding: 10px;
-            font-size: 1em;
-            color: #5a3e1b;
-        }
-        footer {
-            margin-top: 40px;
-            text-align: center;
-            color: #777;
-            font-size: 0.9em;
-        }
-    </style>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Cookie Vault Gallery</title>
+	<style>
+		:root {
+			color-scheme: light dark;
+			--bg: #0e101c;
+			--fg: #fdf8ef;
+			--muted: rgba(253, 248, 239, 0.72);
+			--accent: #ffb347;
+			--card: rgba(15, 17, 31, 0.78);
+			--border: rgba(255, 255, 255, 0.18);
+			--shadow: 0 26px 70px rgba(6, 8, 20, 0.65);
+		}
+		* {
+			box-sizing: border-box;
+		}
+		body {
+			margin: 0;
+			min-height: 100vh;
+			font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+			background: radial-gradient(130% 130% at 50% 0%, #2d1f46 0%, var(--bg) 70%);
+			color: var(--fg);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 32px 16px 48px;
+			position: relative;
+			overflow: hidden;
+		}
+		canvas#cookie-field {
+			position: fixed;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+			z-index: 0;
+		}
+		main {
+			position: relative;
+			z-index: 1;
+			width: min(1080px, 100%);
+			display: grid;
+			gap: 32px;
+			background: var(--card);
+			border-radius: 32px;
+			padding: 38px 34px 42px;
+			border: 1px solid var(--border);
+			box-shadow: var(--shadow);
+			backdrop-filter: blur(14px);
+		}
+		header {
+			display: grid;
+			gap: 12px;
+			text-align: center;
+		}
+		header h1 {
+			margin: 0;
+			font-size: clamp(2.4rem, 6vw, 3rem);
+			letter-spacing: 0.04em;
+		}
+		header p {
+			margin: 0;
+			color: var(--muted);
+			line-height: 1.7;
+		}
+		.gallery {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+			gap: 20px;
+		}
+		.card {
+			background: rgba(12, 15, 28, 0.92);
+			border-radius: 20px;
+			border: 1px solid rgba(255, 255, 255, 0.14);
+			box-shadow: 0 16px 44px rgba(10, 14, 30, 0.45);
+			overflow: hidden;
+			display: grid;
+			gap: 0;
+			transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+		}
+		.card:hover,
+		.card:focus-within {
+			transform: translateY(-6px);
+			border-color: rgba(255, 179, 71, 0.5);
+			box-shadow: 0 26px 50px rgba(20, 16, 28, 0.6);
+		}
+		.card img {
+			width: 100%;
+			height: 200px;
+			object-fit: cover;
+		}
+		.card p {
+			margin: 0;
+			padding: 18px 16px 20px;
+			font-size: 1.05rem;
+			font-weight: 600;
+			color: var(--muted);
+			text-align: center;
+		}
+		footer {
+			text-align: center;
+			color: var(--muted);
+			font-size: 0.95rem;
+		}
+		footer a {
+			color: var(--accent);
+			font-weight: 600;
+			text-decoration: none;
+		}
+		@media (max-width: 600px) {
+			main {
+				padding: 30px 20px 34px;
+			}
+		}
+	</style>
 </head>
 <body>
-    <h1>🍪 Cookie Gallery 🍪</h1>
-    <div class="gallery">
-        <div class="card">
-            <img src="/images/choco_cookie.jpg" alt="Chocolate Cookie">
-            <p>Chocolate Cookie</p>
-        </div>
-        <div class="card">
-            <img src="/images/oatmeal_cookie.jpg" alt="Oatmeal Cookie">
-            <p>Oatmeal Cookie</p>
-        </div>
-        <div class="card">
-            <img src="/images/vanilla_cookie.jpg" alt="Vanilla Cookie">
-            <p>Vanilla Cookie</p>
-        </div>
-        <div class="card">
-            <img src="/images/peanut_cookie.jpg" alt="Peanut Cookie">
-            <p>Peanut Cookie</p>
-        </div>
-        <div class="card">
-            <img src="/images/fancy_cookie.jpg" alt="Fancy Cookie">
-            <p>Fancy Cookie</p>
-        </div>
-    </div>
-    <footer>
-        <p>Welcome to the Fusion Web Cookie Gallery</p>
-    </footer>
+	<canvas id="cookie-field" aria-hidden="true"></canvas>
+	<main>
+		<header>
+			<h1>Cookie Vault Gallery</h1>
+			<p>Preview the signature treats guarded inside the vault.</p>
+		</header>
+		<section class="gallery">
+			<figure class="card">
+				<img src="./choko_cookie.jpg" alt="Chocolate Cookie">
+				<p>Chocolate Crunch</p>
+			</figure>
+			<figure class="card">
+				<img src="./oatmetal_cookie.jpg" alt="Oatmeal Cookie">
+				<p>Oatmeal Cluster</p>
+			</figure>
+			<figure class="card">
+				<img src="./vanilla_cookie.jpg" alt="Vanilla Cookie">
+				<p>Vanilla Swirl</p>
+			</figure>
+			<figure class="card">
+				<img src="./peanut_cookie.jpg" alt="Peanut Cookie">
+				<p>Peanut Butter Stamp</p>
+			</figure>
+			<figure class="card">
+				<img src="./fancy_cookie.jpg" alt="Fancy Cookie">
+				<p>Decorated Deluxe</p>
+			</figure>
+		</section>
+		<footer>
+			Access restricted? <a href="/login">Authenticate at the vault entrance.</a>
+		</footer>
+	</main>
+
+	<script type="module">
+		const canvas = document.getElementById("cookie-field");
+
+		const fallbackCookies = () => {
+			const layer = document.createElement("div");
+			layer.style.position = "fixed";
+			layer.style.inset = "0";
+			layer.style.pointerEvents = "none";
+			layer.style.overflow = "hidden";
+			layer.style.zIndex = "0";
+			document.body.appendChild(layer);
+
+			const sprites = ["(cookie)", "[treat]", "{sweet}"];
+			for (let i = 0; i < 24; i++) {
+				const span = document.createElement("span");
+				span.textContent = sprites[i % sprites.length];
+				const size = 32 + Math.random() * 48;
+				span.style.position = "absolute";
+				span.style.left = Math.random() * 100 + "%";
+				span.style.top = Math.random() * 100 + "%";
+				span.style.fontSize = size + "px";
+				span.style.filter = "drop-shadow(0 6px 12px rgba(0,0,0,0.25))";
+				span.style.opacity = "0";
+				span.style.animation = `floatCookie ${8 + Math.random() * 6}s ease-in-out infinite`;
+				span.style.animationDelay = (-Math.random() * 8) + "s";
+				layer.appendChild(span);
+			}
+		};
+
+		if (!canvas) {
+			fallbackCookies();
+		} else {
+			try {
+				const THREE = await import("https://unpkg.com/three@0.161.0/build/three.module.js");
+				const {
+					WebGLRenderer,
+					Scene,
+					FogExp2,
+					PerspectiveCamera,
+					AmbientLight,
+					DirectionalLight,
+					CanvasTexture,
+					SpriteMaterial,
+					Sprite,
+					Group,
+					Vector3,
+					MathUtils,
+					Clock
+				} = THREE;
+
+				const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
+				renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				renderer.setClearColor(0x101010, 0);
+
+				const scene = new Scene();
+				scene.fog = new FogExp2(0x0f0f0f, 0.024);
+
+				const camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+				camera.position.set(0, 0, 40);
+
+				const ambient = new AmbientLight(0xfff3df, 0.5);
+				scene.add(ambient);
+				const light = new DirectionalLight(0xffffff, 0.6);
+				light.position.set(1, 1.2, 1);
+				scene.add(light);
+
+				const makeCookieTexture = (size = 256) => {
+					const texCanvas = document.createElement("canvas");
+					texCanvas.width = texCanvas.height = size;
+					const ctx = texCanvas.getContext("2d");
+
+					const radius = size * 0.45;
+					ctx.translate(size / 2, size / 2);
+
+					const gradient = ctx.createRadialGradient(0, 0, radius * 0.2, 0, 0, radius);
+					gradient.addColorStop(0, "#cda56d");
+					gradient.addColorStop(1, "#8a5f2f");
+					ctx.fillStyle = gradient;
+					ctx.beginPath();
+					ctx.arc(0, 0, radius, 0, Math.PI * 2);
+					ctx.fill();
+
+					for (let i = 0; i < 120; i++) {
+						const angle = Math.random() * Math.PI * 2;
+						const dist = Math.pow(Math.random(), 0.7) * radius * 0.9;
+						const x = Math.cos(angle) * dist;
+						const y = Math.sin(angle) * dist;
+						const dot = 1 + Math.random() * 2;
+						ctx.fillStyle = `rgba(0,0,0,${0.05 + Math.random() * 0.05})`;
+						ctx.beginPath();
+						ctx.arc(x, y, dot, 0, Math.PI * 2);
+						ctx.fill();
+					}
+
+					const drawChip = (x, y, rad) => {
+						ctx.save();
+						ctx.translate(x, y);
+						ctx.rotate((Math.random() - 0.5) * 0.6);
+						const chipGrad = ctx.createRadialGradient(0, 0, rad * 0.3, 0, 0, rad);
+						chipGrad.addColorStop(0, "#3b2416");
+						chipGrad.addColorStop(1, "#140b06");
+						ctx.fillStyle = chipGrad;
+						ctx.beginPath();
+						ctx.moveTo(-rad, 0);
+						ctx.quadraticCurveTo(0, -rad * 1.2, rad, 0);
+						ctx.quadraticCurveTo(0, rad * 0.9, -rad, 0);
+						ctx.fill();
+						ctx.restore();
+					};
+
+					for (let i = 0; i < 18; i++) {
+						const angle = Math.random() * Math.PI * 2;
+						const dist = Math.pow(Math.random(), 0.9) * radius * 0.8;
+						const x = Math.cos(angle) * dist;
+						const y = Math.sin(angle) * dist;
+						drawChip(x, y, 6 + Math.random() * 6);
+					}
+
+					const texture = new CanvasTexture(texCanvas);
+					texture.anisotropy = 4;
+					texture.generateMipmaps = true;
+					texture.minFilter = THREE.LinearMipmapLinearFilter;
+					return texture;
+				};
+
+				const baseTexture = makeCookieTexture(256);
+				const COUNT = 160;
+				const DEPTH = 120;
+				const HALF = DEPTH / 2;
+				const AREA = 36;
+
+				const group = new Group();
+				scene.add(group);
+				const cookies = [];
+
+				for (let i = 0; i < COUNT; i++) {
+					const material = new SpriteMaterial({ map: baseTexture, transparent: true, depthWrite: false });
+					const sprite = new Sprite(material);
+					const size = 0.8 + Math.pow(Math.random(), 1.6) * 6.0;
+					sprite.scale.set(size, size, 1);
+					sprite.position.set(
+						(Math.random() - 0.5) * AREA * 2,
+						(Math.random() - 0.5) * AREA * 2,
+						-HALF + Math.random() * DEPTH - 20
+					);
+
+					const speedBase = 0.02 + Math.random() * 0.08;
+					const direction = new Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+					const depthFactor = MathUtils.mapLinear(sprite.position.z, -HALF, HALF, 1.3, 0.4);
+					const velocity = direction.multiplyScalar(speedBase * depthFactor);
+					const spin = (Math.random() - 0.5) * 0.02;
+
+					group.add(sprite);
+					cookies.push({ sprite, velocity, spin });
+				}
+
+				const wrap = (value, min, max) => {
+					const range = max - min;
+					if (value < min) return value + range;
+					if (value > max) return value - range;
+					return value;
+				};
+
+				const onResize = () => {
+					const width = window.innerWidth;
+					const height = window.innerHeight;
+					camera.aspect = width / height;
+					camera.updateProjectionMatrix();
+					renderer.setSize(width, height);
+				};
+
+				window.addEventListener("resize", onResize);
+
+				let mouseX = 0;
+				let mouseY = 0;
+				window.addEventListener("mousemove", (event) => {
+					mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+					mouseY = (event.clientY / window.innerHeight) * 2 - 1;
+				});
+
+				const clock = new Clock();
+				const animate = () => {
+					const dt = Math.min(clock.getDelta(), 0.033);
+
+					camera.position.x += (mouseX * 3 - camera.position.x) * 0.05;
+					camera.position.y += (-mouseY * 3 - camera.position.y) * 0.05;
+					camera.lookAt(0, 0, 0);
+
+					for (const cookie of cookies) {
+						cookie.sprite.position.addScaledVector(cookie.velocity, dt * 60);
+						cookie.sprite.material.opacity = MathUtils.clamp(0.35 + (30 - Math.abs(cookie.sprite.position.z)) / 30, 0.2, 1);
+						cookie.sprite.material.rotation += cookie.spin;
+						const bounds = AREA;
+						cookie.sprite.position.x = wrap(cookie.sprite.position.x, -bounds, bounds);
+						cookie.sprite.position.y = wrap(cookie.sprite.position.y, -bounds, bounds);
+						cookie.sprite.position.z = wrap(cookie.sprite.position.z, -HALF, HALF);
+					}
+
+					renderer.render(scene, camera);
+					requestAnimationFrame(animate);
+				};
+
+				window.addEventListener("click", () => {
+					for (let i = 0; i < 12; i++) {
+						const material = new SpriteMaterial({ map: makeCookieTexture(256), transparent: true, depthWrite: false });
+						const sprite = new Sprite(material);
+						const size = 1 + Math.random() * 4;
+						sprite.scale.set(size, size, 1);
+						sprite.position.copy(camera.position).add(new Vector3((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4, -6 - Math.random() * 8));
+						const velocity = new Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.2).normalize().multiplyScalar(0.12 + Math.random() * 0.12);
+						const spin = (Math.random() - 0.5) * 0.03;
+						group.add(sprite);
+						cookies.push({ sprite, velocity, spin });
+					}
+				});
+
+				onResize();
+				requestAnimationFrame(animate);
+			} catch (error) {
+				console.error("Three.js gallery background failed:", error);
+				fallbackCookies();
+			}
+		}
+	</script>
+	<style>
+		@keyframes floatCookie {
+			0% {
+				transform: translate3d(-10px, 20px, 0) scale(0.8);
+				opacity: 0;
+			}
+			20% {
+				opacity: 1;
+			}
+			50% {
+				transform: translate3d(10px, -20px, 0) scale(1.15);
+			}
+			80% {
+				opacity: 1;
+			}
+			100% {
+				transform: translate3d(-15px, 25px, 0) scale(0.7);
+				opacity: 0;
+			}
+		}
+	</style>
 </body>
 </html>
