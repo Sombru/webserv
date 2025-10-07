@@ -191,7 +191,7 @@ bool Server::handleConnection(int fd)
 			{
 				response += it->first + ": " + it->second + "\r\n";
 			}
-			response += "\r\n\r\n";
+			response += "\r\n\r\n\r\n";
 			response += resp.body;
 			// DEBUG(response);
 			return sendResponse(fd, response);

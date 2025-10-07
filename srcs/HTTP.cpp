@@ -442,12 +442,10 @@ bool HTTP::executeCgi(const std::string &scriptPath, const std::string &interpre
 		std::string serverProtEnv = "SERVER_PROTOCOL=" + request.version;
 		envp.push_back(const_cast<char*>(serverProtEnv.c_str()));
 		envp.push_back(NULL);
-
-		// Exec
 		if (!interpreter.empty())
-			execve(argv[0], &argv[0], &argv[0]);
+			execve(interpreter.c_str(), argv.data(), envp.data());
 		else
-			execve(interpreter.c_str(), &argv[0], envp.data());
+			execve(scriptPath.c_str(), argv.data(), envp.data());
 
 		// If exec fails
 		_exit(1);
