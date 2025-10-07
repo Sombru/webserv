@@ -191,7 +191,7 @@ bool Server::handleConnection(int fd)
 			{
 				response += it->first + ": " + it->second + "\r\n";
 			}
-			response += "\r\n\r\n\r\n";
+			response += "\r\n\r\n";
 			response += resp.body;
 			// DEBUG(response);
 			return sendResponse(fd, response);
@@ -212,7 +212,7 @@ bool Server::sendResponse(int fd, const std::string &response)
 	}
 	else
 	{
-		DEBUG("Sent " + response + " to client " + intToString(fd));
+		// DEBUG("Sent " + response + " to client " + intToString(fd));
 	}
 	return true;
 }

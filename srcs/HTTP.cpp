@@ -172,6 +172,8 @@ void HTTP::findBestLocation()
 {
 	const LocationConfig *bestMatch = 0;
 	size_t longestMatch = 0;
+	if (request.path.empty())
+		request.path = '/';
 
 	// Find the location with the longest matching path prefix
 	for (size_t i = 0; i < serverConfig.locations.size(); ++i)
@@ -190,8 +192,6 @@ void HTTP::findBestLocation()
 		}
 	}
 	request.best_location = *bestMatch;
-	// if (!bestMatch)
-		// request.best_location = serverConfig.locations[serverConfig.locations.size()-1];
 }
 
 void HTTP::handleConnectionHeader()
@@ -245,7 +245,6 @@ void HTTP::generateResponse()
 
 	// call before methods
 	handleConnectionHeader();
-	// DEBUG(request.headers[""])
 	if (request.body.size() > serverConfig.clientMaxBodySize)
 		return buildErrorRespose(413);
 	if (!methodAllowed(request.method))

@@ -125,7 +125,7 @@ bool HTTP::handleLogin()
 	if (formData["username"] == "admin" && formData["password"] == "admin")
 	{
 		// sets cookie for 200 seconds (shortened for testing)
-		addHeaders("Set-Cookie", "logged_in=true; Path=/; Max-Age=200000");
+		addHeaders("Set-Cookie", "logged_in=true; Path=/; Max-Age=20");
 		redirect("/");
 	}
 	else

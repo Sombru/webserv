@@ -11,8 +11,8 @@ class ServerManager
 private:
 	FullConfig &config;
 	std::vector<Server> servers;
-	std::vector<epoll_event> events;
-	std::map<int, Server> serversMap; 
+
+	std::map<int, Server> serversMap;
 	std::map<int, Client> clientsMap;
 	// std::map<int, time_t> clientActivity;
 	int epoll_fd;

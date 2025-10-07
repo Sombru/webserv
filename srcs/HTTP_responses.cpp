@@ -7,6 +7,7 @@ void HTTP::buildErrorRespose(int code)
 	response.body = loadErrorPage(code);
 	response.headers["Content-Type"] = getMimeType(serverConfig.root + "/" + serverConfig.errorPage);
 	response.headers["Content-Length"] = intToString(response.body.size());
+	response.headers[CONNECTION] = "close";
 }
 
 void HTTP::buildResponse(int code, std::string &fsTarget)

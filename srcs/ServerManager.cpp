@@ -27,38 +27,39 @@ ServerManager::ServerManager(FullConfig &configSrc)
 
 int ServerManager::setup()
 {
-	epoll_fd = epoll_create1(0);
-	if (epoll_fd < 0)
-	{
-		ERROR("Failed to create epoll: " + errstr);
-		return -1;
-	}
-	events.reserve(servers.size() + 1);
-	for (size_t i = 0; i < servers.size(); ++i)
-	{
-		if (servers[i].setup() < 0)
-			return -1;
+    epoll_fd = epoll_create1(0);
+    if (epoll_fd < 0)
+    {
+        ERROR("Failed to create epoll: " + errstr);
+        return -1;
+    }
 
-		serversMap.insert(std::make_pair(servers[i].server_fd, servers[i]));
+    for (size_t i = 0; i < servers.size(); ++i)
+    {
+        if (servers[i].setup() < 0)
+            return -1;
 
-		epoll_event sock_event;
-		sock_event.events = EPOLLIN;
-		sock_event.data.fd = servers[i].server_fd;
-		events.push_back(sock_event);
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, servers[i].server_fd, &events[i]) < 0)
-		{
-			ERROR("Failed to add " + config.servers[i].name + " to epoll: " + errstr);
-			return -1;
-		}
-	}
-	return 0; // success
+        serversMap.insert(std::make_pair(servers[i].server_fd, servers[i]));
+
+        epoll_event ev;
+        ev.events = EPOLLIN;
+        ev.data.fd = servers[i].server_fd;
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, servers[i].server_fd, &ev) < 0)
+        {
+            ERROR("Failed to add " + config.servers[i].name + " to epoll: " + errstr);
+            return -1;
+        }
+    }
+    return 0;
 }
+
 
 void ServerManager::run()
 {
 	for (size_t i = 0; i < config.servers.size(); ++i)
 		INFO("Running server '" + config.servers[i].name + "' on host: " + config.servers[i].host);
 
+	std::vector<epoll_event> events(config.maxEvents);
 	running = true;
 
 	while (running && !signalReceived)
