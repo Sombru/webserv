@@ -32,6 +32,7 @@ public:
 	void acceptConnection(int &epoll_fd, std::map<int, Client> &clientsMap);
 	bool handleConnection(int fd);  // Return false if client should be removed
 	bool sendResponse(int fd, const std::string &response);
+	bool sendResponse(int fd, const HttpResponse &response);
 
 	~Server();
 };

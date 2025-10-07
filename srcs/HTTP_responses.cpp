@@ -14,7 +14,7 @@ void HTTP::buildResponse(int code, std::string &fsTarget)
 {
 	response.status_code = code;
 	response.status_text = getStatusText(code);
-	std::string buffer = readFile(fsTarget);
+	std::string buffer = readFileSmart(fsTarget);
 	if (buffer == BADFILE)
 		return buildErrorRespose(404);
 	response.body = buffer;

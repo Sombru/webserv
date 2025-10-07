@@ -6,6 +6,7 @@
 #include <sstream>
 
 #define PATH "configs/default.conf"
+// #define PATH "configs/cookies_test.conf"
 
 int main()
 {

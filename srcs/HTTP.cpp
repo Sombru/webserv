@@ -69,7 +69,6 @@ void HTTP::parseRequest(const std::string &rawRequest)
 
 	response.body.clear();
 	response.headers.clear();
-	response.is_download_file = false;
 	response.status_code = 0;
 	response.status_text.clear();
 	response.version.clear();
@@ -487,8 +486,8 @@ bool HTTP::executeCgi(const std::string &scriptPath, const std::string &interpre
 	}
 
 	// Parse CGI output headers (simple parser: headers until blank line)
-	size_t hdrEnd = childOut.find("\r\n\r\n");
-	size_t hdrSkip = 4;
+	size_t hdrEnd = childOut.find("\r\n");
+	size_t hdrSkip = 2;
 	if (hdrEnd == std::string::npos)
 	{
 		hdrEnd = childOut.find("\n\n");

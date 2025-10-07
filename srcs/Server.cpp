@@ -184,24 +184,46 @@ bool Server::handleConnection(int fd)
 				 ", Version: " + http.request.version);
 			http.generateResponse();
 			const HttpResponse &resp = http.response;
-
-			// Build raw HTTP response
-			std::string response = resp.version + " " + intToString(resp.status_code) + " " + resp.status_text + "\r\n";
-			for (std::map<std::string, std::string>::const_iterator it = http.response.headers.begin(); it != http.response.headers.end(); ++it)
-			{
-				response += it->first + ": " + it->second + "\r\n";
-			}
-			response += "\r\n";
-			response += resp.body;
-			// DEBUG(response);
-			return sendResponse(fd, response);
+			
+			sendResponse(fd, resp);
 		}
-
 	}
 
 	return true; // Keep connection alive, waiting for more data
 }
 
+bool Server::sendResponse(int fd, const HttpResponse &response)
+{
+	std::string headerStr;
+
+	headerStr = response.version + " " + intToString(response.status_code) + " " + response.status_text + "\r\n";
+
+	for (std::map<std::string, std::string>::const_iterator it = response.headers.begin(); it != response.headers.end(); ++it)
+	{
+		headerStr += it->first + ": " + it->second + "\r\n";
+	}
+
+	// Header/body separator (required by HTTP)
+	headerStr += "\r\n";
+
+	ssize_t sent = send(fd, headerStr.data(), headerStr.size(), 0);
+	if (sent == -1)
+	{
+		ERROR("Failed to send response to client " + intToString(fd) + ": " + errstr);
+		return false;
+	}
+
+	if (!response.body.empty())
+	{
+		sent = send(fd, response.body.data(), response.body.size(), 0);
+		if (sent == -1)
+		{
+			ERROR("Failed to send response to client " + intToString(fd) + ": " + errstr);
+			return false;
+		}
+	}
+	return true;
+}
 
 bool Server::sendResponse(int fd, const std::string &response)
 {

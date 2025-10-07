@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Error {{code}}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff;
+      padding: 2em;
+      margin: 0;
+    }
+
+    .container {
+      border: 2px dashed rgb(0, 255, 42);
+      padding: 2em;
+      text-align: center;
+      max-width: 600px;
+      margin: 5% auto;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 6rem;
+      margin: 0;
+      color: #f85149;
+    }
+
+    p {
+      font-size: 1.5rem;
+      margin: 10px 0;
+    }
+
+    a {
+      text-decoration: none;
+      color: #007BFF;
+      font-size: 1rem;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1 id="error-code">{{code}}</h1>
+    <p class="glitch" id="error-status_text">{{status_text}}</p>
+    <p>The page you're looking for encountered an error.</p>
+    <!-- <a href="">← Back to homepage</a> -->
+  </div>
+
+  <script>
+    document.getElementById("error-code").textContent = "{{code}}";
+    document.getElementById("error-status_text").textContent = "{{status_text}}";
+  </script>
+</body>
+
+</html>
