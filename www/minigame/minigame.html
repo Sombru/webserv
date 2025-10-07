@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Maze Game</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: monospace;
+            background: linear-gradient(135deg, #89f7fe, #66a6ff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        canvas {
+            background: #f0f0f0;
+            border: 3px solid #333;
+            box-shadow: 5px 5px 20px rgba(0,0,0,0.3);
+        }
+
+        #winImage {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover; /* stretches while keeping aspect ratio */
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="mazeCanvas" width="400" height="400"></canvas>
+    <img id="winImage" src="win.png" alt="You Win!">
+
+    <script>
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const gridSize = 20;
+        const cellSize = canvas.width / gridSize;
+
+        const maze = [
+            [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,0],
+            [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0],
+            [1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,0,1,1,0],
+            [0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0],
+            [0,1,1,1,0,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1],
+            [0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
+            [0,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+            [0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        ];
+
+        let ball = {x: 0, y: 0};
+
+        function drawMaze() {
+            for(let y=0; y<gridSize; y++) {
+                for(let x=0; x<gridSize; x++) {
+                    if(maze[y][x] === 1) ctx.fillStyle = "#333";
+                    else if(maze[y][x] === 2) ctx.fillStyle = "#4caf50";
+                    else ctx.fillStyle = "#ddd";
+                    ctx.fillRect(x*cellSize, y*cellSize, cellSize, cellSize);
+                    ctx.strokeStyle = "#aaa";
+                    ctx.strokeRect(x*cellSize, y*cellSize, cellSize, cellSize);
+                }
+            }
+
+            ctx.fillStyle = "#e53935";
+            ctx.beginPath();
+            ctx.arc(ball.x*cellSize + cellSize/2, ball.y*cellSize + cellSize/2, cellSize/3, 0, Math.PI*2);
+            ctx.fill();
+        }
+
+        function checkWin() {
+            if(maze[ball.y][ball.x] === 2) {
+                document.getElementById('mazeCanvas').style.display = 'none';
+                document.getElementById('winImage').style.display = 'block';
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            let nx = ball.x;
+            let ny = ball.y;
+            if(e.key === "ArrowUp") ny--;
+            if(e.key === "ArrowDown") ny++;
+            if(e.key === "ArrowLeft") nx--;
+            if(e.key === "ArrowRight") nx++;
+
+            if(nx >=0 && nx < gridSize && ny >=0 && ny < gridSize && maze[ny][nx] !== 1){
+                ball.x = nx;
+                ball.y = ny;
+                drawMaze();
+                checkWin();
+            }
+        });
+
+        drawMaze();
+    </script>
+</body>
+</html>
