@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Images Directory</title>
+</head>
+<body>
+	<h1>Directory Listing</h1>
+	{{autoindex}}
+	<hr>
+	<form action="/images/" method="post" enctype="multipart/form-data">
+		<label for="file">Upload new image:</label>
+		<input type="file" name="file" id="file">
+		<button type="submit">Upload</button>
+	</form>
+	<p>Allowed methods: GET, POST, DELETE</p>
+	<a href="/">Back to Home</a>
+</body>
+</html>

@@ -18,7 +18,7 @@ std::string readFileBinary(const std::string &path)
 /// returns file contens, BADFILE if cant open/read/empty
 std::string readFile(const std::string &path)
 {
-	std::ifstream file(path.c_str());
+	std::ifstream file(path.c_str(), std::ios::binary);
 	std::stringstream buffer;
 
 	buffer << file.rdbuf();

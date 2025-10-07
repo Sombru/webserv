@@ -20,6 +20,7 @@ void HTTP::addHeaders(const std::string &header, const std::string &value)
 		response.headers[header] += "; " + value;
 }
 
+
 std::string HTTP::getStatusText(int code)
 {
 	switch (code)
@@ -78,12 +79,13 @@ std::string HTTP::getMimeType(const std::string &path)
 
 	std::string extension = path.substr(dotPos + 1); // skip the '.'
 
+	// DEBUG(extension);
 	if (extension.empty())
 		return "application/octet-stream";
-	// DEBUG(serverConfig.mimeTypes.at("text/html"));
 
-	std::map<std::string, std::string>::const_iterator it =
-		serverConfig.mimeTypes.find(extension);
+	std::map<std::string, std::string>::const_iterator it = serverConfig.mimeTypes.find(extension);
+	// DEBUG(it->first);
+	// DEBUG(it->second);
 	if (it != serverConfig.mimeTypes.end())
 		return it->second;
 

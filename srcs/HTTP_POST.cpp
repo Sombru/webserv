@@ -44,7 +44,7 @@ void HTTP::POST()
 
 	std::string uploadDir = request.best_location.fs_uploadDir;
 
-	// DEBUG(uploadDir);
+	DEBUG(uploadDir);
 	// create one if it doesn't exist
 	struct stat st;
 	if (stat(uploadDir.c_str(), &st) == -1)

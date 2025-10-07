@@ -1,120 +1,24 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>webserv Upload</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background: linear-gradient(to bottom, #f0f4f8, #dfe8f0);
-        }
-
-        .left {
-            background: #cce3f3;
-            border-right: 1px solid #bbb;
-        }
-
-        .right {
-            background: #e3f2fd;
-        }
-
-        textarea {
-            background: #ffffff;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 12px;
-            font-size: 16px;
-            color: #333;
-        }
-
-        button {
-            background: #37bdc7;
-            color: #fff;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        button:hover {
-            background: #019875;
-        }
-
-        .delete-btn {
-            background-color: #019875;
-            color: #fff;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s ease;
-        }
-
-        .delete-btn:hover {
-            background-color: #c5e6e7;
-        }
-
-        .file-list li {
-            background-color: #e3f2fd;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 10px 14px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .file-list a {
-            color: #0984e3;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-    </style>
+	<meta charset="UTF-8">
+	<title>Fusion Web</title>
+	<style>
+		body { font-family: Arial, sans-serif; background: #f8f9fa; text-align: center; }
+		h1 { color: #333; margin-top: 50px; }
+		nav a { margin: 10px; text-decoration: none; color: #007bff; }
+		nav a:hover { text-decoration: underline; }
+	</style>
 </head>
-
 <body>
-    <div class="main">
-        <div class="left">
-            <h2>POST raw body</h2>
-            <form method="POST" action="/upload">
-                <textarea name="data" placeholder="Write something here..."></textarea><br>
-                <button type="submit">Send Text</button>
-            </form>
-        </div>
-
-        <div class="right">
-            <h2>Upload a File</h2>
-            <form method="POST" action="/upload" enctype="multipart/form-data">
-                <label for="fileUpload">
-                    <button type="button" onclick="document.getElementById('fileUpload').click()">+ Select File</button>
-                </label>
-                <input type="file" name="file" id="fileUpload" onchange="this.form.submit()">
-            </form>
-
-            <!-- File list section embedded here -->
-            <div class="file-list">
-                <h3>Uploaded Files</h3>
-                <ul id="uploadedFiles">
-                    {{autoindex}} <!-- Will be populated from server -->
-                </ul>
-            </div>
-        </div>
-    </div>
-
+	<h1>Welcome to Fusion Web</h1>
+	<nav>
+		<a href="/about">About</a>
+		<a href="/images">Images</a>
+		<a href="/cgi-bin/test.py">CGI Python</a>
+		<a href="/cgi-bin/test.sh">CGI Bash</a>
+		<a href="/old">Redirect Example</a>
+	</nav>
+	<p>Upload testing via POST is allowed in /images/</p>
 </body>
-
 </html>
