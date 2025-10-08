@@ -9,27 +9,7 @@ void HTTP::POST()
 		handleLogin();
 		return;
 	}
-	// If this location has CGI configured, try to execute script
-	if (!request.best_location.cgi.empty())
-	{
-		// Determine filesystem path to script
-		std::string scriptFs = request.best_location.fs_path + "/" + request.path.substr(request.best_location.path.size());
-		size_t dot = scriptFs.find_last_of('.');
-		std::string ext = (dot == std::string::npos) ? "" : scriptFs.substr(dot + 1);
-		std::string interpreter;
-		std::map<std::string, std::string>::iterator it = request.best_location.cgi.find(ext);
-		if (it != request.best_location.cgi.end()) interpreter = it->second;
-		else if (request.best_location.cgi.find("none") != request.best_location.cgi.end())
-			interpreter = request.best_location.cgi["none"];
 
-		if (!interpreter.empty() || request.best_location.cgi.find("none") != request.best_location.cgi.end())
-		{
-			if (executeCgi(scriptFs, interpreter, request.body))
-				return; // response filled by CGI
-			else
-				return; // error response set
-		}
-	}
 	// check for upload
 	if (request.best_location.uploadDir.empty())
 	{

@@ -2,14 +2,14 @@
 
 int HTTP::methodAllowed(std::string &requestMethod)
 {
-	int res = false;
-
 	for (size_t i = 0; i < request.best_location.allowedMethods.size(); ++i)
 	{
 		if (request.best_location.allowedMethods[i] == requestMethod)
-			res = true;
+		{
+			return true;
+		}
 	}
-	return res;	
+	return false;
 }
 
 void HTTP::addHeaders(const std::string &header, const std::string &value)

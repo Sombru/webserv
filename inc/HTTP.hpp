@@ -78,7 +78,9 @@ private:
 
 	// CGI execution helper
 	// Returns true if CGI was executed and response is filled
-	bool executeCgi(const std::string &scriptPath, const std::string &interpreter, const std::string &requestBody);
+	bool isCgiScrit();
+	void executeCgi(const std::string &scriptPath, const std::string &interpreter, const std::string &requestBody);
+	void launchExecve(int inpipe[2], int outpipe[2], const std::string &fspath, const std::string &interpreter);
 	void DELETE(const std::string &fsPath);
 	bool handleLogin();
 	bool handleSession();

@@ -104,3 +104,14 @@ std::ostream &operator<<(std::ostream &os, const LocationConfig &location)
 	os << '\n';
 	return os;
 }
+
+std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &vec)
+{
+	os << "\n[";
+	for (size_t i = 0; i < vec.size(); ++i)
+	{
+		os << vec[i] << " ";
+	}
+	os << "]\n";
+	return os;
+}

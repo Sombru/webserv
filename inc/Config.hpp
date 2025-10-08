@@ -84,7 +84,7 @@ private:
 	int parseLocation(ServerConfig &server, TokenIterator &iter);
 	bool parseSimpleDirective(TokenIterator &iter, std::string &result);
 	bool parseAllowedMethods(LocationConfig &location, TokenIterator &iter);
-	bool parseCgiDirective(LocationConfig &location, TokenIterator &iter);
+	int parseCgiBlock(LocationConfig &location, TokenIterator &iter);
 	int parseTypesBlock(ServerConfig &server, TokenIterator &iter);
 
 	void tokenize();

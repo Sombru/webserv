@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
 		ERROR("Failed to parse configuration");
 		return 1;
 	}
-	
+	// DEBUG(config);
 	if (config.validateConfig() == -1)
 	{
 		ERROR("Configuration validation failed");

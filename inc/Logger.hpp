@@ -26,6 +26,7 @@ std::ostream &operator<<(std::ostream &os, const std::vector<Token> &tokens);
 std::ostream &operator<<(std::ostream &os, const Config &conf);
 std::ostream &operator<<(std::ostream &os, const ServerConfig &server);
 std::ostream &operator<<(std::ostream &os, const LocationConfig &location);
+std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &vec);
 
 #define errstr std::string(strerror(errno))
 

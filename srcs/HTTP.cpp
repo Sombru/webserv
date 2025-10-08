@@ -241,22 +241,19 @@ void HTTP::generateResponse()
 {
 	// ensure response version is set so status-line is valid
 	response.version = HTTP_VERSION;
-
+	std::string fsPath = resolveRequestPath();
 	// call before methods
 	handleConnectionHeader();
+	if (!handleSession())
+		return redirect("/login");
 	if (request.body.size() > serverConfig.clientMaxBodySize)
 		return buildErrorRespose(413);
 	if (!methodAllowed(request.method))
 		return buildErrorRespose(405);
 	if (!request.best_location.returnPath.empty())
 		return redirect(request.best_location.returnPath);
-	if (!handleSession())
-		return redirect("/login");
-	std::string fsPath = resolveRequestPath();
-
-	// if (request.headers[""])
-	// DEBUG(fsPath);
-	// DEBUG(request.best_location.fs_uploadDir);
+	if (isCgiScrit())
+		return executeCgi(fsPath, request.best_location.cgi[getFileExtension(request.path)], request.body); 
 	if (request.method == "GET")
 		GET(fsPath);
 	else if (request.method == "POST")
@@ -388,161 +385,3 @@ std::string HTTP::extractChunkData(const std::string& data, size_t chunkSize)
 	return data.substr(dataStart, chunkSize);
 }
 
-// Execute CGI script using interpreter (if provided).
-// scriptPath: full filesystem path to script
-// interpreter: path to interpreter executable, or empty if script is executable itself
-// requestBody: body to pass to CGI via stdin (for POST)
-bool HTTP::executeCgi(const std::string &scriptPath, const std::string &interpreter, const std::string &requestBody)
-{
-	int inpipe[2];
-	int outpipe[2];
-	if (pipe(inpipe) < 0 || pipe(outpipe) < 0)
-	{
-		buildErrorRespose(500);
-		return false;
-	}
-
-	pid_t pid = fork();
-	if (pid < 0)
-	{
-		buildErrorRespose(500);
-		return false;
-	}
-
-	if (pid == 0)
-	{
-		// Child
-		dup2(inpipe[0], STDIN_FILENO);
-		dup2(outpipe[1], STDOUT_FILENO);
-		close(inpipe[1]);
-		close(outpipe[0]);
-
-		// Prepare argv
-		std::vector<char*> argv;
-		if (!interpreter.empty())
-		{
-			argv.push_back(const_cast<char*>(interpreter.c_str()));
-		}
-		argv.push_back(const_cast<char*>(scriptPath.c_str()));
-		argv.push_back(NULL);
-
-		// Minimal environment for CGI
-		std::vector<char*> envp;
-		std::string methodEnv = "REQUEST_METHOD=" + request.method;
-		envp.push_back(const_cast<char*>(methodEnv.c_str()));
-		std::string queryEnv = "QUERY_STRING=" + request.query_string;
-		envp.push_back(const_cast<char*>(queryEnv.c_str()));
-		std::string contentLenEnv = "CONTENT_LENGTH=" + intToString(request.body.size());
-		envp.push_back(const_cast<char*>(contentLenEnv.c_str()));
-		std::string contentTypeEnv = "CONTENT_TYPE=" + (request.headers.count("Content-Type") ? request.headers["Content-Type"] : "");
-		envp.push_back(const_cast<char*>(contentTypeEnv.c_str()));
-		std::string serverNameEnv = "SERVER_NAME=" + serverConfig.name;
-		envp.push_back(const_cast<char*>(serverNameEnv.c_str()));
-		std::string serverProtEnv = "SERVER_PROTOCOL=" + request.version;
-		envp.push_back(const_cast<char*>(serverProtEnv.c_str()));
-		envp.push_back(NULL);
-		if (!interpreter.empty())
-			execve(interpreter.c_str(), argv.data(), envp.data());
-		else
-			execve(scriptPath.c_str(), argv.data(), envp.data());
-
-		// If exec fails
-		_exit(1);
-	}
-
-	// Parent
-	close(inpipe[0]);
-	close(outpipe[1]);
-
-	// Write request body to child stdin
-	ssize_t toWrite = requestBody.size();
-	const char *buf = requestBody.c_str();
-	while (toWrite > 0)
-	{
-		ssize_t n = write(inpipe[1], buf, toWrite);
-		if (n <= 0) break;
-		buf += n;
-		toWrite -= n;
-	}
-	close(inpipe[1]);
-
-	// Read child's stdout
-	std::string childOut;
-	char tmp[4096];
-	ssize_t n;
-	while ((n = read(outpipe[0], tmp, sizeof(tmp))) > 0)
-	{
-		childOut.append(tmp, n);
-	}
-	close(outpipe[0]);
-
-	int status = 0;
-	waitpid(pid, &status, 0);
-
-	if (childOut.empty())
-	{
-		buildErrorRespose(502);
-		return false;
-	}
-
-	// Parse CGI output headers (simple parser: headers until blank line)
-	size_t hdrEnd = childOut.find("\r\n");
-	size_t hdrSkip = 2;
-	if (hdrEnd == std::string::npos)
-	{
-		hdrEnd = childOut.find("\n\n");
-		hdrSkip = 2;
-	}
-
-	if (hdrEnd != std::string::npos)
-	{
-		std::istringstream hs(childOut.substr(0, hdrEnd));
-		std::string line;
-		while (std::getline(hs, line))
-		{
-			if (line.empty() || line == "\r") continue;
-			size_t colon = line.find(':');
-			if (colon != std::string::npos)
-			{
-				std::string k = line.substr(0, colon);
-				std::string v = line.substr(colon + 1);
-				if (!v.empty() && v[0] == ' ') v = v.substr(1);
-				if (!v.empty() && v[v.size()-1] == '\r') v = v.substr(0, v.size()-1);
-				response.headers[k] = v;
-			}
-		}
-		response.body = childOut.substr(hdrEnd + hdrSkip);
-	}
-	else
-	{
-		// No headers, entire output is body
-		response.body = childOut;
-	}
-
-	// Fill status if CGI set Status header
-	if (response.headers.count("Status"))
-	{
-		std::string st = response.headers["Status"];
-		size_t sp = st.find(' ');
-		if (sp != std::string::npos)
-		{
-			response.status_code = std::atoi(st.substr(0, sp).c_str());
-			response.status_text = st.substr(sp + 1);
-		}
-		else
-			response.status_code = std::atoi(st.c_str());
-	}
-	else
-	{
-		if (response.status_code == 0)
-			response.status_code = 200;
-		if (response.status_text.empty())
-			response.status_text = getStatusText(response.status_code);
-	}
-
-	// Ensure content-length
-	if (response.headers.find("Content-Length") == response.headers.end())
-		response.headers["Content-Length"] = intToString(response.body.size());
-
-	return true;
-}

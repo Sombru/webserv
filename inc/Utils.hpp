@@ -16,3 +16,4 @@ bool is_directory(const std::string &path);
 bool hasLoginLocation(const std::vector<LocationConfig> &locations);
 std::string readFileBinary(const std::string &path);
 std::vector<std::string> getDirectoryContents(const std::string &path);
+std::string getFileExtension(const std::string& file);

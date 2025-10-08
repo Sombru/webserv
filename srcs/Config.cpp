@@ -347,8 +347,7 @@ int Config::parseLocation(ServerConfig &server, TokenIterator &iter)
 		}
 		else if (directive == "cgi")
 		{
-			if (!parseCgiDirective(location, iter))
-				iter.skipToNextDirective();
+			parseCgiBlock(location, iter);
 		}
 		else if (directive == "return")
 		{
@@ -398,26 +397,35 @@ bool Config::parseAllowedMethods(LocationConfig &location, TokenIterator &iter)
 }
 
 // Parse CGI directive (interpreter extension pairs)
-bool Config::parseCgiDirective(LocationConfig &location, TokenIterator &iter)
+int Config::parseCgiBlock(LocationConfig &location, TokenIterator &iter)
 {
-	iter.advance(); // consume "cgi"
+	iter.advance(); // consume "types"
 
-	// Parse: interpreter extension interpreter extension ... ;
-	while (iter.hasNext() && iter.currentType() != SEMICOLON)
+	if (!iter.expectAndConsume(LBRACE))
+		return -1;
+
+	while (iter.hasNext() && iter.currentType() != RBRACE)
 	{
 		if (iter.currentType() == WORD && iter.peekType(1) == WORD)
 		{
 			std::string interpreter = iter.consumeWord();
 			std::string extension = iter.consumeWord();
+
+			if (!iter.expectAndConsume(SEMICOLON))
+			{
+				iter.skipToNextDirective();
+				continue;
+			}
 			location.cgi[extension] = interpreter;
 		}
 		else
 		{
-			iter.advance(); // skip unexpected token
+			WARNING("Invalid cgi entry");
+			iter.skipToNextDirective();
 		}
 	}
 
-	return iter.expectAndConsume(SEMICOLON);
+	return iter.expectAndConsume(RBRACE) ? 0 : -1;
 }
 
 // Parse types block

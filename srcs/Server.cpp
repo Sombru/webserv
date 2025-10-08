@@ -206,7 +206,7 @@ bool Server::sendResponse(int fd, const HttpResponse &response)
 	// Header/body separator (required by HTTP)
 	headerStr += "\r\n";
 
-	ssize_t sent = send(fd, headerStr.data(), headerStr.size(), 0);
+	ssize_t sent = send(fd, headerStr.data(), headerStr.size(), MSG_NOSIGNAL);
 	if (sent == -1)
 	{
 		ERROR("Failed to send response to client " + intToString(fd) + ": " + errstr);
@@ -215,7 +215,7 @@ bool Server::sendResponse(int fd, const HttpResponse &response)
 
 	if (!response.body.empty())
 	{
-		sent = send(fd, response.body.data(), response.body.size(), 0);
+		sent = send(fd, response.body.data(), response.body.size(), MSG_NOSIGNAL);
 		if (sent == -1)
 		{
 			ERROR("Failed to send response to client " + intToString(fd) + ": " + errstr);
@@ -224,6 +224,7 @@ bool Server::sendResponse(int fd, const HttpResponse &response)
 	}
 	return true;
 }
+
 
 bool Server::sendResponse(int fd, const std::string &response)
 {

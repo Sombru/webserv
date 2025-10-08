@@ -23,27 +23,6 @@ void HTTP::GET(std::string &fsPath)
 		buildResponse(200, request.best_location.fs_index);
 		return ;
 	}
-
-	// Check for CGI mapping by extension
-	size_t dot = fsPath.find_last_of('.');
-	std::string ext = (dot == std::string::npos) ? "" : fsPath.substr(dot + 1);
-	// If location has cgi mapping for this extension or a 'none' mapping (executable), run CGI
-	std::map<std::string, std::string>::iterator it = request.best_location.cgi.find(ext);
-	if (it != request.best_location.cgi.end() || request.best_location.cgi.find("none") != request.best_location.cgi.end())
-	{
-		std::string interpreter;
-		if (it != request.best_location.cgi.end()) 
-			interpreter = it->second;
-		else
-			interpreter = request.best_location.cgi["none"];
-
-		// Execute CGI and build response from its output
-		if (executeCgi(fsPath, interpreter, ""))
-			return; // response already filled by executeCgi
-		else
-			return; // executeCgi already set error response
-	}
-
 	return buildResponse(200, fsPath);
 }
 
