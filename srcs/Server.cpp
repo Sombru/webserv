@@ -152,45 +152,35 @@ bool Server::handleConnection(int fd)
 	while (true)
 	{
 		ssize_t bytesRead = recv(fd, buffer, sizeof(buffer) - 1, 0);
-		if (bytesRead < 0)
+
+		if (bytesRead > 0)
 		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
+			buffer[bytesRead] = '\0';
+			rawRequest += buffer;
+
+			// Check if we have a complete HTTP request
+			if (rawRequest.find("\r\n\r\n") != std::string::npos ||
+				rawRequest.find("\n\n") != std::string::npos)
 			{
-				break; // No more data available right now
+				http.parseRequest(rawRequest);
+
+				INFO("HTTP Request - Method: " + http.request.method +
+					 ", Path: " + http.request.path +
+					 ", Version: " + http.request.version);
+
+				http.generateResponse();
+				const HttpResponse &resp = http.response;
+				sendResponse(fd, resp);
 			}
-			ERROR("Error reading from client " + intToString(fd) + ": " + errstr);
-			return false; // Signal to remove client
 		}
-
-		if (bytesRead == 0)
-		{
-			// INFO("Client " + intToString(fd) + " disconnected");
-			return false; // Signal to remove client
-		}
-
-		// Null-terminate the buffer for safety
-		buffer[bytesRead] = '\0';
-		rawRequest += buffer;
-
-		// Check if we have a complete HTTP request (ends with \r\n\r\n)
-		if (rawRequest.find("\r\n\r\n") != std::string::npos ||
-			rawRequest.find("\n\n") != std::string::npos)
-		{
-			// DEBUG(rawRequest);
-			http.parseRequest(rawRequest);
-
-			INFO("HTTP Request - Method: " + http.request.method +
-				 ", Path: " + http.request.path +
-				 ", Version: " + http.request.version);
-			http.generateResponse();
-			const HttpResponse &resp = http.response;
-			
-			sendResponse(fd, resp);
-		}
+		else if (bytesRead == 0)
+			return false;
+		else // bytesRead < 0
+			break;
 	}
-
-	return true; // Keep connection alive, waiting for more data
+	return true; // Keep connection alive
 }
+
 
 bool Server::sendResponse(int fd, const HttpResponse &response)
 {

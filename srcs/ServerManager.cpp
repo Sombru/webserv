@@ -70,7 +70,6 @@ void ServerManager::run()
 		{
 			if (errno == EINTR)
 			{
-				// If interrupted by signal, check if we should shutdown
 				if (signalReceived)
 					break;
 				continue;
@@ -82,31 +81,53 @@ void ServerManager::run()
 		for (int i = 0; i < numEvents; ++i)
 		{
 			int event_fd = events[i].data.fd;
-			// Check if this is a server socket (new connection)
+			uint32_t ev = events[i].events;
+
+			// 🔹 Handle error or hang-up first
+			if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
+			{
+				if (clientsMap.find(event_fd) != clientsMap.end())
+				{
+					WARNING("Client " + intToString(event_fd) + " closed or error (EPOLLERR/HUP/RDHUP)");
+					removeClient(event_fd);
+				}
+				else if (serversMap.find(event_fd) != serversMap.end())
+				{
+					WARNING("Server socket error on fd " + intToString(event_fd));
+					close(event_fd);
+					serversMap.erase(event_fd);
+				}
+				continue; // Skip further handling for this event
+			}
+
+			// 🔹 Check for new connection
 			if (serversMap.find(event_fd) != serversMap.end())
+			{
 				serversMap.at(event_fd).acceptConnection(epoll_fd, clientsMap);
-			// Otherwise, it's a client socket (existing connection)
+			}
+			// 🔹 Existing client activity
 			else if (clientsMap.find(event_fd) != clientsMap.end())
 			{
-				updateClientActivity(event_fd); // Update activity timestamp
+				updateClientActivity(event_fd);
+
 				if (clientsMap[event_fd].server->handleConnection(event_fd) == false)
-					removeClient(event_fd); // if no keep-alive header = close connection immidietly
+					removeClient(event_fd);
 			}
 			else
+			{
 				WARNING("Unknown file descriptor in epoll event: " + intToString(event_fd));
+			}
 		}
+
 		if (config.timeout != -1)
-		{
-			// DEBUG("Check timeouts");
 			checkTimeouts();
-		}
 	}
 
-	// Cleanup when shutting down
+	// 🔹 Graceful shutdown
 	if (signalReceived)
 	{
 		INFO("Performing graceful shutdown...");
-		// Close all client connections
+
 		for (std::map<int, Client>::iterator it = clientsMap.begin(); it != clientsMap.end(); ++it)
 			close(it->first);
 		clientsMap.clear();
@@ -124,6 +145,7 @@ void ServerManager::run()
 		}
 	}
 }
+
 
 void ServerManager::removeClient(int client_fd)
 {
