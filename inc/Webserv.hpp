@@ -21,5 +21,8 @@
 #include <sys/epoll.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <set>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
-extern volatile sig_atomic_t g_sigint;
+#include "Utils.hpp"

@@ -1,0 +1,231 @@
+#include "Server.hpp"
+#include "ServerManager.hpp"
+#include "Client.hpp"
+#include "HTTP.hpp"
+#include "Logger.hpp"
+
+// Server::Server()
+// {
+
+// }
+
+Server::Server(ServerConfig &serverSrc)
+	: serverConfig(serverSrc), http(serverConfig), server_fd(-1)
+{
+	addresStr = (serverConfig.host.substr(0, serverConfig.host.find(':')));
+	port = atoi(serverConfig.host.substr(serverConfig.host.find(':') + 1).c_str());
+}
+
+Server::Server(const Server &other)
+	: port(other.port),
+	  addresStr(other.addresStr),
+	  serverConfig(other.serverConfig),
+	  http(other.http),
+	  server_fd(other.server_fd)
+{
+}
+
+Server &Server::operator=(const Server &other)
+{
+	if (this != &other)
+	{
+		port = other.port;
+		addresStr = other.addresStr;
+		serverConfig = other.serverConfig;
+		http = other.http;
+		server_fd = other.server_fd;
+	}
+	return *this;
+}
+
+Server::~Server() {}
+
+bool Server::setNonBlocking(int fd)
+{
+	int flags = fcntl(fd, F_GETFL, 0); // GETFLAGS (GETFLAGS NOT ALLOWED)
+	if (flags < 0)
+	{
+		ERROR("Failed to get Server flags: " + errstr);
+		return false;
+	}
+
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) // SETFLAGS of this fd to nonblocking
+	{
+		ERROR("Failed to set non-blocking: " + errstr);
+		return false;
+	}
+	return true;
+}
+
+int Server::setup()
+{
+	server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (server_fd < 0)
+	{
+		ERROR("Could not create Server: " + errstr);
+		return -1;
+	}
+	int opt = 1;
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+	{
+		ERROR("Failed to set Server options for " + serverConfig.name + ": " + errstr);
+		close(server_fd);
+		return false;
+	}
+
+	if (!setNonBlocking(server_fd))
+		return -1;
+	struct addrinfo hints;
+	std::memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+
+	struct addrinfo *res;
+	if (getaddrinfo(addresStr.c_str(), intToString(port).c_str(), &hints, &res) < 0)
+	{
+		ERROR("Failed to get addres info for " + serverConfig.name + ": " + errstr);
+		return -1;
+	}
+
+	if (bind(server_fd, res->ai_addr, res->ai_addrlen) < 0)
+	{
+		freeaddrinfo(res);
+		ERROR("Failed to bind Server for " + serverConfig.name + ": " + errstr);
+		return -1;
+	}
+	freeaddrinfo(res); // free result after use
+
+	if (listen(server_fd, MAX_CONNECTIONS) < 0)
+	{
+		ERROR("Failed to listen for connection for " + serverConfig.name + ": " + errstr);
+		return -1;
+	}
+	return EXIT_SUCCESS;
+}
+
+void Server::acceptConnection(int &epoll_fd, std::map<int, Client> &clientsMap)
+{
+	while (true)
+	{
+		struct sockaddr_in client_addr;
+		socklen_t client_len = sizeof(client_addr);
+
+		int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
+		if (client_fd < 0)
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{
+				break; // No more connections
+			}
+			ERROR("Accept failed: " + errstr);
+			break;
+		}
+
+		if (!setNonBlocking(client_fd))
+			return;
+
+		struct epoll_event event;
+		event.events = EPOLLIN | EPOLLET;
+		event.data.fd = client_fd;
+
+		if ((epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) < 0))
+		{
+			ERROR("Failed to add clinet to epoll: " + errstr);
+			close(client_fd);
+			return;
+		}
+		clientsMap[client_fd] = this;
+
+		char clinetIP[INET_ADDRSTRLEN];
+		inet_ntop(AF_INET, &client_addr.sin_addr, clinetIP, INET_ADDRSTRLEN);
+		INFO("New clinet " + intToString(client_fd) + " connected to " + serverConfig.name + " at " + getTimestamp());
+		// INFO((std::string)"Client IP: " + clinetIP);
+	}
+}
+
+bool Server::handleConnection(int fd)
+{
+	char buffer[4096];
+	std::string rawRequest;
+
+	while (true)
+	{
+		ssize_t bytesRead = recv(fd, buffer, sizeof(buffer) - 1, 0);
+
+		if (bytesRead > 0)
+		{
+			buffer[bytesRead] = '\0';
+			rawRequest += buffer;
+
+			// Check if we have a complete HTTP request
+			if (rawRequest.find("\r\n\r\n") != std::string::npos ||
+				rawRequest.find("\n\n") != std::string::npos)
+			{
+				http.parseRequest(rawRequest);
+
+				INFO("HTTP Request - Method: " + http.request.method +
+					 ", Path: " + http.request.path +
+					 ", Version: " + http.request.version);
+
+				http.generateResponse();
+				const HttpResponse &resp = http.response;
+				sendResponse(fd, resp);
+			}
+		}
+		else if (bytesRead == 0)
+			return false;
+		else // bytesRead < 0
+			break;
+	}
+	return true; // Keep connection alive
+}
+
+
+bool Server::sendResponse(int fd, const HttpResponse &response)
+{
+	std::string headerStr;
+
+	headerStr = response.version + " " + intToString(response.status_code) + " " + response.status_text + "\r\n";
+
+	for (std::map<std::string, std::string>::const_iterator it = response.headers.begin(); it != response.headers.end(); ++it)
+	{
+		headerStr += it->first + ": " + it->second + "\r\n";
+	}
+
+	// Header/body separator (required by HTTP)
+	headerStr += "\r\n";
+
+	ssize_t sent = send(fd, headerStr.data(), headerStr.size(), MSG_NOSIGNAL);
+	if (sent == -1)
+	{
+		ERROR("Failed to send response to client " + intToString(fd) + ": " + errstr);
+		return false;
+	}
+
+	if (!response.body.empty())
+	{
+		sent = send(fd, response.body.data(), response.body.size(), MSG_NOSIGNAL);
+		if (sent == -1)
+		{
+			ERROR("Failed to send response to client " + intToString(fd) + ": " + errstr);
+			return false;
+		}
+	}
+	return true;
+}
+
+
+bool Server::sendResponse(int fd, const std::string &response)
+{
+	if (send(fd, response.c_str(), response.size(), MSG_NOSIGNAL) < 0)
+	{
+		ERROR("Failed to send response to client " + intToString(fd) + ": " + errstr);
+		return false;
+	}
+	else
+	{
+		// DEBUG("Sent " + response + " to client " + intToString(fd));
+	}
+	return true;
+}

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Error {{code}}</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #030a19;
+      --bg-alt: rgba(9, 17, 36, 0.82);
+      --fg: #f1f6ff;
+      --muted: rgba(241, 246, 255, 0.72);
+      --accent: #4f85ff;
+      --accent-2: #22d3ee;
+      --accent-3: #f87171;
+      --border: rgba(255, 255, 255, 0.15);
+      --shadow: 0 30px 90px rgba(9, 17, 36, 0.65);
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      background: radial-gradient(140% 140% at 50% 0%, #193b74 0%, var(--bg) 60%);
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+    main {
+      width: min(720px, 100%);
+      background: linear-gradient(130deg, rgba(79, 133, 255, 0.22), rgba(34, 211, 238, 0.26));
+      border-radius: 28px;
+      padding: 46px 36px 48px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      gap: 26px;
+      text-align: center;
+    }
+    main::before,
+    main::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(100px);
+      opacity: 0.75;
+    }
+    main::before {
+      width: 240px;
+      height: 240px;
+      top: -90px;
+      left: -120px;
+      background: rgba(79, 133, 255, 0.7);
+    }
+    main::after {
+      width: 280px;
+      height: 280px;
+      bottom: -140px;
+      right: -120px;
+      background: rgba(248, 113, 113, 0.48);
+    }
+    header {
+      display: grid;
+      gap: 14px;
+      z-index: 1;
+    }
+    .code-pill {
+      width: fit-content;
+      margin: 0 auto;
+      padding: 10px 22px;
+      border-radius: 999px;
+      background: rgba(3, 10, 25, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      color: var(--accent-2);
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(3.6rem, 14vw, 6rem);
+      letter-spacing: 0.08em;
+      text-shadow: 0 18px 48px rgba(5, 12, 27, 0.6);
+      color: #ffffff;
+    }
+    h2 {
+      margin: 0;
+      font-size: clamp(1.6rem, 3vw, 2.1rem);
+      font-weight: 600;
+    }
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 1.05rem;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      z-index: 1;
+    }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 999px;
+      font-weight: 600;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+      border: none;
+      cursor: pointer;
+    }
+    .button.primary {
+      background: linear-gradient(120deg, var(--accent), #5ea0ff);
+      color: #ffffff;
+      box-shadow: 0 16px 40px rgba(79, 133, 255, 0.42);
+    }
+    .button.secondary {
+      background: rgba(3, 10, 25, 0.7);
+      color: var(--fg);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 16px 32px rgba(9, 17, 36, 0.5);
+    }
+    .button:hover,
+    .button:focus-visible {
+      transform: translateY(-2px);
+    }
+    .diagnostics {
+      background: rgba(3, 10, 25, 0.66);
+      border-radius: 20px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+      display: grid;
+      gap: 16px;
+      text-align: left;
+      z-index: 1;
+    }
+    .diagnostics h3 {
+      margin: 0;
+      font-size: 1.15rem;
+      color: var(--accent-2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pill-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .pill {
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(79, 133, 255, 0.18);
+      border: 1px solid rgba(79, 133, 255, 0.35);
+      color: #ffffff;
+      font-size: 0.95rem;
+      letter-spacing: 0.03em;
+    }
+    details {
+      background: rgba(34, 211, 238, 0.16);
+      border-radius: 16px;
+      border: 1px solid rgba(34, 211, 238, 0.4);
+      padding: 16px 18px;
+      color: var(--fg);
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      outline: none;
+    }
+    .tip {
+      margin-top: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    footer {
+      z-index: 1;
+      color: rgba(241, 246, 255, 0.6);
+      font-size: 0.95rem;
+    }
+    footer a {
+      color: var(--accent-2);
+      font-weight: 600;
+    }
+    @media (max-width: 600px) {
+      main {
+        padding: 36px 22px 40px;
+      }
+      .diagnostics {
+        text-align: center;
+      }
+      .pill-grid {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <header>
+      <div class="code-pill">HTTP {{code}}</div>
+      <h1 id="error-code">{{code}}</h1>
+      <h2 id="error-status_text">{{status_text}}</h2>
+      <p>Something in your request did not quite land. Use the hints below to inspect your handler and get back on track.</p>
+    </header>
+
+    <div class="actions">
+      <a class="button primary" href="/">Return home</a>
+      <a class="button secondary" href="/cgi_demo.html">Run CGI diagnostics</a>
+    </div>
+
+    <section class="diagnostics" aria-labelledby="diag-title">
+      <h3 id="diag-title">Troubleshooting shortcuts</h3>
+      <div class="pill-grid">
+        <span class="pill">Check method permissions</span>
+        <span class="pill">Validate body limits</span>
+        <span class="pill">Confirm routing rules</span>
+        <span class="pill">Inspect CGI output</span>
+      </div>
+      <details>
+        <summary>What happened?</summary>
+        <p class="tip">
+          The server returned <strong>{{code}}</strong>, signalling your implementation hit a branch that needs review.
+          Use logs or the CGI demo to inspect headers and payloads sent to this route.
+        </p>
+      </details>
+    </section>
+
+    <footer>
+      Need a different challenge? Explore the <a href="/about">About page</a> for more scenarios.
+    </footer>
+  </main>
+
+  <script>
+    const codeNode = document.getElementById("error-code");
+    const statusNode = document.getElementById("error-status_text");
+
+    codeNode.textContent = "{{code}}";
+    statusNode.textContent = "{{status_text}}";
+  </script>
+</body>
+
+</html>

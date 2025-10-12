@@ -1,86 +1,97 @@
 // Logger.hpp
 #pragma once
 
-#define LOG_INFO "\033[32m"      // Green
-#define LOG_WARNING "\033[33m"   // Yellow
-#define LOG_ERROR "\033[31m"     // Red
-#define LOG_DEBUG "\033[36m"     // Cyan
-#define LOG_TIMESTAMP "\033[90m" // Bright Black (Gray)
-#define LOG_RESET "\033[0m"      // Reset to default
+#define GREEN "\033[32m"		// Green
+#define YELLOW "\033[33m"		// Yellow
+#define RED "\033[31m"			// Red
+#define CYAN "\033[36m"			// Cyan
+#define BRIGHT_BLACK "\033[90m" // Bright Black (Gray)
+#define RESET "\033[0m"			// Reset to default
 
-#include "HTTP.hpp"
-#include "Webserv.hpp"
-#include "Config.hpp"
 #include <ctime>
+#include <string>
+#include <iostream>
+#include "Config.hpp"
 
 enum LogLevel
 {
-    INFO,
-    WARNING,
-    ERROR,
-    DEBUG
+	INFO,
+	WARNING,
+	ERROR,
+	DEBUG
 };
+
+std::ostream &operator<<(std::ostream &os, const Token &token);
+std::ostream &operator<<(std::ostream &os, const std::vector<Token> &tokens);
+std::ostream &operator<<(std::ostream &os, const Config &conf);
+std::ostream &operator<<(std::ostream &os, const ServerConfig &server);
+std::ostream &operator<<(std::ostream &os, const LocationConfig &location);
+std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &vec);
+
+#define errstr std::string(strerror(errno))
+
+#define LOGGER_INFO(msg) Logger::info(msg, __func__, __FILE__, __LINE__)
+#define LOGGER_WARNING(msg) Logger::warning(msg, __func__, __FILE__, __LINE__)
+#define LOGGER_ERROR(msg) Logger::error(msg, __func__, __FILE__, __LINE__)
+#define LOGGER_DEBUG(msg) Logger::debug(msg, __func__, __FILE__, __LINE__)
+
+#define INFO(msg) Logger::info(msg, __func__, __FILE__, __LINE__)
+#define WARNING(msg) Logger::warning(msg, __func__, __FILE__, __LINE__)
+#define ERROR(msg) Logger::error(msg, __func__, __FILE__, __LINE__)
+#define DEBUG(msg) Logger::debug(msg, __func__, __FILE__, __LINE__)
 
 class Logger
 {
 public:
-    // static void log(LogLevel level, const std::string& message);
+	template <typename T>
+	static void info(const T &message, const char *func, const char *file, int line)
+	{
+		log(::INFO, message, func, file, line);
+	}
 
-    // Clean info function for messages
-    template <typename T>
-    static void info(const T &message);
-    template <typename T>
-    static void warning(const T &message);
-    template <typename T>
-    static void error(const T &message);
-    template <typename T>
-    static void debug(const T &message);
+	template <typename T>
+	static void warning(const T &message, const char *func, const char *file, int line)
+	{
+		log(::WARNING, message, func, file, line);
+	}
 
-    // Overloaded version that accepts extra parameters
-    static void info(const std::string &message, const std::string &serverName, const std::string &host, int port);
+	template <typename T>
+	static void error(const T &message, const char *func, const char *file, int line)
+	{
+		log(::ERROR, message, func, file, line);
+	}
+
+	template <typename T>
+	static void debug(const T &message, const char *func, const char *file, int line)
+	{
+		log(::DEBUG, message, func, file, line);
+	}
 
 private:
-    static std::string getTimestamp();
-    // static std::string levelToString(LogLevel level);
+	template <typename T>
+	static void log(LogLevel level, const T &message, const char *func, const char *file, int line)
+	{
+		std::string levelStr;
+		switch (level)
+		{
+		case ::INFO:
+			levelStr = CYAN "INFO" RESET;
+			break;
+		case ::WARNING:
+			levelStr = YELLOW "WARNING" RESET;
+			break;
+		case ::ERROR:
+			levelStr = RED "ERROR" RESET;
+			break;
+		case ::DEBUG:
+			levelStr = GREEN "DEBUG" RESET;
+			break;
+		}
+
+		std::cout << BRIGHT_BLACK
+				  << file << ":" << line << " (" << func << ") "
+				  << RESET << "[" << levelStr << "] "
+				  << message << std::endl;
+	}
 };
 
-// Implementation moved to Logger.cpp
-std::ostream &operator<<(std::ostream &os, const Token &token);
-std::ostream &operator<<(std::ostream &os, const std::vector<Token> &tokens);
-std::ostream &operator<<(std::ostream &os, const ServerConfig &coserver);
-std::ostream &operator<<(std::ostream &os, const LocationConfig &location);
-std::ostream &operator<<(std::ostream &os, const HttpRequest &req);
-// #include "../utils/Logger.cpp"
-
-
-template <typename T>
-void Logger::info(const T &message)
-{
-    std::cout << LOG_TIMESTAMP << "[" << getTimestamp() << "] " << LOG_RESET
-              << LOG_INFO << "[INFO] " << LOG_RESET
-              << message << std::endl;
-}
-
-template <typename T>
-void Logger::warning(const T &message)
-{
-    std::cout << LOG_TIMESTAMP << "[" << getTimestamp() << "] " << LOG_RESET
-              << LOG_WARNING << "[WARNING] " << LOG_RESET
-              << message << std::endl;
-}
-
-template <typename T>
-void Logger::error(const T &message)
-{
-    std::cout << LOG_TIMESTAMP << "[" << getTimestamp() << "] " << LOG_RESET
-              << LOG_ERROR << "[ERROR] " << LOG_RESET
-              << message << std::endl;
-}
-
-template <typename T>
-void Logger::debug(const T &message)
-{
-    std::cout << LOG_TIMESTAMP << "[" << getTimestamp() << "] " << LOG_RESET
-              << LOG_DEBUG << "[DEBUG] " << LOG_RESET
-              << message << std::endl;
-}

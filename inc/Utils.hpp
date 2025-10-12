@@ -1,15 +1,19 @@
 #pragma once
-
 #include "Webserv.hpp"
-#include "HTTP.hpp"
+#include "Config.hpp"
 
-#define BADFILE "BAD"
-#define EMPTY "EMPTY"
-
+#define BADFILE "BADFILE"
 std::string readFile(const std::string &path);
+
 std::string intToString(int n);
-std::string serialize(const HttpResponse &);
+std::string getTimestamp();
+
+// HTTP parsing utilities
+std::map<std::string, std::string> parseQueryString(const std::string &queryString);
+
+std::string getMimeType(const std::string &path);
 bool is_directory(const std::string &path);
+bool hasLoginLocation(const std::vector<LocationConfig> &locations);
+std::string readFileBinary(const std::string &path);
 std::vector<std::string> getDirectoryContents(const std::string &path);
-std::string buildAutoIndexHTML(const std::string &path, const std::string &requestPath);
-std::string urlDecode(const std::string &s);
+std::string getFileExtension(const std::string& file);

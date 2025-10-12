@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Fusion Web</title>
+	<style>
+		:root {
+			color-scheme: light dark;
+			--bg: #040b19;
+			--bg-alt: #0d1a30;
+			--fg: #f3f7ff;
+			--accent: #4f85ff;
+			--accent-soft: rgba(79, 133, 255, 0.22);
+			--teal: #22d3ee;
+			--muted: rgba(243, 247, 255, 0.72);
+			--card-bg: rgba(6, 14, 27, 0.78);
+			--border: rgba(255, 255, 255, 0.1);
+			--shadow: 0 20px 55px rgba(13, 23, 44, 0.6);
+		}
+		* {
+			box-sizing: border-box;
+		}
+		body {
+			margin: 0;
+			font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+			min-height: 100vh;
+			background: radial-gradient(130% 130% at 50% 0%, #17386b 0%, var(--bg) 60%);
+			color: var(--fg);
+			display: flex;
+			justify-content: center;
+		}
+		main {
+			width: 100%;
+			max-width: 1180px;
+			padding: 32px 20px 120px;
+			display: grid;
+			gap: 56px;
+		}
+		header.hero {
+			background: linear-gradient(135deg, var(--accent-soft), rgba(34, 211, 238, 0.28));
+			border-radius: 32px;
+			padding: 44px 42px 56px;
+			box-shadow: var(--shadow);
+			position: relative;
+			overflow: hidden;
+			display: grid;
+			gap: 32px;
+		}
+		header.hero::before,
+		header.hero::after {
+			content: "";
+			position: absolute;
+			border-radius: 999px;
+			filter: blur(90px);
+			opacity: 0.75;
+		}
+		header.hero::before {
+			width: 260px;
+			height: 260px;
+			top: -90px;
+			left: -140px;
+			background: rgba(79, 133, 255, 0.65);
+		}
+		header.hero::after {
+			width: 320px;
+			height: 320px;
+			right: -160px;
+			bottom: -160px;
+			background: rgba(34, 211, 238, 0.55);
+		}
+		.top-nav {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 18px;
+			z-index: 1;
+		}
+		.logo {
+			font-weight: 700;
+			font-size: 1.2rem;
+			padding: 10px 18px;
+			border-radius: 999px;
+			background: rgba(6, 14, 27, 0.65);
+			border: 1px solid rgba(255, 255, 255, 0.12);
+			box-shadow: 0 12px 25px rgba(13, 23, 44, 0.4);
+		}
+		.quick-link {
+			text-decoration: none;
+			color: var(--fg);
+			padding: 10px 16px;
+			border-radius: 999px;
+			background: rgba(6, 14, 27, 0.4);
+			border: 1px solid var(--border);
+			font-size: 0.95rem;
+			transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+		}
+		.quick-link:hover,
+		.quick-link:focus-visible {
+			transform: translateY(-2px);
+			box-shadow: 0 14px 28px rgba(15, 23, 42, 0.5);
+			border-color: rgba(255, 255, 255, 0.3);
+		}
+		.hero-content {
+			max-width: 660px;
+			display: grid;
+			gap: 22px;
+			z-index: 1;
+		}
+		.hero-content h1 {
+			margin: 0;
+			font-size: clamp(2.6rem, 5vw, 3.6rem);
+			letter-spacing: 0.04em;
+		}
+		.hero-content p {
+			margin: 0;
+			line-height: 1.7;
+			color: var(--muted);
+			font-size: 1.05rem;
+		}
+		.hero-actions {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 14px;
+		}
+		.button {
+			text-decoration: none;
+			display: inline-flex;
+			align-items: center;
+			gap: 10px;
+			padding: 12px 26px;
+			border-radius: 999px;
+			font-weight: 600;
+			font-size: 1rem;
+			transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+			border: none;
+			cursor: pointer;
+		}
+		.button.primary {
+			background: linear-gradient(120deg, var(--accent), #5ea0ff);
+			color: #ffffff;
+			box-shadow: 0 16px 40px rgba(79, 133, 255, 0.45);
+		}
+		.button.secondary {
+			background: rgba(6, 14, 27, 0.72);
+			color: var(--fg);
+			border: 1px solid rgba(255, 255, 255, 0.18);
+			box-shadow: 0 14px 30px rgba(15, 23, 42, 0.45);
+		}
+		.button:hover,
+		.button:focus-visible {
+			transform: translateY(-2px);
+		}
+		.section-heading {
+			margin: 0;
+			font-size: 1.9rem;
+		}
+		.section-sub {
+			margin: 12px 0 32px;
+			color: var(--muted);
+		}
+		.grid {
+			display: grid;
+			gap: 24px;
+		}
+		.grid.columns-3 {
+			grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+		}
+		.feature-card {
+			background: var(--card-bg);
+			border-radius: 24px;
+			padding: 26px;
+			border: 1px solid var(--border);
+			box-shadow: var(--shadow);
+			display: grid;
+			gap: 16px;
+			position: relative;
+			overflow: hidden;
+		}
+		.feature-card::after {
+			content: "";
+			position: absolute;
+			inset: 0;
+			background: linear-gradient(135deg, rgba(79, 133, 255, 0.25), rgba(34, 211, 238, 0.2));
+			opacity: 0;
+			transition: opacity 0.2s ease;
+			z-index: -1;
+		}
+		.feature-card:hover::after {
+			opacity: 1;
+		}
+		.card-label {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			font-weight: 600;
+			color: var(--accent);
+			background: rgba(79, 133, 255, 0.18);
+			padding: 6px 14px;
+			border-radius: 999px;
+			border: 1px solid rgba(79, 133, 255, 0.3);
+			width: fit-content;
+		}
+		.feature-card p {
+			margin: 0;
+			line-height: 1.65;
+			color: var(--muted);
+		}
+		.link-row {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px;
+		}
+		.tile-link {
+			text-decoration: none;
+			color: var(--fg);
+			background: rgba(7, 16, 33, 0.7);
+			border: 1px solid var(--border);
+			padding: 12px 20px;
+			border-radius: 16px;
+			transition: transform 0.18s ease, border-color 0.18s ease;
+		}
+		.tile-link:hover,
+		.tile-link:focus-visible {
+			transform: translateY(-2px);
+			border-color: rgba(255, 255, 255, 0.28);
+		}
+		.interactive {
+			background: var(--card-bg);
+			border-radius: 24px;
+			padding: 32px;
+			border: 1px solid var(--border);
+			box-shadow: var(--shadow);
+			display: grid;
+			gap: 20px;
+		}
+		.toggle-bar {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px;
+		}
+		.toggle-btn {
+			background: rgba(34, 211, 238, 0.14);
+			border: 1px solid rgba(34, 211, 238, 0.4);
+			color: var(--teal);
+			border-radius: 999px;
+			padding: 10px 20px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+		}
+		.toggle-btn.active {
+			background: var(--teal);
+			color: var(--bg);
+			transform: translateY(-2px);
+			box-shadow: 0 14px 30px rgba(34, 211, 238, 0.38);
+		}
+		.panel {
+			display: none;
+			line-height: 1.65;
+			color: var(--muted);
+		}
+		.panel.active {
+			display: block;
+		}
+		.panel ul {
+			margin: 16px 0 0;
+			padding-left: 20px;
+		}
+		.panel li {
+			margin-bottom: 6px;
+		}
+		footer {
+			text-align: center;
+			color: rgba(243, 247, 255, 0.55);
+			font-size: 0.95rem;
+		}
+		footer a {
+			color: var(--teal);
+			font-weight: 600;
+		}
+		@media (max-width: 720px) {
+			header.hero {
+				padding: 36px 24px 48px;
+			}
+			.hero-actions {
+				justify-content: center;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main>
+		<header class="hero">
+			<nav class="top-nav" aria-label="Primary">
+				<div class="logo">Fusion Web</div>
+				<a class="quick-link" href="/about">About</a>
+				<a class="quick-link" href="/cgi_demo.html">CGI Demo</a>
+				<a class="quick-link" href="/images">Uploads</a>
+				<a class="quick-link" href="/cubes">3D Lab</a>
+				<a class="quick-link" href="/error.html">Error Template</a>
+			</nav>
+			<div class="hero-content">
+				<h1>Test every corner of your HTTP server.</h1>
+				<p>
+					Fusion Web bundles static pages, CGI scripts, uploads, and redirects into a single playground.
+					It is built to help you verify your webserv implementation without leaving your terminal.
+				</p>
+				<div class="hero-actions">
+					<a class="button primary" href="/cgi_demo.html">Run CGI showcase</a>
+					<a class="button secondary" href="/about">See what is inside</a>
+				</div>
+			</div>
+		</header>
+
+		<section aria-labelledby="feature-heading">
+			<h2 id="feature-heading" class="section-heading">What you can explore</h2>
+			<p class="section-sub">Pick a module to stress test parsing, routing, and content serving features in your project.</p>
+			<div class="grid columns-3">
+				<article class="feature-card">
+					<span class="card-label">CGI scripts</span>
+					<h3>Inspect live request data</h3>
+					<p>
+						The Python and Bash scripts echo headers and bodies so you can confirm environment variables,
+						request payloads, and status codes are delivered exactly as expected.
+					</p>
+					<div class="link-row">
+						<a class="tile-link" href="/cgi-bin/test.py">Run Python</a>
+						<a class="tile-link" href="/cgi-bin/test.sh">Run Bash</a>
+					</div>
+				</article>
+				<article class="feature-card">
+					<span class="card-label">Uploads</span>
+					<h3>Validate multipart handling</h3>
+					<p>
+						The uploads lab under <code>/images</code> and <code>/upload</code> lets you post files, browse
+						autoindex listings, and check delete support in your handler.
+					</p>
+					<div class="link-row">
+						<a class="tile-link" href="/images">Image directory</a>
+						<a class="tile-link" href="/upload">Upload lab</a>
+					</div>
+				</article>
+				<article class="feature-card">
+					<span class="card-label">Visual checks</span>
+					<h3>Stress static asset delivery</h3>
+					<p>
+						Serve modern JavaScript bundles and assets with the 3D scenes. Watch how caching headers and MIME
+						types behave while rendering interactive WebGL animations.
+					</p>
+					<div class="link-row">
+						<a class="tile-link" href="/cubes">Falling cubes</a>
+						<a class="tile-link" href="/falling_boxes_animation.html">Boxes animation</a>
+					</div>
+				</article>
+			</div>
+		</section>
+
+		<section aria-labelledby="interactive-heading" class="interactive">
+			<h2 id="interactive-heading" class="section-heading">Server readiness checklist</h2>
+			<p class="section-sub">Toggle a category to reveal questions you can use to verify your implementation.</p>
+			<div class="toggle-bar" role="tablist">
+				<button class="toggle-btn active" role="tab" aria-selected="true" aria-controls="panel-routing" data-target="panel-routing">Routing</button>
+				<button class="toggle-btn" role="tab" aria-selected="false" aria-controls="panel-cgi" data-target="panel-cgi">CGI</button>
+				<button class="toggle-btn" role="tab" aria-selected="false" aria-controls="panel-upload" data-target="panel-upload">Uploads</button>
+				<button class="toggle-btn" role="tab" aria-selected="false" aria-controls="panel-errors" data-target="panel-errors">Errors</button>
+			</div>
+			<div id="panel-routing" class="panel active" role="tabpanel">
+				<strong>Routing checklist:</strong>
+				<ul>
+					<li>Does <code>/old</code> redirect back to the homepage with the correct status?</li>
+					<li>Are default index files served for directories missing explicit filenames?</li>
+					<li>Can you toggle autoindex for <code>/images</code> without impacting siblings?</li>
+				</ul>
+			</div>
+			<div id="panel-cgi" class="panel" role="tabpanel" hidden>
+				<strong>CGI checklist:</strong>
+				<ul>
+					<li>Are environment variables such as <code>REQUEST_METHOD</code> and <code>QUERY_STRING</code> populated?</li>
+					<li>Does your server stream script output while preserving headers?</li>
+					<li>Can scripts without extensions, like <code>test_noext</code>, run successfully?</li>
+				</ul>
+			</div>
+			<div id="panel-upload" class="panel" role="tabpanel" hidden>
+				<strong>Upload checklist:</strong>
+				<ul>
+					<li>Do multipart requests save to <code>/images/uploaded_images</code>?</li>
+					<li>Is raw POST data captured correctly by the textarea form?</li>
+					<li>Can you delete files and observe the response code your server returns?</li>
+				</ul>
+			</div>
+			<div id="panel-errors" class="panel" role="tabpanel" hidden>
+				<strong>Error checklist:</strong>
+				<ul>
+					<li>Is the custom template at <code>/error.html</code> displayed for missing routes?</li>
+					<li>Do you return <code>405</code> when hitting routes with disallowed methods?</li>
+					<li>Are timeouts and body size limits honored with descriptive messages?</li>
+				</ul>
+			</div>
+		</section>
+
+		<footer>
+			Dive deeper on the <a href="/about">About page</a> or explore the <a href="/cgi_demo.html">CGI showcase</a>.
+		</footer>
+	</main>
+
+	<script>
+		const tabs = document.querySelectorAll(".toggle-btn");
+		const panels = document.querySelectorAll(".panel");
+
+		function activateTab(targetId) {
+			tabs.forEach((tab) => {
+				const active = tab.dataset.target === targetId;
+				tab.classList.toggle("active", active);
+				tab.setAttribute("aria-selected", String(active));
+			});
+			panels.forEach((panel) => {
+				const active = panel.id === targetId;
+				panel.classList.toggle("active", active);
+				panel.hidden = !active;
+			});
+		}
+
+		tabs.forEach((tab) => {
+			tab.addEventListener("click", () => activateTab(tab.dataset.target));
+		});
+	</script>
+</body>
+</html>

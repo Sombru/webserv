@@ -1,13 +1,34 @@
-#include "Webserv.hpp"
 #include "Config.hpp"
-#include "Utils.hpp"
 #include "Logger.hpp"
+#include "TokenIterator.hpp"
+#include "Utils.hpp"
 
-Config::Config() {}
+Config::Config(char *src) : configPath(src), currentTokenIndex(0), error(0)
+{
+	this->serverBase.name = MAND;
+	this->serverBase.host = MAND;
+	this->serverBase.index = DEFAULT;
+	this->serverBase.root = MAND;
+	this->serverBase.clientMaxBodySize = 0;
+	this->serverBase.errorPage = "error.html";
+	this->serverBase.mimeTypes["text/plain"] = "plain";
+	this->serverBase.timeout = -1;
+	this->serverBase.maxEvents = DEFAULT_MAX_EVENTS;
+
+	this->LocationBase.path = MAND;
+	this->LocationBase.root = DEFAULT;
+	this->LocationBase.alias = DEFAULT;
+	this->LocationBase.index = DEFAULT;
+	this->LocationBase.autoindex = false;
+	this->LocationBase.allowedMethods.push_back("GET");
+
+	this->config.maxEvents = DEFAULT_MAX_EVENTS;
+	this->config.timeout = DEFAULT_TIMEOUT;
+}
 
 Config::~Config() {}
 
-static Token addToken(TokenType type, std::string value)
+static inline Token addToken(TokenType type, std::string value)
 {
 	Token token;
 
@@ -16,12 +37,8 @@ static Token addToken(TokenType type, std::string value)
 	return token;
 }
 
-/// @brief parses contens of a file into tokens of TYPE and VALUE, see Token
-/// @param fileBuff file contents(cant be empty)
-/// @return // vector of tokens read from file
-std::vector<Token> Config::tokenize(const std::string &fileBuff)
+void Config::tokenize()
 {
-	std::vector<Token> tokens;
 	std::string current;
 	char c;
 	for (size_t i = 0; i < fileBuff.length(); ++i)
@@ -31,7 +48,7 @@ std::vector<Token> Config::tokenize(const std::string &fileBuff)
 		{
 			if (!current.empty())
 			{
-				tokens.push_back(addToken(WORD, current));
+				this->tokens.push_back(addToken(WORD, current));
 				current.clear();
 			}
 		}
@@ -39,34 +56,34 @@ std::vector<Token> Config::tokenize(const std::string &fileBuff)
 		{
 			if (!current.empty())
 			{
-				tokens.push_back(addToken(WORD, current));
+				this->tokens.push_back(addToken(WORD, current));
 				current.clear();
 			}
-			tokens.push_back(addToken(LBRACE, "{"));
+			this->tokens.push_back(addToken(LBRACE, "{"));
 		}
 		else if (c == '}')
 		{
 			if (!current.empty())
 			{
-				tokens.push_back(addToken(WORD, current));
+				this->tokens.push_back(addToken(WORD, current));
 				current.clear();
 			}
-			tokens.push_back(addToken(RBRACE, "}"));
+			this->tokens.push_back(addToken(RBRACE, "}"));
 		}
 		else if (c == ';')
 		{
 			if (!current.empty())
 			{
-				tokens.push_back(addToken(WORD, current));
+				this->tokens.push_back(addToken(WORD, current));
 				current.clear();
 			}
-			tokens.push_back(addToken(SEMICOLON, ";"));
+			this->tokens.push_back(addToken(SEMICOLON, ";"));
 		}
 		else if (c == '#')
 		{
 			while (fileBuff[i] && fileBuff[i] != '\n')
 			{
-				i++;
+				++i;
 			}
 		}
 		else
@@ -74,375 +91,457 @@ std::vector<Token> Config::tokenize(const std::string &fileBuff)
 	}
 	if (!current.empty())
 	{
-		tokens.push_back(addToken(WORD, current));
+		this->tokens.push_back(addToken(WORD, current));
 	}
-	return tokens;
 }
 
-/// @brief parses tokens into "server" blocks, see ServerConfig
-// known directives "server"
-/// @param tokens vector of tokens read from a config file
-/// @return vector of "server" blocks from a file
-std::vector<ServerConfig> Config::parseConfig(const char *path)
+int Config::parseConfig()
 {
-	std::string fileBuff = readFile(path);
+	this->fileBuff = readFile(this->configPath);
 	if (fileBuff == BADFILE)
-		throw std::runtime_error("Could not open a file at given path");
-	if (fileBuff == EMPTY)
-		throw std::runtime_error("given config file is empty");
+	{
+		ERROR("Could not open provided configuration or is empty");
+		return -1;
+	}
+
+	tokenize();
+	TokenIterator iter(this->tokens);
+
+	while (iter.hasNext())
+	{
+		if (iter.currentType() != WORD)
+		{
+			WARNING("Expected directive name");
+			iter.advance();
+			continue;
+		}
+
+		if (iter.currentValue() == "server")
+		{
+			if (parseServerConfig(iter) == -1)
+			{
+				ERROR("Failed to parse server block");
+				iter.skipToClosingBrace();
+				if (iter.hasNext())
+					iter.advance(); // skip the closing brace
+			}
+		}
+		else if (iter.currentValue() == "max_events")
+		{
+			std::string value;
+			if (parseSimpleDirective(iter, value))
+				config.maxEvents = std::atol(value.c_str());
+			else
+				iter.skipToNextDirective();
+		}
+		else if (iter.currentValue() == "timeout")
+		{
+			std::string value;
+			if (parseSimpleDirective(iter, value))
+				config.timeout = std::atol(value.c_str());
+			else
+				iter.skipToNextDirective();
+		}
+		else
+		{
+			WARNING("Unknown top-level directive: " + iter.currentValue());
+			iter.skipToNextDirective();
+		}
+	}
+
+	return iter.hasErrors() ? -1 : 0;
+}
+
+// TokenIterator-based parsing methods
+int Config::parseServerConfig(TokenIterator &iter)
+{
+	ServerConfig server = this->serverBase;
+	std::set<std::string> seenDirectives; // Track seen directives
+
+	// Parse: server <name> {
+	if (!iter.consumeSpecificWord("server"))
+		return -1;
+
+	server.name = iter.consumeWord();
+	if (server.name.empty())
+		return -1;
+
+	if (!iter.expectAndConsume(LBRACE))
+		return -1;
+
+	// Parse server block content
+	while (iter.hasNext() && iter.currentType() != RBRACE)
+	{
+		if (iter.currentType() != WORD)
+		{
+			WARNING("Expected directive name but found " + iter.currentValue());
+			iter.advance();
+			continue;
+		}
+
+		std::string directive = iter.currentValue();
+
+		// Check for redefinition (except location which can appear multiple
+		// times)
+		if (directive != "location" &&
+			seenDirectives.find(directive) != seenDirectives.end())
+		{
+			WARNING("Redefinition of directive '" + directive + "' to " +
+					iter.peekValue(1));
+		}
+		seenDirectives.insert(directive);
+
+		if (directive == "location")
+		{
+
+			if (parseLocation(server, iter) == -1)
+			{
+				iter.skipToNextDirective(); // Error recovery
+				continue;
+			}
+		}
+		else if (directive == "host")
+		{
+			if (!parseSimpleDirective(iter, server.host))
+				iter.skipToNextDirective();
+		}
+		else if (directive == "root")
+		{
+			if (!parseSimpleDirective(iter, server.root))
+				iter.skipToNextDirective();
+		}
+		else if (directive == "index")
+		{
+			if (!parseSimpleDirective(iter, server.index))
+				iter.skipToNextDirective();
+		}
+		else if (directive == "client_max_body_size")
+		{
+			std::string value;
+			if (parseSimpleDirective(iter, value))
+				server.clientMaxBodySize = std::atol(value.c_str());
+			else
+				iter.skipToNextDirective();
+		}
+		else if (directive == "error_page")
+		{
+			if (!parseSimpleDirective(iter, server.errorPage))
+				iter.skipToNextDirective();
+		}
+		else if (directive == "types")
+		{
+			if (parseTypesBlock(server, iter) == -1)
+				iter.skipToClosingBrace();
+		}
+		else
+		{
+			WARNING("Unknown server directive: " + directive);
+			iter.skipToNextDirective();
+		}
+	}
+
+	if (!iter.expectAndConsume(RBRACE))
+		return -1;
+
+	this->config.servers.push_back(server);
+	return 0;
+}
+
+// Simple directive parser (directive value;)
+bool Config::parseSimpleDirective(TokenIterator &iter, std::string &result)
+{
+	iter.advance(); // consume directive name
+
+	if (!iter.expect(WORD))
+		return false;
+
+	result = iter.consumeWord();
+
+	if (!iter.expectAndConsume(SEMICOLON))
+		return false;
+
+	return true;
+}
+
+// Location parsing with redefinition checking
+int Config::parseLocation(ServerConfig &server, TokenIterator &iter)
+{
+	LocationConfig location = this->LocationBase;
+	std::set<std::string>
+		seenLocationDirectives; // Track seen location directives
+
+	// Parse: location <path> {
+	iter.advance(); // consume "location"
+
+	location.path = iter.consumeWord();
+	if (location.path.empty())
+		return -1;
+
+	if (!iter.expectAndConsume(LBRACE))
+		return -1;
 	
-	std::vector<Token> tokens = Config::tokenize(fileBuff);
-	Logger::info("Tokenization complete. Token count: " + intToString(tokens.size()));
-	std::vector<ServerConfig> servers;
-	size_t index = 0;
-
-	while (index < tokens.size())
-	{
-		if (tokens[index].type == WORD && tokens[index].value == "server")
-		{
-			ServerConfig server = Config::parseServerConfig(tokens, index);
-			servers.push_back(server);
-		}
-		else
-		{
-			// Skip unknown tokens or handle errors
-			index++;
-		}
-	}
-	Config::validateConfig(servers);
-	Logger::info("Configuration validation passed");
-	return servers;
-}
-
-/// @brief parses a single "server" block from config
-// directives: "server", "host", "listen", "server_name", "root", "client_max_body_size", "location"
-/// @param tokens tokens to parse
-/// @param index index of current token to parse
-/// @return a "server" block, see ServerConfig
-ServerConfig Config::parseServerConfig(const std::vector<Token> &tokens, size_t &index)
-{
-	ServerConfig server;
-
-	server.host = DEFAULT_HOST;
-	server.port = -1;
-	server.serverNname = "";
-	server.root = "";
-	server.clientMaxBodySize = 0;
-	server.errorPath = "";
-	server.defaultLocation = NULL;
-
-	// Expect "server" token
-	if (index >= tokens.size() || tokens[index].value != "server")
-		throw std::runtime_error("Expected 'server' keyword");
-	index++;
-
-	// Expect opening brace
-	if (index >= tokens.size() || tokens[index].type != LBRACE)
-		throw std::runtime_error("Expected '{' after 'server'");
-	index++;
-
-	// Parse server directives
-	while (index < tokens.size() && tokens[index].type != RBRACE)
-	{
-		if (tokens[index].type == WORD)
-		{
-			std::string directive = tokens[index].value;
-			index++;
-
-			if (directive == "host")
-			{
-				if (index >= tokens.size() || tokens[index].type != WORD)
-					throw std::runtime_error("Expected value after 'host'");
-				server.host = tokens[index].value;
-				index++;
-			}
-			else if (directive == "listen")
-			{
-				if (index >= tokens.size() || tokens[index].type != WORD)
-					throw std::runtime_error("Expected value after 'listen'");
-				server.port = atoi(tokens[index].value.c_str());
-				index++;
-			}
-			else if (directive == "server_name")
-			{
-				if (index >= tokens.size() || tokens[index].type != WORD)
-					throw std::runtime_error("Expected value after 'server_name'");
-				server.serverNname = tokens[index].value;
-				index++;
-			}
-			else if (directive == "root")
-			{
-				if (index >= tokens.size() || tokens[index].type != WORD)
-					throw std::runtime_error("Expected value after 'root'");
-				server.root = tokens[index].value;
-				index++;
-			}
-			else if (directive == "client_max_body_size")
-			{
-				if (index >= tokens.size() || tokens[index].type != WORD)
-					throw std::runtime_error("Expected value after 'client_max_body_size'");
-				server.clientMaxBodySize = atoi(tokens[index].value.c_str());
-				index++;
-			}
-			else if (directive == "error_page")
-			{
-				if (index >= tokens.size() || tokens[index].type != WORD)
-					throw std::runtime_error("Expected value after 'error_page'");
-				server.errorPath = tokens[index].value;
-				index++;
-			}
-			else if (directive == "location")
-			{
-				// Parse location block
-				LocationConfig location = Config::parseLocation(tokens, index);
-				server.locations.push_back(location);
-				continue; // parseLocation handles its own indexing
-			}
-
-			// Expect semicolon after directive value
-			if (index < tokens.size() && tokens[index].type == SEMICOLON)
-				index++;
-		}
-		else
-		{
-			index++;
-		}
-	}
-
-	// Expect closing brace
-	if (index >= tokens.size() || tokens[index].type != RBRACE)
-		throw std::runtime_error("Expected '}' to close server block");
-	index++;
-
-	return server;
-}
-
-/// @brief parses location block in ServerConfig
-/// @param tokens 
-/// @param index 
-/// @return 
-LocationConfig Config::parseLocation(const std::vector<Token> &tokens, size_t &index)
-{
-	LocationConfig location;
-
-	// Initialize defaults
-	location.name = "";
-	location.root = "";
-	location.index = "";
-	location.returnPath = "";
-	location.uploadDir = "";
-	location.autoindex = false;
-
-	// Expect location path
-	if (index >= tokens.size() || tokens[index].type != WORD)
-		throw std::runtime_error("Expected location name");
-	location.name = tokens[index].value;
-	index++;
-
-	// Expect opening brace
-	if (index >= tokens.size() || tokens[index].type != LBRACE)
-		throw std::runtime_error("Expected '{' after location name");
-	index++;
-
 	// Parse location directives
-	while (index < tokens.size() && tokens[index].type != RBRACE)
+	while (iter.hasNext() && iter.currentType() != RBRACE)
 	{
-		if (tokens[index].type == WORD)
+		if (iter.currentType() != WORD)
 		{
-			std::string directive = tokens[index].value;
-			index++;
+			WARNING("Expected location directive");
+			iter.advance();
+			continue;
+		}
 
-			if (directive == "root")
-			{
-				if (index >= tokens.size() || tokens[index].type != WORD)
-					throw std::runtime_error("Expected value after 'root'");
-				location.root = tokens[index].value;
-				index++;
-			}
-			else if (directive == "index")
-			{
-				if (index >= tokens.size() || tokens[index].type != WORD)
-					throw std::runtime_error("Expected value after 'index'");
-				location.index = tokens[index].value;
-				index++;
-			}
-			else if (directive == "autoindex")
-			{
-				if (index >= tokens.size() || tokens[index].type != WORD)
-					throw std::runtime_error("Expected value after 'autoindex'");
-				location.autoindex = (tokens[index].value == "on");
-				index++;
-			}
-			else if (directive == "allow_methods")
-			{
-				// Parse multiple methods until semicolon
-				while (index < tokens.size() && tokens[index].type != SEMICOLON)
-				{
-					if (tokens[index].type == WORD)
-						location.allowedMethods.push_back(tokens[index].value);
-					index++;
-				}
-				continue; // Skip semicolon handling below
-			}
-			else if (directive == "cgi_ext")
-			{
-				// Parse CGI extensions
-				std::vector<std::string> extensions;
-				while (index < tokens.size() && tokens[index].type != SEMICOLON)
-				{
-					if (tokens[index].type == WORD)
-						extensions.push_back(tokens[index].value);
-					index++;
-				}
-				for (size_t i = 0; i < extensions.size(); i++)
-					location.cgi[extensions[i]] = ""; 
-				continue;
-			}
-			else if (directive == "cgi_path")
-			{
-				// Parse CGI paths and match with extensions
-				std::vector<std::string> paths;
-				while (index < tokens.size() && tokens[index].type != SEMICOLON)
-				{
-					if (tokens[index].type == WORD)
-						paths.push_back(tokens[index].value);
-					index++;
-				}
+		std::string directive = iter.currentValue();
 
-				// Match paths with extensions (assumes same order)
-				size_t pathIndex = 0;
-				for (std::map<std::string, std::string>::iterator it = location.cgi.begin();
-					 it != location.cgi.end() && pathIndex < paths.size(); ++it, ++pathIndex)
-				{
-					it->second = paths[pathIndex];
-				}
-				continue;
-			}
-			else if (directive == "return")
-			{
-				if (index >= tokens.size() || tokens[index].type != WORD)
-					throw std::runtime_error("Expected value after 'return'");
-				location.returnPath = tokens[index].value;
-				index++;
-			}
-			else if (directive == "upload_dir")
-			{
-				if (index >= tokens.size() || tokens[index].type != WORD)
-					throw std::runtime_error("Expected value after 'upload_dir'");
-				location.uploadDir = tokens[index].value;
-				index++;
-			}
+		// Check for redefinition in location block
+		if (seenLocationDirectives.find(directive) !=
+			seenLocationDirectives.end())
+		{
+			WARNING("Redefinition of directive '" + directive +
+					"' in location '" + location.path + "'");
+		}
+		seenLocationDirectives.insert(directive);
 
-			// Expect semicolon after directive value
-			if (index < tokens.size() && tokens[index].type == SEMICOLON)
-				index++;
+		// Special validation: root and alias are mutually exclusive
+		if (directive == "root" && seenLocationDirectives.find("alias") !=
+									   seenLocationDirectives.end())
+		{
+			WARNING("Location '" + location.path +
+					"' has both 'root' and 'alias' directives - this may cause "
+					"conflicts");
+		}
+		if (directive == "alias" &&
+			seenLocationDirectives.find("root") != seenLocationDirectives.end())
+		{
+			WARNING("Location '" + location.path +
+					"' has both 'root' and 'alias' directives - this may cause "
+					"conflicts");
+		}
+
+		if (directive == "root")
+		{
+			if (!parseSimpleDirective(iter, location.root))
+				iter.skipToNextDirective();
+		}
+		else if (directive == "alias")
+		{
+			if (!parseSimpleDirective(iter, location.alias))
+				iter.skipToNextDirective();
+		}
+		else if (directive == "index")
+		{
+			if (!parseSimpleDirective(iter, location.index))
+				iter.skipToNextDirective();
+		}
+		else if (directive == "autoindex")
+		{
+			std::string value;
+			if (parseSimpleDirective(iter, value))
+				location.autoindex = (value == "on" || value == "true");
+			else
+				iter.skipToNextDirective();
+		}
+		else if (directive == "allowed_methods")
+		{
+			if (!parseAllowedMethods(location, iter))
+				iter.skipToNextDirective();
+		}
+		else if (directive == "cgi")
+		{
+			parseCgiBlock(location, iter);
+		}
+		else if (directive == "return")
+		{
+			if (!parseSimpleDirective(iter, location.returnPath))
+				iter.skipToNextDirective();
+		}
+		else if (directive == "upload_dir")
+		{
+			if (!parseSimpleDirective(iter, location.uploadDir))
+				iter.skipToNextDirective();
 		}
 		else
 		{
-			index++;
+			WARNING("Unknown location directive: " + directive);
+			iter.skipToNextDirective();
 		}
 	}
 
-	// Expect closing brace
-	if (index >= tokens.size() || tokens[index].type != RBRACE)
-		throw std::runtime_error("Expected '}' to close location block");
-	index++;
+	if (!iter.expectAndConsume(RBRACE))
+		return -1;
 
-	return location;
+	server.locations.push_back(location);
+	return 0;
 }
 
-void Config::validateConfig(std::vector<ServerConfig> &config)
+// Parse allowed methods (can have multiple values)
+bool Config::parseAllowedMethods(LocationConfig &location, TokenIterator &iter)
 {
-	if (config.empty())
-		throw std::runtime_error("Configuration validation failed: No server blocks found");
+	iter.advance(); // consume "allowed_methods"
 
-	for (size_t i = 0; i < config.size(); i++)
+	location.allowedMethods.clear();
+
+	// Collect all method names until semicolon
+	while (iter.hasNext() && iter.currentType() != SEMICOLON)
 	{
-		ServerConfig &server = config[i];
-		
-		// Validate mandatory server fields
-		if (server.port == -1)
-			throw std::runtime_error("Configuration validation failed: Server " + intToString(i + 1) + " missing mandatory 'listen' directive");
-		
-		if (server.serverNname.empty())
-			throw std::runtime_error("Configuration validation failed: Server " + intToString(i + 1) + " missing mandatory 'server_name' directive");
-		
-		if (server.root.empty())
-			throw std::runtime_error("Configuration validation failed: Server " + intToString(i + 1) + " missing mandatory 'root' directive");
-		
-		if (server.clientMaxBodySize == 0)
-			throw std::runtime_error("Configuration validation failed: Server " + intToString(i + 1) + " missing mandatory 'client_max_body_size' directive");
-		
-		if (server.errorPath.empty())
-			throw std::runtime_error("Configuration validation failed: Server " + intToString(i + 1) + " missing mandatory 'error_page' directive");
-		
-		// Check for duplicate ports
-		for (size_t j = i + 1; j < config.size(); j++)
+		if (iter.currentType() == WORD)
 		{
-			if (config[j].port == server.port && config[j].host == server.host)
-				throw std::runtime_error("Configuration validation failed: Duplicate server configuration for " + server.host + ":" + intToString(server.port));
+			location.allowedMethods.push_back(iter.currentValue());
 		}
-		
-		// Validate locations and find default location
-		bool hasDefaultLocation = false;
-		for (size_t j = 0; j < server.locations.size(); j++)
-		{
-			LocationConfig &location = server.locations[j];
-			
-			// Check if this is the default location "/"
-			if (location.name == "/")
-			{
-				hasDefaultLocation = true;
-				server.defaultLocation = &server.locations[j];
-			}
-			
-			// Validate mandatory location fields
-			if (location.name.empty())
-				throw std::runtime_error("Configuration validation failed: Server " + intToString(i + 1) + " has location with empty name");
-			
-			// Set default values for location
-			if (location.root.empty())
-				location.root = server.root; // defaults to root of the server
-			
-			// Ensure GET is always enabled
-			bool hasGet = false;
-			for (size_t k = 0; k < location.allowedMethods.size(); k++)
-			{
-				if (location.allowedMethods[k] == "GET")
-				{
-					hasGet = true;
-					break;
-				}
-			}
-			if (!hasGet)
-				location.allowedMethods.push_back("GET");
-		}
-		
-		// Now set default index values after we have the defaultLocation pointer
-		for (size_t j = 0; j < server.locations.size(); j++)
-		{
-			LocationConfig &location = server.locations[j];
-			
-			if (location.index.empty())
-			{
-				// Set default index if server has a default location with index
-				if (server.defaultLocation && !server.defaultLocation->index.empty())
-					location.index = server.defaultLocation->index;
-				else
-					location.index = "index.html"; // fallback default
-			}
-		}
-		
-		// Check for mandatory default location
-		if (!hasDefaultLocation)
-			throw std::runtime_error("Configuration validation failed: Server " + intToString(i + 1) + " missing mandatory default location '/'");
-		
-		// Validate port range
-		if (server.port < 1 || server.port > 65535)
-			throw std::runtime_error("Configuration validation failed: Server " + intToString(i + 1) + " port " + intToString(server.port) + " is out of valid range (1-65535)");
-		
-		// Validate client_max_body_size (reasonable limits)
-		if (server.clientMaxBodySize > 1073741824) // 1GB limit
-			throw std::runtime_error("Configuration validation failed: Server " + intToString(i + 1) + " client_max_body_size " + intToString(server.clientMaxBodySize) + " exceeds maximum allowed (1GB)");
+		iter.advance();
 	}
+
+	if (!iter.expectAndConsume(SEMICOLON))
+		return false;
+
+	return true;
+}
+
+// Parse CGI directive (interpreter extension pairs)
+int Config::parseCgiBlock(LocationConfig &location, TokenIterator &iter)
+{
+	iter.advance(); // consume "types"
+
+	if (!iter.expectAndConsume(LBRACE))
+		return -1;
+
+	while (iter.hasNext() && iter.currentType() != RBRACE)
+	{
+		if (iter.currentType() == WORD && iter.peekType(1) == WORD)
+		{
+			std::string interpreter = iter.consumeWord();
+			std::string extension = iter.consumeWord();
+
+			if (!iter.expectAndConsume(SEMICOLON))
+			{
+				iter.skipToNextDirective();
+				continue;
+			}
+			location.cgi[extension] = interpreter;
+		}
+		else
+		{
+			WARNING("Invalid cgi entry");
+			iter.skipToNextDirective();
+		}
+	}
+
+	return iter.expectAndConsume(RBRACE) ? 0 : -1;
+}
+
+// Parse types block
+int Config::parseTypesBlock(ServerConfig &server, TokenIterator &iter)
+{
+	iter.advance(); // consume "types"
+
+	if (!iter.expectAndConsume(LBRACE))
+		return -1;
+
+	while (iter.hasNext() && iter.currentType() != RBRACE)
+	{
+		if (iter.currentType() == WORD && iter.peekType(1) == WORD)
+		{
+			std::string mimeType = iter.consumeWord();
+			std::string extension = iter.consumeWord();
+
+			if (!iter.expectAndConsume(SEMICOLON))
+			{
+				iter.skipToNextDirective();
+				continue;
+			}
+
+			server.mimeTypes[extension] = mimeType;
+		}
+		else
+		{
+			WARNING("Invalid types entry");
+			iter.skipToNextDirective();
+		}
+	}
+
+	return iter.expectAndConsume(RBRACE) ? 0 : -1;
+}
+
+int Config::validateConfig()
+{
+	if (config.maxEvents == 0)
+	{
+		ERROR("Invalid value for max_events");
+		return -1;
+	}
+	if (config.timeout == 0)
+	{
+		ERROR("Invalid value for timeout");
+		return -1;
+	}
+	for (size_t i = 0; i < this->config.servers.size(); ++i)
+	{
+		ServerConfig &server = this->config.servers[i];
+
+		// Check mandatory fields
+		if (server.name == MAND)
+		{
+			ERROR("Server name is mandatory");
+			return -1;
+		}
+		if (server.host == MAND)
+		{
+			ERROR("Server host is mandatory");
+			return -1;
+		}
+		if (server.root == MAND)
+		{
+			ERROR("Server root is mandatory");
+			return -1;
+		}
+		if (server.index == DEFAULT)
+		{
+			WARNING("No index for '" + server.name +
+					"' defaults to 'index.html'");
+			server.index = DEFAULT_INDEX;
+		}
+		if (server.clientMaxBodySize == 0)
+		{
+			ERROR("Invalid value for client_max_body_size in '" + server.name +
+				  "'");
+			return -1;
+		}
+		for (size_t i = 0; i < server.locations.size(); ++i)
+		{
+			if (server.locations[i].root == DEFAULT &&
+				server.locations[i].alias == DEFAULT)
+			{
+				WARNING("No root or alias for location '" +
+						server.locations[i].path + "' defaults to server root");
+				server.locations[i].root = server.root;
+			}
+			// assign filessystem path to location
+			if (server.locations[i].alias != DEFAULT)
+			{
+				server.locations[i].fs_path = server.locations[i].alias;
+			}
+			else
+			{
+				server.locations[i].fs_path = server.locations[i].root + server.locations[i].path;
+			}
+			if (server.locations[i].index == DEFAULT)
+			{
+				WARNING("No index for '" + server.locations[i].path +
+						"' defaults to 'index.html'");
+				server.locations[i].index = DEFAULT_INDEX;
+			}
+			server.locations[i].fs_index = server.locations[i].fs_path + "/" + server.locations[i].index;
+			if (!server.locations[i].uploadDir.empty())
+				server.locations[i].fs_uploadDir = server.locations[i].fs_path + server.locations[i].uploadDir;
+		}
+		LocationConfig serverLoc = LocationBase;
+		serverLoc.root = server.root;
+		serverLoc.allowedMethods.push_back("GET");
+		serverLoc.autoindex = false;
+		serverLoc.fs_path = server.root;
+		serverLoc.index = server.index;
+		serverLoc.path = "/";
+		serverLoc.fs_index = serverLoc.fs_path + "/" + serverLoc.index;
+		server.locations.push_back(serverLoc);
+	}
+	return 0;
 }

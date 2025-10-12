@@ -1,16 +1,22 @@
 #pragma once
 
-#include "Webserv.hpp"
+#include <string>
+#include <vector>
+#include <map>
 
-#define DEFAULT_HOST "127.0.0.1"
+class TokenIterator; // Forward declaration
 
 struct LocationConfig
 {
-	std::string name;						 // name of loc mandatory
+	std::string path;						 // uri of loc
 	std::string root;						 // path to root of its folder, defaults to root of the server
+	std::string alias;						 // alias to root of the its folder(doesnt append with path)
 	std::string index;						 // index a location
 	std::string returnPath;					 // redirection path
 	std::string uploadDir;					 // dir for POST request might be usefull
+	std::string fs_uploadDir;				 // filesystem path for upload dir
+	std::string fs_path;					 // filesystem path for that location retrived from root/alias
+	std::string fs_index;					 // filesystem path to location's index
 	bool autoindex;							 // directory listing
 	std::vector<std::string> allowedMethods; // GET is always enabled
 
@@ -20,21 +26,30 @@ struct LocationConfig
 
 struct ServerConfig
 {
-	std::string host;					   // defaults to 127.0.0.1
-	int port;							   // socket port to listen to, mandatory
-	std::string serverNname;			   // mandatory
-	std::string root;					   // root of this server mandatory
-	size_t clientMaxBodySize;			   // max recv size, mandatory
-	std::string errorPath;				   // mandatory
-	LocationConfig *defaultLocation;	   // for location named "/" mandatory
-	std::vector<LocationConfig> locations; // locations for URI starting with location.name
+	std::string name;							  // mandatory
+	std::string index;							  // file to serve when server page requested default is index.html
+	std::string host;							  // defaults to 127.0.0.1:8080, mam
+	std::string root;							  // root of this server mandatory
+	size_t clientMaxBodySize;					  // max recv size, mandatory
+	std::string errorPage;						  // mandatory
+	int timeout;								  // timeout before closing connection
+	int maxEvents;								  // max number of events to handle in one request
+	std::vector<LocationConfig> locations;		  // locations for URI starting with location.name
+	std::map<std::string, std::string> mimeTypes; // mime types for this server
+};
+
+struct FullConfig
+{
+	std::vector<ServerConfig> servers; // parsed config structure
+	int timeout;
+	int maxEvents;
 };
 
 enum TokenType
 {
-	WORD, // all
-	LBRACE, // {
-	RBRACE, // }
+	WORD,	  // all
+	LBRACE,	  // {
+	RBRACE,	  // }
 	SEMICOLON // ;
 };
 
@@ -44,27 +59,44 @@ struct Token
 	std::string value;
 };
 
+#define MAND "___MANDATORY___"
+#define DEFAULT "___DEFAULT___"
+#define DEFAULT_INDEX "index.html"
+#define DEFAULT_MAX_EVENTS 1000;
+#define DEFAULT_TIMEOUT -1;
+
 class Config
 {
 private:
-	/* data */
+	const char *configPath;			// path to config file
+	std::string fileBuff;			// contents of a config file
+	std::vector<Token> tokens;		// tokens of config file
+	size_t currentTokenIndex;		// current position in tokens
+
+	int error;
+	std::string errorMsg;
+
+	ServerConfig serverBase;
+	LocationConfig LocationBase;
+
+	// TokenIterator-based methods
+	int parseServerConfig(TokenIterator &iter);
+	int parseLocation(ServerConfig &server, TokenIterator &iter);
+	bool parseSimpleDirective(TokenIterator &iter, std::string &result);
+	bool parseAllowedMethods(LocationConfig &location, TokenIterator &iter);
+	int parseCgiBlock(LocationConfig &location, TokenIterator &iter);
+	int parseTypesBlock(ServerConfig &server, TokenIterator &iter);
+
+	void tokenize();
+	int parseServerConfig(size_t &i);
+
 public:
-	Config();
 
-	static std::vector<Token> tokenize(const std::string &fileBuff);
-	static std::vector<ServerConfig> parseConfig(const char*);
-	static ServerConfig parseServerConfig(const std::vector<Token> &tokens, size_t &index);
-	static LocationConfig parseLocation(const std::vector<Token> &tokens, size_t &index);
-	static void validateConfig(std::vector<ServerConfig> &config);
+	FullConfig config;
 
+	Config(char *src);
 	~Config();
+
+	int parseConfig();
+	int validateConfig();
 };
-
-// Token addToken(TokenType type, std::string value);
-// std::vector<Token> tokenize_config(const std::string &input);
-// std::ostream &operator<<(std::ostream &os, const Token &token);
-// std::ostream &operator<<(std::ostream &os, const std::vector<Token> &tokens);
-// std::ostream &operator<<(std::ostream &os, const ServerConfig &config);
-// std::ostream &operator<<(std::ostream &os, const LocationConfig &config);
-
-// void parse_server(ServerConfig &srv, const std::vector<Token> &tokens, size_t &i);

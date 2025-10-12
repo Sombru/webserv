@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Slider Addition Calculator V2</title>
+    <style>
+        body {
+            font-family: monospace;
+            font-size: 10px;
+            margin: 10px;
+        }
+
+        input[type="range"] {
+            width: 1500px;
+            height: 5px;
+            margin: 5px 0;
+        }
+
+        button {
+            font-size: 10px;
+            padding: 5px 5px;
+        }
+
+        .value-display, .result {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    Number 1: <span id="val1">0</span><br>
+    <input type="range" id="num1" min="0" max="100000" value="0" oninput="updateValue('num1','val1')"><br>
+
+    Number 2: <span id="val2">0</span><br>
+    <input type="range" id="num2" min="0" max="100000" value="0" oninput="updateValue('num2','val2')"><br>
+
+    <button onclick="calculate()">Calculate</button><br>
+    Result: <span id="result">—</span>
+
+    <script>
+        function updateValue(sliderId, displayId) {
+            document.getElementById(displayId).textContent = document.getElementById(sliderId).value;
+        }
+
+        function calculate() {
+            const n1 = parseInt(document.getElementById('num1').value);
+            const n2 = parseInt(document.getElementById('num2').value);
+            document.getElementById('result').textContent = n1 + n2;
+        }
+    </script>
+</body>
+</html>

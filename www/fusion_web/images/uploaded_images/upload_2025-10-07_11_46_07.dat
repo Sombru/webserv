@@ -1,0 +1,31 @@
+------geckoformboundaryc9dc8a905e182aa3a4a884e98ddffba6
+Content-Disposition: form-data; name="file"; filename="autoindex"
+Content-Type: application/octet-stream
+
+
+<html>
+<head>
+<style>
+body { font-family: Arial, sans-serif; margin: 40px; }
+h1 { color: #333; }
+ul { list-style-type: none; padding: 0; }
+li { margin: 5px 0; }
+a { text-decoration: none; color: #0066cc; }
+a:hover { text-decoration: underline; }
+.directory::before { content: '📁 '; }
+.file::before { content: '📄 '; }
+</style>
+</head>
+<body>
+<h1>Index of /autoindex</h1>
+<ul>
+<li><a href="" class="directory">../</a></li>
+<li><a href="/autoindex/error.html" class="file">error.html</a></li>
+<li><a href="/autoindex/login.html" class="file">login.html</a></li>
+<li><a href="/autoindex/success" class="directory">success/</a></li>
+<li><a href="/autoindex/upload" class="directory">upload/</a></li>
+<li><a href="/autoindex/index.html" class="file">index.html</a></li>
+</ul>
+</body>
+</html>
+------geckoformboundaryc9dc8a905e182aa3a4a884e98ddffba6--
